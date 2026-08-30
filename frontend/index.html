@@ -226,6 +226,17 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .p-blue{background:rgba(78,158,236,.60)}
 .p-rose{background:rgba(244,110,132,.60)}
 
+/* 开屏。底是画布的底色，中间一行字标。
+   开屏不给光——光的起落只有一次，留给从冷屏进画布的那一下 */
+.splash{position:absolute;inset:0;z-index:30;background:var(--base);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity 700ms var(--ease),visibility 0s linear 700ms}
+.splash.gone{opacity:0;visibility:hidden;pointer-events:none}
+/* 字距会在末字母后多出一段空，text-indent 补回来才是真居中 */
+.splash span{font-size:13px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
+  color:var(--ink);opacity:0;transition:opacity 900ms var(--ease)}
+.splash.lit span{opacity:1}
+
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
 .dev{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:40}
 .dev>.devbtn{position:relative;width:24px;height:24px;border-radius:50%;border:0;cursor:pointer;
@@ -502,6 +513,8 @@ body::-webkit-scrollbar-button:vertical:end:increment{
       </button>
     </div>
   </section>
+
+  <div class="splash" id="splash"><span>After</span></div>
 
   <!-- 演示菜单：测试期的脚手架，对应原提案规范面板上的控制按钮。上线前整块删掉 -->
   <div class="dev" id="dev">
@@ -1238,7 +1251,7 @@ dev.querySelector('.devbtn').addEventListener('click',function(){ dev.classList.
 dev.querySelectorAll('.devmenu button').forEach(function(b){
   b.addEventListener('click',function(){
     var a=b.dataset.act;
-    if(a==='restart') go(0);
+    if(a==='restart') boot();
     else if(a==='draw') drawScene();
     else if(a==='canvas') go(4);
     else if(a==='her') toggleHer();
@@ -1257,8 +1270,21 @@ if(window.visualViewport){
   });
 }
 
+/* ---------- 开屏 ----------
+   字先淡入，停一拍，整层揭开落到冷屏。时长走感觉不走整数：
+   字 900ms 到位，读一眼的时间给足，2.3s 开始揭 */
+var splashEl=document.getElementById('splash');
+var splashTimers=[];
+function boot(){
+  splashTimers.forEach(clearTimeout); splashTimers=[];
+  splashEl.classList.remove('gone','lit');
+  go(0);
+  splashTimers.push(setTimeout(function(){ splashEl.classList.add('lit'); }, calm?60:260));
+  splashTimers.push(setTimeout(function(){ splashEl.classList.add('gone'); }, calm?280:2300));
+}
+
 stopDraw();
-go(0);
+boot();
 </script>
 </body>
 </html>
