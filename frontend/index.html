@@ -263,6 +263,82 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .startbtn.quiet:active{background:rgba(140,120,105,.2)}
 .startbtn:focus-visible{outline:2px solid var(--ink-2);outline-offset:3px}
 
+/* ---------- 注册与登录的公共底盘 ---------- */
+/* 顶上一行：返回键加一条很细的进度条，替掉原来的「1 / 2」。
+   步数是给填表的人看的余量，不是一句要读的话，所以它该是一条线不是一行字 */
+.navrow{flex:none;display:flex;align-items:center;gap:13px;margin-bottom:26px}
+.back{position:relative;flex:none;width:22px;height:22px;padding:0;border:0;background:transparent;
+  cursor:pointer;display:flex;align-items:center;justify-content:center}
+.back::after{content:"";position:absolute;inset:-11px}  /* 看到的是 22，能按到的是 44 */
+.back svg{width:16px;height:16px}
+.cold .back{color:var(--cold-2nd)}
+.cold .back:hover{color:var(--cold-ink)}
+.cold .back:focus-visible{outline:2px solid var(--cold-ink);outline-offset:3px}
+.warm .back{color:var(--ink-3)}
+.warm .back:hover{color:var(--ink-2)}
+.warm .back:focus-visible{outline:2px solid var(--ink-2);outline-offset:3px}
+.prog{flex:1;height:2px;border-radius:1px;background:var(--cold-line);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--cold-ink);border-radius:1px;
+  transition:width 520ms var(--ease)}
+
+/* 注册第一步与登录页：暖屏，和开始页同一块布，只是内容换了 */
+/* 顶距和冷屏 .body 取同一个值：返回键要在整条注册流程里钉死在一个位置，
+   暖屏用 .notch（46）而冷屏用 52，中间会看见它跳一下 */
+.auth{padding:max(52px, calc(env(safe-area-inset-top) + 34px)) 26px
+      calc(30px + env(safe-area-inset-bottom))}
+.auth .navrow{margin-bottom:0}
+.auth .mid{flex:1;width:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:24px}
+.auth .foot{flex:none;display:flex;flex-direction:column;gap:10px}
+
+/* PLACEHOLDER：她没有形象，这里先放一团会呼吸的光占位，
+   等真正的进场动画进来把这一块连注释一起删掉 */
+.ph{width:104px;height:104px;border-radius:50%;
+  background:radial-gradient(circle,rgba(216,165,78,.34) 0%,rgba(247,178,145,.18) 46%,rgba(247,178,145,0) 70%);
+  animation:phbreath 3600ms ease-in-out infinite}
+@keyframes phbreath{
+  0%,100%{transform:scale(.90);opacity:.66}
+  50%{transform:scale(1.08);opacity:1}
+}
+.ph-note{font-size:9px;letter-spacing:.22em;color:var(--ink-3);text-transform:uppercase}
+
+/* 底部那一件事等中间的东西先站住，再自己浮上来。延迟里用 both 撑住起始态，
+   否则它会先闪一下满不透明度再退回去 */
+.screen.auth .foot{opacity:0}
+.screen.auth.on .foot{animation:footrise 900ms var(--ease) 900ms both}
+@keyframes footrise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* 选项是一行可以按的字，不是一个控件——没有单选圆点，选中即前进。
+   一个问题只问一件事，和日历底栏、一张贴纸上一句话是同一条 */
+.opts{display:flex;flex-direction:column;gap:8px;overflow-y:auto;margin-bottom:auto}
+.opt{width:100%;text-align:left;background:var(--cold-surface);
+  border:0.5px solid var(--cold-line);border-radius:6px;padding:12px 13px;
+  font-size:13px;line-height:1.6;font-family:inherit;color:var(--cold-ink);cursor:pointer;
+  transition:background 140ms var(--ease),border-color 140ms var(--ease),color 140ms var(--ease)}
+.opt:hover{background:#FAFAFB}
+.opt:focus-visible{outline:2px solid var(--cold-ink);outline-offset:2px}
+.opt.sel{background:var(--cold-ink);border-color:var(--cold-ink);color:#fff}
+
+/* 登录页。文本框用画布上那块白（和你的气泡同一个值），
+   不引入冷屏那种白底描边——这一页还在她的布上 */
+.login .mid{align-items:stretch}
+.login .form{width:100%;display:flex;flex-direction:column;gap:9px}
+.tin{width:100%;background:rgba(255,255,255,.55);border:0.5px solid rgba(140,110,90,.18);
+  border-radius:6px;padding:12px 13px;font-size:13px;font-family:inherit;color:var(--ink);
+  outline:none;transition:background 140ms var(--ease),border-color 140ms var(--ease)}
+.tin::placeholder{color:var(--ink-3)}
+.tin:focus{background:rgba(255,255,255,.78);border-color:rgba(140,110,90,.34)}
+.login .form .startbtn{margin-top:5px}
+/* 忘记密码不做成键：它是一句话，出了事才去找它，不该和登录争分量 */
+.forgot{align-self:center;margin-top:2px;background:transparent;border:0;padding:6px;
+  font-size:11.5px;font-family:inherit;color:var(--ink-3);cursor:pointer}
+.forgot:hover{color:var(--ink-2)}
+.forgot:focus-visible{outline:2px solid var(--ink-2);outline-offset:2px}
+
+/* 中间那块也慢慢来，比底部早一步：先看到要填什么，再看到还能怎么进 */
+.screen.auth .mid{opacity:0}
+.screen.auth.on .mid{animation:footrise 900ms var(--ease) 260ms both}
+
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
 .dev{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:40}
 .dev>.devbtn{position:relative;width:24px;height:24px;border-radius:50%;border:0;cursor:pointer;
@@ -285,17 +361,59 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 <div id="app">
   <div class="glow" id="glow"></div>
 
-  <section class="screen warm start" data-s="5" id="startScreen">
+  <section class="screen warm start on" data-s="5" id="startScreen">
     <div class="brand"><span>After</span></div>
     <div class="btns">
-      <button class="startbtn primary" onclick="go(0)">注册</button>
-      <button class="startbtn quiet" onclick="go(2)">登录</button>
+      <button class="startbtn primary" onclick="go(6)">注册</button>
+      <button class="startbtn quiet" onclick="go(7)">登录</button>
     </div>
   </section>
 
-  <section class="screen cold on" data-s="0">
+  <section class="screen warm auth" data-s="6">
+    <div class="navrow"><button class="back" onclick="back()" aria-label="返回">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+      </button></div>
+    <div class="mid">
+      <!-- PLACEHOLDER：真正的进场动画进来后，替掉 .ph 和 .ph-note 这两行 -->
+      <div class="ph"></div>
+      <div class="ph-note">placeholder</div>
+    </div>
+    <div class="foot"><button class="startbtn primary" onclick="go(0)">继续</button></div>
+  </section>
+
+  <section class="screen warm auth login" data-s="7">
+    <div class="navrow">
+      <button class="back" onclick="back()" aria-label="返回">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+      </button>
+    </div>
+    <div class="mid">
+      <div class="form">
+        <input class="tin" type="text" placeholder="邮箱、手机号或用户名"
+               autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+        <input class="tin" type="password" placeholder="密码" autocomplete="current-password">
+        <button class="startbtn primary" onclick="go(2)">登录</button>
+        <button class="forgot" type="button">忘记密码</button>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="startbtn quiet" onclick="go(2)">微信登录</button>
+      <button class="startbtn quiet" onclick="go(2)">邮箱登录</button>
+      <button class="startbtn quiet" onclick="go(2)">Apple ID 登录</button>
+    </div>
+  </section>
+
+  <section class="screen cold" data-s="0">
     <div class="body">
-      <div class="step">1 / 2</div>
+      <div class="navrow">
+        <button class="back" onclick="back()" aria-label="返回">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+        </button>
+        <div class="prog"><i></i></div>
+      </div>
       <div class="ask">你的出生日期</div>
       <div class="field">YYYY / MM / DD</div>
       <div class="legal">本服务不向未成年人提供。</div>
@@ -305,13 +423,59 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 
   <section class="screen cold" data-s="1">
     <div class="body">
-      <div class="step">2 / 2</div>
+      <div class="navrow">
+        <button class="back" onclick="back()" aria-label="返回">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+        </button>
+        <div class="prog"><i></i></div>
+      </div>
       <div class="terms">
         <b>□</b>接下来跟你说话的是一个 AI 角色，不是自然人。<br>
         <b>□</b>它会记住发生过的事，那些事不能被撤回。<br>
         <b>□</b>你的数据可以随时导出或删除。
       </div>
-      <button class="coldbtn" onclick="go(2)">进入</button>
+      <button class="coldbtn" onclick="go(8)">继续</button>
+    </div>
+  </section>
+
+  <section class="screen cold" data-s="8">
+    <div class="body">
+      <div class="navrow">
+        <button class="back" onclick="back()" aria-label="返回">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+        </button>
+        <div class="prog"><i></i></div>
+      </div>
+      <div class="ask">你为什么想使用 AFTER？</div>
+      <div class="opts">
+        <button class="opt" data-next="9">我想分享生活中的琐事，让情绪有一个出口</button>
+        <button class="opt" data-next="9">我想有一个私人的人工助手</button>
+        <button class="opt" data-next="9">我只是单纯的好奇</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen cold" data-s="9">
+    <div class="body">
+      <div class="navrow">
+        <button class="back" onclick="back()" aria-label="返回">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+        </button>
+        <div class="prog"><i></i></div>
+      </div>
+      <div class="ask">你是怎么知道 AFTER 的？</div>
+      <div class="opts">
+        <button class="opt" data-next="2">朋友 / 家人</button>
+        <button class="opt" data-next="2">搜索引擎</button>
+        <button class="opt" data-next="2">社区 / 组织</button>
+        <button class="opt" data-next="2">抖音</button>
+        <button class="opt" data-next="2">应用商店</button>
+        <button class="opt" data-next="2">其他</button>
+        <button class="opt" data-next="2">我不方便透露</button>
+      </div>
     </div>
   </section>
 
@@ -586,7 +750,23 @@ glow.style.background=pools.map(function(p){
   return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) 74%)";
 }).join(",");
 
-/* ---------- 屏 ---------- */
+/* ---------- 屏 ----------
+   注册表单的四步：年龄、协议、为什么来、从哪知道。进度条按它算，返回键按它退。
+   暖屏是开始页、注册第一步、登录页和对话画布；冷屏只有平台要你办的那四件事。 */
+var FORM=[0,1,8,9];
+var WARM=[2,3,4,5,6,7];
+var BACK={0:6, 1:0, 8:1, 9:8, 6:5, 7:5};
+
+function paintProgress(n){
+  var i=FORM.indexOf(n); if(i<0) return;
+  var pct=(i+1)/FORM.length*100;
+  document.querySelectorAll('.prog i').forEach(function(el){ el.style.width=pct+'%'; });
+}
+function back(){
+  var b=BACK[go.now];
+  if(b!==undefined) go(b);
+}
+
 function go(n){
   go.now=n;
   stopDraw();
@@ -602,7 +782,8 @@ function go(n){
       m.style.animation='none'; m.getBoundingClientRect(); m.style.animation='';
     });
   });
-  document.body.classList.toggle('warmlit', n>=2);
+  document.body.classList.toggle('warmlit', WARM.indexOf(n)>=0);
+  paintProgress(n);
   if(n===4) requestAnimationFrame(dim);
 }
 
@@ -913,6 +1094,16 @@ function almTick(){
 }
 function almStart(){ almBuild(); clearInterval(ALM.timer); ALM.timer=setInterval(almTick,10000); }
 function almStop(){ clearInterval(ALM.timer); ALM.timer=0; }
+
+/* ---------- 选项 ----------
+   先让选中被看见，再走。立刻跳走等于没给回应 */
+document.querySelectorAll('.opt').forEach(function(b){
+  b.addEventListener('click',function(){
+    b.parentNode.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('sel'); });
+    b.classList.add('sel');
+    setTimeout(function(){ go(+b.dataset.next); }, calm?0:280);
+  });
+});
 
 /* ---------- 输入区 ----------
    右边永远只有一个控件。空着的时候它是图片，有东西可发的时候它就是发送。
