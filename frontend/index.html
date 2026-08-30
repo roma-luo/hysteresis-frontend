@@ -231,7 +231,7 @@ body::-webkit-scrollbar-button:vertical:end:increment{
    起落那一下仍然留给从冷屏进画布的那次，不在这里用掉 */
 .splash{position:absolute;inset:0;z-index:30;background:var(--base);
   display:flex;align-items:center;justify-content:center;
-  transition:opacity 700ms var(--ease),visibility 0s linear 700ms}
+  transition:opacity 900ms var(--ease),visibility 0s linear 900ms}
 .splash.gone{opacity:0;visibility:hidden;pointer-events:none}
 .splash .pool{position:absolute;inset:0;pointer-events:none}
 /* 这块布不设 mix-blend-mode。近白底上 multiply 和 source-over 差不到两级色阶，
@@ -1291,10 +1291,11 @@ if(window.visualViewport){
    字淡入，停一拍，然后像墨被打散一样化掉，最后整层揭开落到冷屏。
    散开不是淡出：湍流先把笔画扯成丝缕，再化开、变淡，同时微微胀大——
    墨在水里是先散形再失色的，反过来就成了普通的渐隐。 */
-var SPLASH_LIT=260, SPLASH_HOLD=2300, DISPERSE_MS=3000;
+var SPLASH_LIT=260, SPLASH_HOLD=2300, DISPERSE_MS=3600;
 /* 整块胀多大、流场搅多远、往上抬多少、笔尖跟着长多少、总浓度、交接用掉的那一段 */
 var INK_EXPAND=3.2, INK_SWIRL=30, INK_FINE=95, INK_RISE=26, INK_BAND=300;
-var NIB_R0=0.84, NIB_K=4.2, INK_GAIN=0.17, INK_DIFFUSE=11, HANDOFF=0.18;
+var NIB_R0=0.84, NIB_K=4.2, INK_GAIN=0.32, INK_DIFFUSE=12, HANDOFF=0.30;
+var GONE_AT=0.82;                 /* 散到这里就开始揭层，墨的尾巴在揭的过程中继续飘 */
 var SUPER=4, STEP=2;              /* 字渲到 4 倍再隔点采样。笔尖同步放大，
                                      叠画率不变，所以抽稀不影响浓度，只省一半的画 */
 var LEVELS=6;                     /* 浓度分档。同档一次画完，每帧只切 6 次不透明度 */
@@ -1371,6 +1372,7 @@ function sampleWord(){
 }
 
 function disperse(done){
+  disperse.gone=false;
   if(calm){ splashWord.style.opacity=0; done(); return; }
   var host=splashEl.getBoundingClientRect(), box=splashWord.getBoundingClientRect();
   var dpr=Math.min(2,window.devicePixelRatio||1);
@@ -1390,25 +1392,30 @@ function disperse(done){
 
   (function step(now){
     var t=Math.min(1,(now-t0)/DISPERSE_MS);
-    /* 交接：点阵接手的头一段和那行字对冲，两者形状一样，看不出换过 */
-    var p=Math.min(1,t/HANDOFF);
+    /* 交接：点阵接手的头一段和那行字对冲。走 smoothstep 而不是线性——
+       线性在两端各有一个速度突变，恰好是眼睛最容易抓到接缝的地方。
+       交接期间运动是冻结的（下面的 tm 还在 0）：墨要是这时候就开始漂，
+       屏幕上就是深字加一个错位的影子，重影正是接缝被看见的样子 */
+    var p=Math.min(1,t/HANDOFF); p=p*p*(3-2*p);
     splashWord.style.opacity=(1-p).toFixed(3);
     splashInk.style.opacity=p.toFixed(3);
 
-    var e=Math.pow(t,1.15);                       /* 粗尺度：一沾水就开始走，只是走得慢 */
-    var ef=Math.pow(t,2.3);                       /* 细尺度：字散架来得晚，先让人读到它 */
+    /* 运动用自己的钟：交接走完才起步 */
+    var tm=Math.max(0,(t-HANDOFF)/(1-HANDOFF));
+    var e=Math.pow(tm,1.15);                      /* 粗尺度：一沾水就开始走，只是走得慢 */
+    var ef=Math.pow(tm,2.3);                      /* 细尺度：字散架来得晚，先让人读到它 */
     var grow=1+INK_EXPAND*e;                      /* 整块在胀。只靠流场会聚成团，不会散 */
-    var rise=INK_RISE*Math.pow(t,1.6);
+    var rise=INK_RISE*Math.pow(tm,1.6);
     /* 笔尖跟着墨云一起长。让它自己长会和实际铺开的程度脱节：
        长过头就到处叠画糊成一块，长不够就断成颗粒 */
     var swell=1+NIB_K*e, r=NIB_R0*swell;
     /* 墨量守恒。铺开的面积是 grow²，每颗墨点自己的面积是 swell²，
        两者相除才是这一刻该有的浓度——不做这条，密排的墨点一叠就是死黑一片 */
     var thin=INK_GAIN*grow*grow/(swell*swell);
-    var k=Math.max(0,(t-0.55)/0.45);
+    var k=Math.max(0,(tm-0.30)/0.70);
     var fade=(1-k*k*(3-2*k))*thin;                /* 失色放在最后 */
     var d=r*2;
-    var diff=INK_DIFFUSE*Math.pow(t,1.9);         /* 毛边也压到后段，早了整块就先起沙 */
+    var diff=INK_DIFFUSE*Math.pow(tm,1.9);        /* 毛边也压到后段，早了整块就先起沙 */
 
     inkCtx.clearRect(0,0,host.width,INK_BAND);
     for(var lv=0;lv<LEVELS;lv++){
@@ -1422,7 +1429,8 @@ function disperse(done){
       }
     }
     inkCtx.globalAlpha=1;
-    if(t<1) splashRaf=requestAnimationFrame(step); else done();
+    if(t>=GONE_AT && !disperse.gone){ disperse.gone=true; done(); }
+    if(t<1) splashRaf=requestAnimationFrame(step);
   })(t0);
 }
 
