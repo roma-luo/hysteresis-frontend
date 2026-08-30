@@ -226,6 +226,26 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .p-blue{background:rgba(78,158,236,.60)}
 .p-rose{background:rgba(244,110,132,.60)}
 
+/* 开始页。它和开屏是同一块布：底色不换、光不动，字散掉之后按钮才浮上来。
+   注册是墨面的实心键（她那支墨最深的一档），登录是极淡的墨底——
+   和输入区按钮同一套语言，不引入新的控件形态 */
+.start{justify-content:flex-end}
+.start .btns{padding:0 26px calc(52px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:10px;
+  opacity:0;transform:translateY(8px);
+  transition:opacity 900ms var(--ease),transform 1200ms var(--ease)}
+.start.in .btns{opacity:1;transform:none}
+.startbtn{border:0;border-radius:8px;padding:13px;font-size:13px;letter-spacing:.06em;
+  font-family:inherit;cursor:pointer;
+  transition:background 140ms var(--ease)}
+.startbtn.primary{background:var(--ink);color:var(--base)}
+.startbtn.primary:hover{background:#4A453F}
+.startbtn.primary:active{background:#332F2B}
+.startbtn.quiet{background:rgba(140,120,105,.10);color:var(--ink)}
+.startbtn.quiet:hover{background:rgba(140,120,105,.15)}
+.startbtn.quiet:active{background:rgba(140,120,105,.2)}
+.startbtn:focus-visible{outline:2px solid var(--ink-2);outline-offset:3px}
+
 /* 开屏。底就是对话框那块布：画布底色加同一组五团柔光，中间一行字标。
    光在这里是静止的、满不透明度的——它只是已经在那儿了。
    起落那一下仍然留给从冷屏进画布的那次，不在这里用掉 */
@@ -266,6 +286,13 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 <body>
 <div id="app">
   <div class="glow" id="glow"></div>
+
+  <section class="screen warm start" data-s="5" id="startScreen">
+    <div class="btns">
+      <button class="startbtn primary" onclick="go(0)">注册</button>
+      <button class="startbtn quiet" onclick="go(2)">登录</button>
+    </div>
+  </section>
 
   <section class="screen cold on" data-s="0">
     <div class="body">
@@ -1441,10 +1468,16 @@ function boot(){
   splashWord.style.cssText='';           /* 把上一次散开留下的形变清干净 */
   splashInk.style.opacity=0;
   if(splashInk.width) inkCtx.clearRect(0,0,splashInk.width,splashInk.height);
-  go(0);
+  var startScreen=document.getElementById('startScreen');
+  startScreen.classList.remove('in');
+  go(5);
   splashTimers.push(setTimeout(function(){ splashEl.classList.add('lit'); }, calm?60:SPLASH_LIT));
   splashTimers.push(setTimeout(function(){
-    disperse(function(){ splashEl.classList.add('gone'); });
+    disperse(function(){
+      /* 开屏和开始页是同一块布，揭层时唯一在变的就是按钮浮上来 */
+      splashEl.classList.add('gone');
+      startScreen.classList.add('in');
+    });
   }, calm?280:SPLASH_HOLD));
 }
 
