@@ -226,10 +226,22 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .p-blue{background:rgba(78,158,236,.60)}
 .p-rose{background:rgba(244,110,132,.60)}
 
-/* 开始页。它和开屏是同一块布：底色不换、光不动，字散掉之后按钮才浮上来。
+/* 开始页。字标慢慢出现，微微发光地停在那儿；约五秒后按钮慢慢浮上来。
    注册是墨面的实心键（她那支墨最深的一档），登录是极淡的墨底——
    和输入区按钮同一套语言，不引入新的控件形态 */
 .start{justify-content:flex-end}
+.start .brand{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none}
+/* 字距会在末字母后多出一段空，text-indent 补回来才是真居中 */
+.start .brand span{font-size:13px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
+  color:var(--ink);opacity:0;transition:opacity 900ms var(--ease)}
+.start.lit .brand span{opacity:1;animation:wordglow 4600ms ease-in-out 1400ms infinite}
+/* 微微发光：呼吸的暖色光晕，用的是光团里那两支色（琥珀与桃），不引入新色。
+   字色本身不动，动的只有字周围的空气 */
+@keyframes wordglow{
+  0%,100%{text-shadow:0 0 7px rgba(216,165,78,0),0 0 16px rgba(247,178,145,0)}
+  50%{text-shadow:0 0 7px rgba(216,165,78,.5),0 0 18px rgba(247,178,145,.34)}
+}
 .start .btns{padding:0 26px calc(52px + env(safe-area-inset-bottom));
   display:flex;flex-direction:column;gap:10px;
   opacity:0;transform:translateY(8px);
@@ -245,25 +257,6 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .startbtn.quiet:hover{background:rgba(140,120,105,.15)}
 .startbtn.quiet:active{background:rgba(140,120,105,.2)}
 .startbtn:focus-visible{outline:2px solid var(--ink-2);outline-offset:3px}
-
-/* 开屏。底就是对话框那块布：画布底色加同一组五团柔光，中间一行字标。
-   光在这里是静止的、满不透明度的——它只是已经在那儿了。
-   起落那一下仍然留给从冷屏进画布的那次，不在这里用掉 */
-.splash{position:absolute;inset:0;z-index:30;background:var(--base);
-  display:flex;align-items:center;justify-content:center;
-  transition:opacity 900ms var(--ease),visibility 0s linear 900ms}
-.splash.gone{opacity:0;visibility:hidden;pointer-events:none}
-.splash .pool{position:absolute;inset:0;pointer-events:none}
-/* 这块布不设 mix-blend-mode。近白底上 multiply 和 source-over 差不到两级色阶，
-   但整块画布的混合合成每帧都要跑一遍，是散开时最贵的一项 */
-.splash .ash{position:absolute;left:0;z-index:2;pointer-events:none;opacity:0}
-/* 字距会在末字母后多出一段空，text-indent 补回来才是真居中。
-   墨用 multiply：散开到很淡的时候它仍然是颜料压在纸上，不是一个透明的影子 */
-.splash span{position:relative;z-index:1;
-  font-size:13px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
-  color:var(--ink);mix-blend-mode:multiply;
-  opacity:0;transition:opacity 900ms var(--ease)}
-.splash.lit span{opacity:1}
 
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
 .dev{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:40}
@@ -288,6 +281,7 @@ body::-webkit-scrollbar-button:vertical:end:increment{
   <div class="glow" id="glow"></div>
 
   <section class="screen warm start" data-s="5" id="startScreen">
+    <div class="brand"><span>After</span></div>
     <div class="btns">
       <button class="startbtn primary" onclick="go(0)">注册</button>
       <button class="startbtn quiet" onclick="go(2)">登录</button>
@@ -549,14 +543,6 @@ body::-webkit-scrollbar-button:vertical:end:increment{
     </div>
   </section>
 
-  <div class="splash" id="splash">
-    <div class="pool"></div>
-    <span id="splashWord">After</span>
-    <!-- 散开时字交给这块布：每个墨点按一个连续流场漂移。
-         滤镜在 13px 上没有足够的墨可散——笔画只有 1px 宽，一洇就没了 -->
-    <canvas class="ash" id="splashInk" aria-hidden="true"></canvas>
-  </div>
-
   <!-- 演示菜单：测试期的脚手架，对应原提案规范面板上的控制按钮。上线前整块删掉 -->
   <div class="dev" id="dev">
     <button class="devbtn" aria-label="演示菜单">···</button>
@@ -591,12 +577,9 @@ var pools=[
  ["155% 90%","-6% 96%","213,229,241",.34],
  ["180% 110%","46% 52%","246,221,219",.30]
 ];
-/* 同一组光渲染两处：画布上的会起落，开屏那层是静止的。一处定义，不写两份 */
-var poolCSS=pools.map(function(p){
+glow.style.background=pools.map(function(p){
   return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) 74%)";
 }).join(",");
-glow.style.background=poolCSS;
-document.querySelector('.splash .pool').style.background=poolCSS;
 
 /* ---------- 屏 ---------- */
 function go(n){
@@ -1314,171 +1297,17 @@ if(window.visualViewport){
   });
 }
 
-/* ---------- 开屏 ----------
-   字淡入，停一拍，然后像墨被打散一样化掉，最后整层揭开落到冷屏。
-   散开不是淡出：湍流先把笔画扯成丝缕，再化开、变淡，同时微微胀大——
-   墨在水里是先散形再失色的，反过来就成了普通的渐隐。 */
-var SPLASH_LIT=260, SPLASH_HOLD=2300, DISPERSE_MS=3600;
-/* 整块胀多大、流场搅多远、往上抬多少、笔尖跟着长多少、总浓度、交接用掉的那一段 */
-var INK_EXPAND=3.2, INK_SWIRL=30, INK_FINE=95, INK_RISE=26, INK_BAND=300;
-var NIB_R0=0.84, NIB_K=4.2, INK_GAIN=0.32, INK_DIFFUSE=12, HANDOFF=0.30;
-var GONE_AT=0.82;                 /* 散到这里就开始揭层，墨的尾巴在揭的过程中继续飘 */
-var SUPER=4, STEP=2;              /* 字渲到 4 倍再隔点采样。笔尖同步放大，
-                                     叠画率不变，所以抽稀不影响浓度，只省一半的画 */
-var LEVELS=6;                     /* 浓度分档。同档一次画完，每帧只切 6 次不透明度 */
-
-var splashEl=document.getElementById('splash');
-var splashWord=document.getElementById('splashWord');
-var splashInk=document.getElementById('splashInk');
-var inkCtx=splashInk.getContext('2d');
-var splashTimers=[], splashRaf=0, grains=null, nib=null;
-
-/* 一枚软笔尖。硬边的方块叠出来是炭粉，软边的才叠得成一片连续的墨 */
-function makeNib(){
-  var S=32, c=document.createElement('canvas'); c.width=c.height=S;
-  var g=c.getContext('2d');
-  var grd=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
-  grd.addColorStop(0,'rgba(62,58,54,1)');
-  grd.addColorStop(0.42,'rgba(62,58,54,0.55)');
-  grd.addColorStop(1,'rgba(62,58,54,0)');
-  g.fillStyle=grd; g.fillRect(0,0,S,S);
-  return c;
-}
-
-/* 把字渲成点阵。一个墨点一颗，带上它自己的浓度 */
-function sampleWord(){
-  var cs=getComputedStyle(splashWord);
-  var fs=parseFloat(cs.fontSize), ls=0.42*fs*SUPER;
-  var txt=(splashWord.textContent||'').toUpperCase().split('');
-  var off=document.createElement('canvas'), o=off.getContext('2d');
-  var font=cs.fontStyle+' '+cs.fontWeight+' '+(fs*SUPER)+'px '+cs.fontFamily;
-
-  o.font=font;
-  var w=txt.map(function(ch){ return o.measureText(ch).width; });
-  var total=w.reduce(function(a,b){return a+b},0)+ls*(txt.length-1);
-  var pad=Math.ceil(fs*SUPER);
-  off.width=Math.ceil(total)+pad*2; off.height=Math.ceil(fs*SUPER*2.4);
-
-  o=off.getContext('2d');          /* 改尺寸会清状态，取完再设 */
-  o.font=font; o.textBaseline='middle'; o.fillStyle='#000';
-  var x=pad, centers=[];
-  txt.forEach(function(ch,i){
-    o.fillText(ch,x,off.height/2);
-    centers.push(x+w[i]/2);          /* 每个字符自己的中心，散开以它为支点 */
-    x+=w[i]+ls;
-  });
-
-  var d=o.getImageData(0,0,off.width,off.height).data;
-  var buckets=[]; for(var b=0;b<LEVELS;b++) buckets.push([]);
-  for(var j=0;j<off.height;j+=STEP) for(var i=0;i<off.width;i+=STEP){
-    var a=d[(j*off.width+i)*4+3];
-    if(a<26) continue;
-    /* 位置换算成相对字块中心的 CSS 像素，这样和 DOM 那行字严丝合缝 */
-    var gx=(i-off.width/2)/SUPER, gy=(j-off.height/2)/SUPER;
-    /* 这颗墨点属于哪个字符：外扩以那个字符的中心为支点，
-       而不是整行字的中心——后者会把两端的字母整体推向两边 */
-    var bc=0, bd=1e9;
-    for(var c=0;c<centers.length;c++){
-      var dd=Math.abs(i-centers[c]); if(dd<bd){bd=dd;bc=c;}
-    }
-    var kx=(centers[bc]-off.width/2)/SUPER;
-    /* 流场四个八度。相邻的点取到相近的向量，所以它们成股地走而不是各自乱飘；
-       但最粗的两个八度波长有 126px 和 48px，比一个字母还大——只有它们，
-       一个字母会整体平移而不是化开。后两个八度波长 15px 和 7px，
-       剪切发生在字母内部，字才会散架 */
-    var cxf=Math.sin(gx*0.050+gy*0.030)+0.50*Math.sin(gx*0.130-gy*0.090);
-    var cyf=Math.cos(gx*0.040-gy*0.055)+0.50*Math.cos(gx*0.110+gy*0.120);
-    var fxf=0.28*Math.sin(gx*0.420+gy*0.310)+0.14*Math.sin(gx*0.900-gy*0.740);
-    var fyf=0.28*Math.cos(gx*0.360-gy*0.400)+0.14*Math.cos(gx*0.820+gy*0.660);
-    /* 粗细分开存，因为它们不同时发力：粗的先带着整团走，细的晚一步才把字拆开 */
-    buckets[Math.min(LEVELS-1,(a/255*LEVELS)|0)].push(
-      {kx:kx, ox:gx-kx, oy:gy, cx:cxf, cy:cyf, fx:fxf, fy:fyf,
-       dx:Math.random()-0.5, dy:Math.random()-0.5});
-  }
-  return buckets;
-}
-
-function disperse(done){
-  disperse.gone=false;
-  if(calm){ splashWord.style.opacity=0; done(); return; }
-  var host=splashEl.getBoundingClientRect(), box=splashWord.getBoundingClientRect();
-  var dpr=Math.min(2,window.devicePixelRatio||1);
-  /* 墨最远走到中心上下约 100px，画布只要这条带就够。铺满屏是白清一屏的像素 */
-  var cx=box.left-host.left+box.width/2;
-  var top=Math.round(box.top-host.top+box.height/2-INK_BAND/2);
-  splashInk.style.top=top+'px'; splashInk.style.left='0px';
-  splashInk.style.width=host.width+'px'; splashInk.style.height=INK_BAND+'px';
-  splashInk.width=host.width*dpr; splashInk.height=INK_BAND*dpr;
-  inkCtx.setTransform(dpr,0,0,dpr,0,0);
-  var cy=INK_BAND/2;
-
-  if(!nib) nib=makeNib();
-  if(!grains) grains=sampleWord();
-  splashWord.style.transition='none';
-  var t0=performance.now();
-
-  (function step(now){
-    var t=Math.min(1,(now-t0)/DISPERSE_MS);
-    /* 交接：点阵接手的头一段和那行字对冲。走 smoothstep 而不是线性——
-       线性在两端各有一个速度突变，恰好是眼睛最容易抓到接缝的地方。
-       交接期间运动是冻结的（下面的 tm 还在 0）：墨要是这时候就开始漂，
-       屏幕上就是深字加一个错位的影子，重影正是接缝被看见的样子 */
-    var p=Math.min(1,t/HANDOFF); p=p*p*(3-2*p);
-    splashWord.style.opacity=(1-p).toFixed(3);
-    splashInk.style.opacity=p.toFixed(3);
-
-    /* 运动用自己的钟：交接走完才起步 */
-    var tm=Math.max(0,(t-HANDOFF)/(1-HANDOFF));
-    var e=Math.pow(tm,1.15);                      /* 粗尺度：一沾水就开始走，只是走得慢 */
-    var ef=Math.pow(tm,2.3);                      /* 细尺度：字散架来得晚，先让人读到它 */
-    var grow=1+INK_EXPAND*e;                      /* 整块在胀。只靠流场会聚成团，不会散 */
-    var rise=INK_RISE*Math.pow(tm,1.6);
-    /* 笔尖跟着墨云一起长。让它自己长会和实际铺开的程度脱节：
-       长过头就到处叠画糊成一块，长不够就断成颗粒 */
-    var swell=1+NIB_K*e, r=NIB_R0*swell;
-    /* 墨量守恒。铺开的面积是 grow²，每颗墨点自己的面积是 swell²，
-       两者相除才是这一刻该有的浓度——不做这条，密排的墨点一叠就是死黑一片 */
-    var thin=INK_GAIN*grow*grow/(swell*swell);
-    var k=Math.max(0,(tm-0.30)/0.70);
-    var fade=(1-k*k*(3-2*k))*thin;                /* 失色放在最后 */
-    var d=r*2;
-    var diff=INK_DIFFUSE*Math.pow(tm,1.9);        /* 毛边也压到后段，早了整块就先起沙 */
-
-    inkCtx.clearRect(0,0,host.width,INK_BAND);
-    for(var lv=0;lv<LEVELS;lv++){
-      var arr=grains[lv]; if(!arr.length) continue;
-      inkCtx.globalAlpha=Math.min(1,(lv+0.5)/LEVELS*fade);
-      for(var i=0;i<arr.length;i++){
-        var g=arr[i];
-        var x=cx+g.kx+g.ox*grow+g.cx*INK_SWIRL*e+g.fx*INK_FINE*ef+g.dx*diff;
-        var y=cy+g.oy*grow+g.cy*INK_SWIRL*0.62*e+g.fy*INK_FINE*ef+g.dy*diff-rise;
-        inkCtx.drawImage(nib,x-r,y-r,d,d);
-      }
-    }
-    inkCtx.globalAlpha=1;
-    if(t>=GONE_AT && !disperse.gone){ disperse.gone=true; done(); }
-    if(t<1) splashRaf=requestAnimationFrame(step);
-  })(t0);
-}
-
+/* ---------- 开场 ----------
+   字慢慢出现，微微发光地停在那儿；约五秒后按钮慢慢浮上来。字不走。 */
+var SPLASH_LIT=260, BTNS_AT=5200;
+var startScreen=document.getElementById('startScreen');
+var splashTimers=[];
 function boot(){
   splashTimers.forEach(clearTimeout); splashTimers=[];
-  cancelAnimationFrame(splashRaf);
-  splashEl.classList.remove('gone','lit');
-  splashWord.style.cssText='';           /* 把上一次散开留下的形变清干净 */
-  splashInk.style.opacity=0;
-  if(splashInk.width) inkCtx.clearRect(0,0,splashInk.width,splashInk.height);
-  var startScreen=document.getElementById('startScreen');
-  startScreen.classList.remove('in');
+  startScreen.classList.remove('in','lit');
   go(5);
-  splashTimers.push(setTimeout(function(){ splashEl.classList.add('lit'); }, calm?60:SPLASH_LIT));
-  splashTimers.push(setTimeout(function(){
-    disperse(function(){
-      /* 开屏和开始页是同一块布，揭层时唯一在变的就是按钮浮上来 */
-      splashEl.classList.add('gone');
-      startScreen.classList.add('in');
-    });
-  }, calm?280:SPLASH_HOLD));
+  splashTimers.push(setTimeout(function(){ startScreen.classList.add('lit'); }, calm?60:SPLASH_LIT));
+  splashTimers.push(setTimeout(function(){ startScreen.classList.add('in'); }, calm?240:BTNS_AT));
 }
 
 stopDraw();
