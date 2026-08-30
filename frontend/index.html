@@ -1293,8 +1293,8 @@ if(window.visualViewport){
    墨在水里是先散形再失色的，反过来就成了普通的渐隐。 */
 var SPLASH_LIT=260, SPLASH_HOLD=2300, DISPERSE_MS=3000;
 /* 整块胀多大、流场搅多远、往上抬多少、笔尖跟着长多少、总浓度、交接用掉的那一段 */
-var INK_EXPAND=1.6, INK_SWIRL=44, INK_FINE=95, INK_RISE=26, INK_BAND=300;
-var NIB_R0=0.84, NIB_K=4.2, INK_GAIN=0.26, INK_DIFFUSE=8, HANDOFF=0.18;
+var INK_EXPAND=3.2, INK_SWIRL=30, INK_FINE=95, INK_RISE=26, INK_BAND=300;
+var NIB_R0=0.84, NIB_K=4.2, INK_GAIN=0.17, INK_DIFFUSE=11, HANDOFF=0.18;
 var SUPER=4, STEP=2;              /* 字渲到 4 倍再隔点采样。笔尖同步放大，
                                      叠画率不变，所以抽稀不影响浓度，只省一半的画 */
 var LEVELS=6;                     /* 浓度分档。同档一次画完，每帧只切 6 次不透明度 */
@@ -1333,8 +1333,12 @@ function sampleWord(){
 
   o=off.getContext('2d');          /* 改尺寸会清状态，取完再设 */
   o.font=font; o.textBaseline='middle'; o.fillStyle='#000';
-  var x=pad;
-  txt.forEach(function(ch,i){ o.fillText(ch,x,off.height/2); x+=w[i]+ls; });
+  var x=pad, centers=[];
+  txt.forEach(function(ch,i){
+    o.fillText(ch,x,off.height/2);
+    centers.push(x+w[i]/2);          /* 每个字符自己的中心，散开以它为支点 */
+    x+=w[i]+ls;
+  });
 
   var d=o.getImageData(0,0,off.width,off.height).data;
   var buckets=[]; for(var b=0;b<LEVELS;b++) buckets.push([]);
@@ -1343,6 +1347,13 @@ function sampleWord(){
     if(a<26) continue;
     /* 位置换算成相对字块中心的 CSS 像素，这样和 DOM 那行字严丝合缝 */
     var gx=(i-off.width/2)/SUPER, gy=(j-off.height/2)/SUPER;
+    /* 这颗墨点属于哪个字符：外扩以那个字符的中心为支点，
+       而不是整行字的中心——后者会把两端的字母整体推向两边 */
+    var bc=0, bd=1e9;
+    for(var c=0;c<centers.length;c++){
+      var dd=Math.abs(i-centers[c]); if(dd<bd){bd=dd;bc=c;}
+    }
+    var kx=(centers[bc]-off.width/2)/SUPER;
     /* 流场四个八度。相邻的点取到相近的向量，所以它们成股地走而不是各自乱飘；
        但最粗的两个八度波长有 126px 和 48px，比一个字母还大——只有它们，
        一个字母会整体平移而不是化开。后两个八度波长 15px 和 7px，
@@ -1353,7 +1364,7 @@ function sampleWord(){
     var fyf=0.28*Math.cos(gx*0.360-gy*0.400)+0.14*Math.cos(gx*0.820+gy*0.660);
     /* 粗细分开存，因为它们不同时发力：粗的先带着整团走，细的晚一步才把字拆开 */
     buckets[Math.min(LEVELS-1,(a/255*LEVELS)|0)].push(
-      {x:gx, y:gy, cx:cxf, cy:cyf, fx:fxf, fy:fyf,
+      {kx:kx, ox:gx-kx, oy:gy, cx:cxf, cy:cyf, fx:fxf, fy:fyf,
        dx:Math.random()-0.5, dy:Math.random()-0.5});
   }
   return buckets;
@@ -1405,8 +1416,8 @@ function disperse(done){
       inkCtx.globalAlpha=Math.min(1,(lv+0.5)/LEVELS*fade);
       for(var i=0;i<arr.length;i++){
         var g=arr[i];
-        var x=cx+g.x*grow+g.cx*INK_SWIRL*e+g.fx*INK_FINE*ef+g.dx*diff;
-        var y=cy+g.y*grow+g.cy*INK_SWIRL*0.62*e+g.fy*INK_FINE*ef+g.dy*diff-rise;
+        var x=cx+g.kx+g.ox*grow+g.cx*INK_SWIRL*e+g.fx*INK_FINE*ef+g.dx*diff;
+        var y=cy+g.oy*grow+g.cy*INK_SWIRL*0.62*e+g.fy*INK_FINE*ef+g.dy*diff-rise;
         inkCtx.drawImage(nib,x-r,y-r,d,d);
       }
     }
