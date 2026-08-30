@@ -235,12 +235,17 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 /* 字距会在末字母后多出一段空，text-indent 补回来才是真居中 */
 .start .brand span{font-size:13px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
   color:var(--ink);opacity:0;transition:opacity 900ms var(--ease)}
-.start.lit .brand span{opacity:1;animation:wordglow 4600ms ease-in-out 1400ms infinite}
-/* 微微发光：呼吸的暖色光晕，用的是光团里那两支色（琥珀与桃），不引入新色。
-   字色本身不动，动的只有字周围的空气 */
+.start.lit .brand span{opacity:1;animation:wordglow 3600ms ease-in-out 1200ms infinite}
+/* 发光的呼吸：光晕在「微亮」和「明亮」之间走，不从零起——
+   从零起的下半程等于没在发光，呼吸就断了。峰值时字色本身也向暖抬一点，
+   字才像在发光，而不只是身后有光。色取光团里的琥珀与桃，不引入新色 */
 @keyframes wordglow{
-  0%,100%{text-shadow:0 0 7px rgba(216,165,78,0),0 0 16px rgba(247,178,145,0)}
-  50%{text-shadow:0 0 7px rgba(216,165,78,.5),0 0 18px rgba(247,178,145,.34)}
+  0%,100%{color:var(--ink);
+    text-shadow:0 0 3px rgba(216,165,78,.14),0 0 10px rgba(216,165,78,.10),
+                0 0 22px rgba(247,178,145,.08)}
+  50%{color:#6E5730;
+    text-shadow:0 0 3px rgba(216,165,78,.80),0 0 12px rgba(216,165,78,.58),
+                0 0 26px rgba(247,178,145,.48)}
 }
 .start .btns{padding:0 26px calc(52px + env(safe-area-inset-bottom));
   display:flex;flex-direction:column;gap:10px;
