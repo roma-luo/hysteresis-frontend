@@ -226,14 +226,17 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .p-blue{background:rgba(78,158,236,.60)}
 .p-rose{background:rgba(244,110,132,.60)}
 
-/* 开屏。底是画布的底色，中间一行字标。
-   开屏不给光——光的起落只有一次，留给从冷屏进画布的那一下 */
+/* 开屏。底就是对话框那块布：画布底色加同一组五团柔光，中间一行字标。
+   光在这里是静止的、满不透明度的——它只是已经在那儿了。
+   起落那一下仍然留给从冷屏进画布的那次，不在这里用掉 */
 .splash{position:absolute;inset:0;z-index:30;background:var(--base);
   display:flex;align-items:center;justify-content:center;
   transition:opacity 700ms var(--ease),visibility 0s linear 700ms}
 .splash.gone{opacity:0;visibility:hidden;pointer-events:none}
+.splash .pool{position:absolute;inset:0;pointer-events:none}
 /* 字距会在末字母后多出一段空，text-indent 补回来才是真居中 */
-.splash span{font-size:13px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
+.splash span{position:relative;z-index:1;
+  font-size:13px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
   color:var(--ink);opacity:0;transition:opacity 900ms var(--ease)}
 .splash.lit span{opacity:1}
 
@@ -514,7 +517,7 @@ body::-webkit-scrollbar-button:vertical:end:increment{
     </div>
   </section>
 
-  <div class="splash" id="splash"><span>After</span></div>
+  <div class="splash" id="splash"><div class="pool"></div><span>After</span></div>
 
   <!-- 演示菜单：测试期的脚手架，对应原提案规范面板上的控制按钮。上线前整块删掉 -->
   <div class="dev" id="dev">
@@ -550,9 +553,12 @@ var pools=[
  ["155% 90%","-6% 96%","213,229,241",.34],
  ["180% 110%","46% 52%","246,221,219",.30]
 ];
-glow.style.background=pools.map(function(p){
+/* 同一组光渲染两处：画布上的会起落，开屏那层是静止的。一处定义，不写两份 */
+var poolCSS=pools.map(function(p){
   return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) 74%)";
 }).join(",");
+glow.style.background=poolCSS;
+document.querySelector('.splash .pool').style.background=poolCSS;
 
 /* ---------- 屏 ---------- */
 function go(n){
