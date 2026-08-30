@@ -234,10 +234,15 @@ body::-webkit-scrollbar-button:vertical:end:increment{
   transition:opacity 700ms var(--ease),visibility 0s linear 700ms}
 .splash.gone{opacity:0;visibility:hidden;pointer-events:none}
 .splash .pool{position:absolute;inset:0;pointer-events:none}
-/* 字距会在末字母后多出一段空，text-indent 补回来才是真居中 */
+/* 这块布不设 mix-blend-mode。近白底上 multiply 和 source-over 差不到两级色阶，
+   但整块画布的混合合成每帧都要跑一遍，是散开时最贵的一项 */
+.splash .ash{position:absolute;left:0;z-index:2;pointer-events:none;opacity:0}
+/* 字距会在末字母后多出一段空，text-indent 补回来才是真居中。
+   墨用 multiply：散开到很淡的时候它仍然是颜料压在纸上，不是一个透明的影子 */
 .splash span{position:relative;z-index:1;
   font-size:13px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
-  color:var(--ink);opacity:0;transition:opacity 900ms var(--ease)}
+  color:var(--ink);mix-blend-mode:multiply;
+  opacity:0;transition:opacity 900ms var(--ease)}
 .splash.lit span{opacity:1}
 
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
@@ -517,7 +522,13 @@ body::-webkit-scrollbar-button:vertical:end:increment{
     </div>
   </section>
 
-  <div class="splash" id="splash"><div class="pool"></div><span>After</span></div>
+  <div class="splash" id="splash">
+    <div class="pool"></div>
+    <span id="splashWord">After</span>
+    <!-- 散开时字交给这块布：每个墨点按一个连续流场漂移。
+         滤镜在 13px 上没有足够的墨可散——笔画只有 1px 宽，一洇就没了 -->
+    <canvas class="ash" id="splashInk" aria-hidden="true"></canvas>
+  </div>
 
   <!-- 演示菜单：测试期的脚手架，对应原提案规范面板上的控制按钮。上线前整块删掉 -->
   <div class="dev" id="dev">
@@ -1277,16 +1288,145 @@ if(window.visualViewport){
 }
 
 /* ---------- 开屏 ----------
-   字先淡入，停一拍，整层揭开落到冷屏。时长走感觉不走整数：
-   字 900ms 到位，读一眼的时间给足，2.3s 开始揭 */
+   字淡入，停一拍，然后像墨被打散一样化掉，最后整层揭开落到冷屏。
+   散开不是淡出：湍流先把笔画扯成丝缕，再化开、变淡，同时微微胀大——
+   墨在水里是先散形再失色的，反过来就成了普通的渐隐。 */
+var SPLASH_LIT=260, SPLASH_HOLD=2300, DISPERSE_MS=3000;
+/* 整块胀多大、流场搅多远、往上抬多少、笔尖跟着长多少、总浓度、交接用掉的那一段 */
+var INK_EXPAND=1.6, INK_SWIRL=44, INK_FINE=95, INK_RISE=26, INK_BAND=300;
+var NIB_R0=0.84, NIB_K=4.2, INK_GAIN=0.26, INK_DIFFUSE=8, HANDOFF=0.18;
+var SUPER=4, STEP=2;              /* 字渲到 4 倍再隔点采样。笔尖同步放大，
+                                     叠画率不变，所以抽稀不影响浓度，只省一半的画 */
+var LEVELS=6;                     /* 浓度分档。同档一次画完，每帧只切 6 次不透明度 */
+
 var splashEl=document.getElementById('splash');
-var splashTimers=[];
+var splashWord=document.getElementById('splashWord');
+var splashInk=document.getElementById('splashInk');
+var inkCtx=splashInk.getContext('2d');
+var splashTimers=[], splashRaf=0, grains=null, nib=null;
+
+/* 一枚软笔尖。硬边的方块叠出来是炭粉，软边的才叠得成一片连续的墨 */
+function makeNib(){
+  var S=32, c=document.createElement('canvas'); c.width=c.height=S;
+  var g=c.getContext('2d');
+  var grd=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+  grd.addColorStop(0,'rgba(62,58,54,1)');
+  grd.addColorStop(0.42,'rgba(62,58,54,0.55)');
+  grd.addColorStop(1,'rgba(62,58,54,0)');
+  g.fillStyle=grd; g.fillRect(0,0,S,S);
+  return c;
+}
+
+/* 把字渲成点阵。一个墨点一颗，带上它自己的浓度 */
+function sampleWord(){
+  var cs=getComputedStyle(splashWord);
+  var fs=parseFloat(cs.fontSize), ls=0.42*fs*SUPER;
+  var txt=(splashWord.textContent||'').toUpperCase().split('');
+  var off=document.createElement('canvas'), o=off.getContext('2d');
+  var font=cs.fontStyle+' '+cs.fontWeight+' '+(fs*SUPER)+'px '+cs.fontFamily;
+
+  o.font=font;
+  var w=txt.map(function(ch){ return o.measureText(ch).width; });
+  var total=w.reduce(function(a,b){return a+b},0)+ls*(txt.length-1);
+  var pad=Math.ceil(fs*SUPER);
+  off.width=Math.ceil(total)+pad*2; off.height=Math.ceil(fs*SUPER*2.4);
+
+  o=off.getContext('2d');          /* 改尺寸会清状态，取完再设 */
+  o.font=font; o.textBaseline='middle'; o.fillStyle='#000';
+  var x=pad;
+  txt.forEach(function(ch,i){ o.fillText(ch,x,off.height/2); x+=w[i]+ls; });
+
+  var d=o.getImageData(0,0,off.width,off.height).data;
+  var buckets=[]; for(var b=0;b<LEVELS;b++) buckets.push([]);
+  for(var j=0;j<off.height;j+=STEP) for(var i=0;i<off.width;i+=STEP){
+    var a=d[(j*off.width+i)*4+3];
+    if(a<26) continue;
+    /* 位置换算成相对字块中心的 CSS 像素，这样和 DOM 那行字严丝合缝 */
+    var gx=(i-off.width/2)/SUPER, gy=(j-off.height/2)/SUPER;
+    /* 流场四个八度。相邻的点取到相近的向量，所以它们成股地走而不是各自乱飘；
+       但最粗的两个八度波长有 126px 和 48px，比一个字母还大——只有它们，
+       一个字母会整体平移而不是化开。后两个八度波长 15px 和 7px，
+       剪切发生在字母内部，字才会散架 */
+    var cxf=Math.sin(gx*0.050+gy*0.030)+0.50*Math.sin(gx*0.130-gy*0.090);
+    var cyf=Math.cos(gx*0.040-gy*0.055)+0.50*Math.cos(gx*0.110+gy*0.120);
+    var fxf=0.28*Math.sin(gx*0.420+gy*0.310)+0.14*Math.sin(gx*0.900-gy*0.740);
+    var fyf=0.28*Math.cos(gx*0.360-gy*0.400)+0.14*Math.cos(gx*0.820+gy*0.660);
+    /* 粗细分开存，因为它们不同时发力：粗的先带着整团走，细的晚一步才把字拆开 */
+    buckets[Math.min(LEVELS-1,(a/255*LEVELS)|0)].push(
+      {x:gx, y:gy, cx:cxf, cy:cyf, fx:fxf, fy:fyf,
+       dx:Math.random()-0.5, dy:Math.random()-0.5});
+  }
+  return buckets;
+}
+
+function disperse(done){
+  if(calm){ splashWord.style.opacity=0; done(); return; }
+  var host=splashEl.getBoundingClientRect(), box=splashWord.getBoundingClientRect();
+  var dpr=Math.min(2,window.devicePixelRatio||1);
+  /* 墨最远走到中心上下约 100px，画布只要这条带就够。铺满屏是白清一屏的像素 */
+  var cx=box.left-host.left+box.width/2;
+  var top=Math.round(box.top-host.top+box.height/2-INK_BAND/2);
+  splashInk.style.top=top+'px'; splashInk.style.left='0px';
+  splashInk.style.width=host.width+'px'; splashInk.style.height=INK_BAND+'px';
+  splashInk.width=host.width*dpr; splashInk.height=INK_BAND*dpr;
+  inkCtx.setTransform(dpr,0,0,dpr,0,0);
+  var cy=INK_BAND/2;
+
+  if(!nib) nib=makeNib();
+  if(!grains) grains=sampleWord();
+  splashWord.style.transition='none';
+  var t0=performance.now();
+
+  (function step(now){
+    var t=Math.min(1,(now-t0)/DISPERSE_MS);
+    /* 交接：点阵接手的头一段和那行字对冲，两者形状一样，看不出换过 */
+    var p=Math.min(1,t/HANDOFF);
+    splashWord.style.opacity=(1-p).toFixed(3);
+    splashInk.style.opacity=p.toFixed(3);
+
+    var e=Math.pow(t,1.15);                       /* 粗尺度：一沾水就开始走，只是走得慢 */
+    var ef=Math.pow(t,2.3);                       /* 细尺度：字散架来得晚，先让人读到它 */
+    var grow=1+INK_EXPAND*e;                      /* 整块在胀。只靠流场会聚成团，不会散 */
+    var rise=INK_RISE*Math.pow(t,1.6);
+    /* 笔尖跟着墨云一起长。让它自己长会和实际铺开的程度脱节：
+       长过头就到处叠画糊成一块，长不够就断成颗粒 */
+    var swell=1+NIB_K*e, r=NIB_R0*swell;
+    /* 墨量守恒。铺开的面积是 grow²，每颗墨点自己的面积是 swell²，
+       两者相除才是这一刻该有的浓度——不做这条，密排的墨点一叠就是死黑一片 */
+    var thin=INK_GAIN*grow*grow/(swell*swell);
+    var k=Math.max(0,(t-0.55)/0.45);
+    var fade=(1-k*k*(3-2*k))*thin;                /* 失色放在最后 */
+    var d=r*2;
+    var diff=INK_DIFFUSE*Math.pow(t,1.9);         /* 毛边也压到后段，早了整块就先起沙 */
+
+    inkCtx.clearRect(0,0,host.width,INK_BAND);
+    for(var lv=0;lv<LEVELS;lv++){
+      var arr=grains[lv]; if(!arr.length) continue;
+      inkCtx.globalAlpha=Math.min(1,(lv+0.5)/LEVELS*fade);
+      for(var i=0;i<arr.length;i++){
+        var g=arr[i];
+        var x=cx+g.x*grow+g.cx*INK_SWIRL*e+g.fx*INK_FINE*ef+g.dx*diff;
+        var y=cy+g.y*grow+g.cy*INK_SWIRL*0.62*e+g.fy*INK_FINE*ef+g.dy*diff-rise;
+        inkCtx.drawImage(nib,x-r,y-r,d,d);
+      }
+    }
+    inkCtx.globalAlpha=1;
+    if(t<1) splashRaf=requestAnimationFrame(step); else done();
+  })(t0);
+}
+
 function boot(){
   splashTimers.forEach(clearTimeout); splashTimers=[];
+  cancelAnimationFrame(splashRaf);
   splashEl.classList.remove('gone','lit');
+  splashWord.style.cssText='';           /* 把上一次散开留下的形变清干净 */
+  splashInk.style.opacity=0;
+  if(splashInk.width) inkCtx.clearRect(0,0,splashInk.width,splashInk.height);
   go(0);
-  splashTimers.push(setTimeout(function(){ splashEl.classList.add('lit'); }, calm?60:260));
-  splashTimers.push(setTimeout(function(){ splashEl.classList.add('gone'); }, calm?280:2300));
+  splashTimers.push(setTimeout(function(){ splashEl.classList.add('lit'); }, calm?60:SPLASH_LIT));
+  splashTimers.push(setTimeout(function(){
+    disperse(function(){ splashEl.classList.add('gone'); });
+  }, calm?280:SPLASH_HOLD));
 }
 
 stopDraw();
