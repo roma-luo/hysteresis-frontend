@@ -1,31 +1,1264 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>HYSTERESIS — 前端占位</title>
-  <style>
-    :root { color-scheme: light dark; }
-    * { margin: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, "PingFang SC", "Segoe UI", sans-serif;
-      background: #0d0d10; color: #e8e8ec;
-      /* dvh 而非 vh：iOS Safari 地址栏收放时高度正确 */
-      min-height: 100dvh;
-      /* 刘海与底部横条安全区 */
-      padding: env(safe-area-inset-top) env(safe-area-inset-right)
-               env(safe-area-inset-bottom) env(safe-area-inset-left);
-      display: grid; place-items: center;
-    }
-    main { text-align: center; padding: 2rem; }
-    h1 { font-size: 1.4rem; font-weight: 500; letter-spacing: .3em; }
-    p { margin-top: 1rem; opacity: .5; font-size: .85rem; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>After · PROJECT HYSTERESIS</title>
+<style>
+:root{
+  --base:#FCFBFA;
+  --ink:#3E3A36; --ink-2:#7A716A; --ink-3:#C0B2A5; --ink-4:#A0917F; --ink-5:#C4BCB4;
+  --cold-bg:#F1F1F3; --cold-surface:#FFFFFF; --cold-ink:#24242A; --cold-2nd:#7E7E88; --cold-line:#DCDCE1;
+  --red:#BE4A40;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--cold-bg);color:var(--cold-ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow:hidden;overscroll-behavior:none;
+  touch-action:manipulation;
+  transition:background-color 900ms var(--ease)}
+body.warmlit{background-color:var(--base)}
+#app{position:fixed;top:0;left:0;width:100%;height:100dvh;overflow:hidden}
+/* 光单独一层，才能有起落 */
+.glow{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;transform:scale(1.05);
+  transition:opacity 1200ms var(--ease),transform 1600ms var(--ease)}
+body.warmlit .glow{opacity:1;transform:none}
+.screen{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;opacity:0;
+  visibility:hidden;pointer-events:none;
+  transition:opacity .4s var(--ease),visibility 0s linear .4s}
+.screen.on{opacity:1;visibility:visible;pointer-events:auto;
+  transition:opacity .4s var(--ease),visibility 0s}
+
+/* 冷墙 */
+.cold{background:var(--cold-bg);color:var(--cold-ink)}
+.cold .body{padding:max(52px, calc(env(safe-area-inset-top) + 34px)) 26px calc(30px + env(safe-area-inset-bottom));
+  flex:1;display:flex;flex-direction:column}
+.step{font-size:10px;letter-spacing:.16em;color:var(--cold-2nd);margin-bottom:24px}
+.ask{font-size:14px;line-height:1.7;margin-bottom:16px}
+.field{background:var(--cold-surface);border:0.5px solid var(--cold-line);border-radius:6px;
+  padding:12px 13px;font-size:13px;color:#A9A9B2}
+.legal{font-size:11px;line-height:1.8;color:var(--cold-2nd);margin-top:14px}
+.terms{font-size:12px;line-height:2.4;margin-bottom:auto}
+.terms b{font-weight:400;display:inline-block;width:15px;color:var(--cold-2nd)}
+.coldbtn{background:var(--cold-ink);color:#fff;border:none;border-radius:6px;padding:12px;font-size:12.5px;
+  width:100%;font-family:inherit;cursor:pointer;letter-spacing:.04em}
+.coldbtn:hover{background:#3A3A42}
+.coldbtn:focus-visible{outline:2px solid #24242A;outline-offset:3px}
+
+/* 画布 */
+.warm{color:var(--ink)}
+.notch{height:max(46px, calc(env(safe-area-inset-top) + 12px));flex:none}
+.who{flex:none;text-align:center;padding-bottom:14px}
+.who .name{font-size:13px;color:var(--ink)}
+.who .tag{font-size:8.5px;color:var(--ink-5);letter-spacing:.08em;margin-top:3px}
+.thread{flex:1;padding:6px 16px 0;display:flex;flex-direction:column;overflow:hidden}
+/* 滚动条：无箭头、无轨道 */
+.scroll,html{scrollbar-width:thin;scrollbar-color:rgba(140,120,105,.18) transparent}
+.scroll::-webkit-scrollbar,body::-webkit-scrollbar{width:4px;height:4px;-webkit-appearance:none}
+.scroll::-webkit-scrollbar-track,body::-webkit-scrollbar-track{background:transparent}
+.scroll::-webkit-scrollbar-corner,body::-webkit-scrollbar-corner{background:transparent}
+.scroll::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb{background:rgba(140,120,105,.18);border-radius:3px}
+.scroll::-webkit-scrollbar-thumb:hover,body::-webkit-scrollbar-thumb:hover{background:rgba(140,120,105,.28)}
+.scroll::-webkit-scrollbar-button,
+.scroll::-webkit-scrollbar-button:single-button,
+.scroll::-webkit-scrollbar-button:vertical:start:decrement,
+.scroll::-webkit-scrollbar-button:vertical:end:increment,
+.scroll::-webkit-scrollbar-button:horizontal:start:decrement,
+.scroll::-webkit-scrollbar-button:horizontal:end:increment,
+body::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button:single-button,
+body::-webkit-scrollbar-button:vertical:start:decrement,
+body::-webkit-scrollbar-button:vertical:end:increment{
+  display:none;width:0;height:0;background:transparent;background-image:none;border:0}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.track{position:relative;padding:6px 16px 24px}
+.stamp{font-size:8px;letter-spacing:.16em;color:var(--ink-3);margin-bottom:20px;text-align:center;flex:none}
+.msg{border-radius:15px;padding:9px 12px;font-size:12.5px;line-height:1.9;margin-bottom:7px;
+  animation:rise .45s var(--ease) both}
+.msg.her{background:rgba(255,255,255,.80);align-self:flex-start;max-width:86%}
+.msg.you{background:rgba(255,255,255,.45);align-self:flex-end;max-width:78%;color:var(--ink-2);margin-left:auto}
+.track .msg.her{max-width:86%}
+@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:var(--dim,1);transform:none}}
+.msg{transition:opacity 220ms var(--ease)}
+/* 输入区。空着的时候它没有容器——只有一行浅字和一个淡图标坐在布上。
+   你一开口它才长出那块白，也就是气泡的雏形。她是内容，这里只是放字的地方。 */
+.composer{flex:none;display:flex;align-items:flex-end;gap:5px;
+  padding:2px 14px calc(8px + env(safe-area-inset-bottom))}
+.cfield{flex:1;min-width:0;background:transparent;border-radius:12px;padding:3px 2px;
+  display:flex;flex-direction:column;gap:5px;
+  transition:background 170ms var(--ease),padding 170ms var(--ease)}
+.cfield.has{background:rgba(255,255,255,.45);padding:3px 9px}
+.cin{width:100%;border:0;outline:none;background:transparent;resize:none;padding:0;
+  font-family:inherit;font-size:12.5px;line-height:1.45;color:var(--ink);
+  max-height:56px;overflow-y:auto}
+.cin::placeholder{color:var(--ink-3)}
+/* 界面上的线是等宽的，她的笔是扁头的。这两种线必须一眼分得开，
+   否则她画的东西就退化成一套图标。
+   按钮无描边、无投影。底色是极淡的墨，不是白：近白底上白填不出形。
+   墨就是滚动条那支墨（140,120,105），不引入新色 */
+.cbtn{position:relative;flex:none;width:34px;height:34px;padding:0;border:0;cursor:pointer;
+  background:rgba(140,120,105,.10);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-4);
+  transition:color 140ms var(--ease),background 140ms var(--ease)}
+/* 看到的圆是 34，能按到的是 44。热区外扩不占布局，行高不用跟着涨 */
+.cbtn::after{content:"";position:absolute;inset:-5px}
+.cbtn svg{width:18px;height:18px}
+.cbtn:hover{color:var(--ink-2);background:rgba(140,120,105,.15)}
+.cbtn:active{background:rgba(140,120,105,.2)}
+.cbtn:focus-visible{outline:2px solid var(--ink-2);outline-offset:2px}
+
+.chips{display:flex;gap:5px}
+.chip{position:relative;width:40px;height:40px;border-radius:7px;overflow:hidden;flex:none;
+  background:rgba(255,255,255,.55)}
+.chip img{display:block;width:100%;height:100%;object-fit:cover}
+.chip button{position:absolute;right:2px;top:2px;width:13px;height:13px;padding:0;border:0;
+  border-radius:50%;background:rgba(62,58,54,.5);color:#fff;font-size:8px;line-height:13px;
+  cursor:pointer}
+.msg.you img{display:block;border-radius:9px;max-width:132px;margin-bottom:5px}
+
+/* 她的光标。走过的地方不留，所以它是一层每帧重画的布，不是一张画 */
+.cur{position:absolute;left:0;top:0;pointer-events:none;z-index:6;mix-blend-mode:multiply;opacity:0;
+  transition:opacity 600ms var(--ease)}
+.cur.here{opacity:1}
+
+/* 扁头笔。每笔的时长由 JS 按该笔的可见长度算，不写死 */
+.ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:multiply;z-index:2}
+.ink path{opacity:0}
+.ink path.lay{opacity:1}
+.ink ellipse{opacity:0;transition:opacity 260ms var(--ease)}
+.ink ellipse.lay{opacity:1}
+
+/* widget */
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.wg{position:absolute;cursor:grab;touch-action:none}
+.wg.drag{cursor:grabbing}
+.wg::before{content:"";position:absolute;inset:-16px;border-radius:34px;background:var(--base);
+  filter:blur(22px);opacity:.18;z-index:-1}
+.vt{width:250px;background:#1A191C;border-radius:18px;padding:11px;display:flex;gap:11px}
+.platter{width:96px;height:96px;border-radius:11px;background:#0F0E11;position:relative;overflow:hidden;flex:none}
+.disc{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82px;height:82px;
+  border-radius:50%;background:#232227;animation:spin 5.4s linear infinite}
+.disc i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%}
+.arm{position:absolute;right:9px;top:8px;width:3px;height:56px;background:#4C4A54;border-radius:2px;
+  transform:rotate(21deg);transform-origin:top center}
+.pivot{position:absolute;right:5px;top:4px;width:11px;height:11px;border-radius:50%;background:#5A5862}
+.vt .meta{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.vt .kicker{font-size:8px;letter-spacing:.22em;color:#6E6B78;margin-bottom:6px}
+.vt .title{font-size:12.5px;color:#EFEDF2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt .sub{font-size:9.5px;color:#7C7A85;margin-top:2px}
+.vt .bar{height:5px;border-radius:3px;background:#2E2D33;margin-top:11px;overflow:hidden}
+.vt .bar span{display:block;width:62%;height:100%;background:#9A86D6;border-radius:3px}
+.vt .clock{display:flex;align-items:baseline;gap:6px;margin-top:7px}
+.vt .clock b{font-size:15px;color:#EFEDF2;font-weight:400}
+.vt .clock em{font-size:9px;color:#6E6B78;font-style:normal}
+
+.wx{width:196px;height:196px;border-radius:22px;overflow:hidden;
+  background:linear-gradient(178deg,#2B3251 0%,#4A5273 24%,#8189A5 46%,#B9C3D6 62%,#9DBEDC 80%,#D6E0E8 100%)}
+.wx .cloud{position:absolute;border-radius:50%}
+.wx .top{position:absolute;left:14px;top:13px}
+.wx .bot{position:absolute;left:14px;bottom:13px}
+.wx .lbl{font-size:9px;margin-bottom:2px}
+.wx .val{font-size:20px;line-height:1.15}
+
+.cal{width:206px;background:rgba(255,255,255,.86);border:0.5px solid rgba(140,110,90,.16);
+  border-radius:18px;padding:16px 14px}
+.cal .mo{font-size:12.5px;color:var(--ink);margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;place-items:center;margin-bottom:13px}
+.grid i{border-radius:50%;display:block}
+.past{width:3px;height:3px;background:#EBE5DE}
+.future{width:17px;height:17px;background:#F2ECE6}
+.today{width:15px;height:15px;border:1.5px solid #C99A7E;box-sizing:border-box}
+.mark{width:17px;height:17px;background:var(--red);opacity:.72}
+.cal .note{border-top:0.5px solid rgba(140,110,90,.14);padding-top:11px}
+.cal .note .d{font-size:9px;color:#BCAFA3;margin-bottom:4px}
+.cal .note .s{font-size:11.5px;line-height:1.8;color:var(--ink)}
+
+.stk{width:158px;border-radius:6px;padding:14px}
+.stk p{font-size:11.5px;line-height:1.8;color:#2E2A28}
+
+/* 游戏机。机器是黑色实体设备，和唱机同族 */
+.gb{width:180px;background:#1A191C;border-radius:17px;padding:12px 12px 13px}
+.gb canvas{display:block;border-radius:7px;background:#141216}
+.pad{display:grid;grid-template-columns:repeat(3,26px);gap:5px;
+  justify-content:center;margin-top:12px}
+.pad b{height:23px;border-radius:6px;background:#2B292F;cursor:pointer;
+  transition:background 90ms linear}
+.pad b:hover{background:#35333C}
+.pad b:active{background:#403E49}
+.pad .sp{background:transparent;cursor:default}
+.gb .cap{font-size:8px;letter-spacing:.2em;color:#5E5A66;text-align:center;margin-top:10px}
+
+/* 猜词。它是一页练字的格纸，不是卡片 */
+.gz{width:250px;background:#F2ECE1;border:0.5px solid rgba(140,110,90,.20);
+  border-radius:7px;padding:16px 12px 13px}
+.tian{display:flex;gap:6px;justify-content:center}
+.tian i{width:41px;height:41px;border:0.5px solid #D6CAB7;position:relative;flex:none;
+  display:flex;align-items:center;justify-content:center}
+.tian i::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:0.5px dashed #E4D9C7}
+.tian i::after{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:0.5px dashed #E4D9C7}
+.tian b{position:relative;z-index:1;font-weight:400;font-size:27px;line-height:1;color:#3E3A36;
+  font-family:"Kaiti SC","STKaiti","KaiTi","Kai","Songti SC",serif}
+.gz .hint{margin-top:13px;padding-top:10px;border-top:0.5px solid rgba(140,110,90,.15);
+  font-size:11.5px;line-height:1.75;color:#6E655C}
+.slot{pointer-events:none}
+
+/* 闹钟。段式屏是反射式的，没有背光，所以底是灰绿不是黑，字是暗的不是亮的。
+   和贪吃蛇同为机器，但不是同一种屏，这个区别要看得出来 */
+.alm{width:238px;background:#16151A;border-radius:19px;padding:15px 13px 13px;position:relative}
+.alm .tab{position:absolute;left:50%;top:-9px;transform:translateX(-50%);
+  background:#16151A;border:0.5px solid #3B3944;border-radius:9px;padding:3px 12px;
+  font-size:7.5px;letter-spacing:.22em;color:#716E7C;white-space:nowrap}
+.lcd{background:#C4C1B2;border:2px solid #E3E0D5;border-radius:9px;display:block}
+.lcd svg{display:block;width:100%;height:auto}
+.almrow{display:flex;gap:11px;align-items:flex-start;margin-top:11px}
+.almnow{flex:none;width:104px}
+.almnow .cap2{font-size:7.5px;letter-spacing:.22em;color:#5C5966;text-align:center;margin-top:6px}
+.leg{flex:1;display:flex;flex-direction:column;gap:7px;padding-top:3px}
+.leg div{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.08em;color:#48464F}
+.leg i{width:5px;height:5px;border-radius:50%;background:#2C2A33;flex:none}
+.leg div.on{color:#CFCCC2}
+.leg div.on i{background:#CFCCC2}
+.p-lilac{background:rgba(150,98,244,.68)}
+.p-peach{background:rgba(244,132,80,.62)}
+.p-amber{background:rgba(250,196,54,.66)}
+.p-blue{background:rgba(78,158,236,.60)}
+.p-rose{background:rgba(244,110,132,.60)}
+
+/* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
+.dev{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:40}
+.dev>.devbtn{position:relative;width:24px;height:24px;border-radius:50%;border:0;cursor:pointer;
+  background:rgba(140,120,105,.12);color:var(--ink-4);font-size:12px;line-height:1;
+  font-family:inherit}
+.dev>.devbtn::after{content:"";position:absolute;inset:-8px}
+.devmenu{position:absolute;right:0;top:30px;display:none;flex-direction:column;
+  background:rgba(255,255,255,.93);border:0.5px solid rgba(140,120,105,.22);border-radius:11px;
+  padding:6px;min-width:132px;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
+.dev.open .devmenu{display:flex}
+.devmenu .devnote{font-size:7.5px;letter-spacing:.24em;color:#C0B2A5;text-align:center;padding:4px 0 5px}
+.devmenu button{background:transparent;border:0;padding:8px 10px;font-size:12px;color:var(--ink);
+  text-align:left;font-family:inherit;cursor:pointer;border-radius:7px}
+.devmenu button:hover{background:rgba(140,120,105,.08)}
+.devmenu button:active{background:rgba(140,120,105,.14)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
+</style>
 </head>
 <body>
-  <main id="app">
-    <h1>HYSTERESIS</h1>
-    <p>前端待置入 — 测试平台运行正常</p>
-  </main>
+<div id="app">
+  <div class="glow" id="glow"></div>
+
+  <section class="screen cold on" data-s="0">
+    <div class="body">
+      <div class="step">1 / 2</div>
+      <div class="ask">你的出生日期</div>
+      <div class="field">YYYY / MM / DD</div>
+      <div class="legal">本服务不向未成年人提供。</div>
+      <div style="margin-top:auto"><button class="coldbtn" onclick="go(1)">继续</button></div>
+    </div>
+  </section>
+
+  <section class="screen cold" data-s="1">
+    <div class="body">
+      <div class="step">2 / 2</div>
+      <div class="terms">
+        <b>□</b>接下来跟你说话的是一个 AI 角色，不是自然人。<br>
+        <b>□</b>它会记住发生过的事，那些事不能被撤回。<br>
+        <b>□</b>你的数据可以随时导出或删除。
+      </div>
+      <button class="coldbtn" onclick="go(2)">进入</button>
+    </div>
+  </section>
+
+  <section class="screen warm" data-s="2">
+    <div class="notch"></div>
+    <div class="who"><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
+    <div class="thread">
+      <div class="stamp">23:04</div>
+      <div class="msg her">你能不能帮我决定一件事。</div>
+      <div class="msg her" style="animation-delay:.9s">楼下便利店还有十分钟关门。我现在下去，还是明天再说。</div>
+    </div>
+    <div class="composer">
+      <div class="cfield">
+        <div class="chips"></div>
+        <textarea class="cin" rows="1" enterkeyhint="send" placeholder="说点什么"></textarea>
+      </div>
+      <input type="file" accept="image/*" class="cfile" hidden>
+      <button class="cbtn pic" aria-label="发一张图">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.6" y="4.2" width="16.8" height="13.6" rx="2.6"/>
+          <circle cx="7.9" cy="9.1" r="1.5"/>
+          <path d="M3.4 15.6 L8.5 11.3 L12.2 14.3 L15.4 11.7 L19 14.8"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <section class="screen warm" data-s="3" id="drawScreen">
+    <div class="notch"></div>
+    <div class="who"><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
+    <svg class="ink" viewBox="0 0 318 640" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="butt" stroke-linejoin="miter">
+      <g transform="scale(1,0.42)" stroke="#8A7263" stroke-opacity="0.5" stroke-width="11">
+        <path data-tempo="slow"   d="M 76,657.1 C 76,571.4 106,514.3 144,514.3 C 182,514.3 212,571.4 212,657.1 C 212,742.9 184,795.2 144,795.2 C 104,795.2 76,742.9 76,657.1"/>
+        <path data-tempo="quick"  d="M 90,585.7 L 82,476.2 L 122,533.3"/>
+        <path data-tempo="quick"  d="M 198,585.7 L 208,476.2 L 168,533.3"/>
+        <path data-tempo="normal" d="M 97,776.2 C 78,866.7 72,1000.0 82,1076.2 L 206,1076.2 C 218,995.2 212,861.9 192,776.2"/>
+        <path data-tempo="normal" d="M 206,1038.1 C 250,1047.6 270,961.9 256,890.5 C 246,838.1 224,842.9 218,885.7"/>
+        <path data-tempo="quick"  stroke-width="9" d="M 115,638.1 C 117,659.5 119,666.7 122,666.7"/>
+        <path data-tempo="quick"  stroke-width="9" d="M 168,638.1 C 170,659.5 172,666.7 175,666.7"/>
+        <path data-tempo="quick"  stroke-width="9" d="M 131,709.5 C 138,728.6 152,728.6 159,709.5"/>
+        <path data-tempo="slow" data-accent="1" stroke="#BE4A40" stroke-opacity="0.62" stroke-width="17" d="M 102,804.8 C 122,852.4 166,852.4 188,800.0"/>
+        <ellipse data-tempo="normal" cx="145" cy="850" rx="8" ry="13" fill="#D8A54E" fill-opacity="0.75"/>
+      </g>
+    </svg>
+    <div class="thread">
+      <div class="stamp">23:14</div>
+      <div class="msg her">红的</div>
+      <div class="msg her" id="afterDraw" style="margin-top:auto;opacity:0;animation:none">项圈上还有个铃铛</div>
+    </div>
+    <div class="composer">
+      <div class="cfield">
+        <div class="chips"></div>
+        <textarea class="cin" rows="1" enterkeyhint="send" placeholder="说点什么"></textarea>
+      </div>
+      <input type="file" accept="image/*" class="cfile" hidden>
+      <button class="cbtn pic" aria-label="发一张图">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.6" y="4.2" width="16.8" height="13.6" rx="2.6"/>
+          <circle cx="7.9" cy="9.1" r="1.5"/>
+          <path d="M3.4 15.6 L8.5 11.3 L12.2 14.3 L15.4 11.7 L19 14.8"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <section class="screen warm" data-s="4">
+    <div class="notch"></div>
+    <div class="who"><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
+    <div class="scroll">
+      <div class="track" id="track" style="min-height:3000px">
+        <div class="stamp">23:26</div>
+        <div class="msg her">放个东西给你听</div>
+        <div style="height:130px"></div>
+        <div class="msg you">这什么啊</div>
+        <div class="msg her">你别说话，听完再说</div>
+        <div style="height:14px"></div>
+
+        <div class="stamp">23:41</div>
+        <div class="msg you">你那边下雨了吗</div>
+        <div class="msg her">下了一整天</div>
+        <div style="height:206px"></div>
+        <div class="msg her">你那儿天还亮着，真好</div>
+        <div style="height:14px"></div>
+
+        <div class="stamp">23:58</div>
+        <div class="msg her">二十四号那天你说要给我看照片</div>
+        <div class="msg her">我记下了，省得你忘</div>
+        <div style="height:250px"></div>
+        <div class="msg you">你怎么什么都记得</div>
+        <div style="height:14px"></div>
+
+        <div class="stamp">00:12</div>
+        <div class="msg her">这个我记一下</div>
+        <div style="height:150px"></div>
+        <div class="msg you">你记这个干嘛</div>
+        <div class="msg her">不干嘛</div>
+        <div style="height:14px"></div>
+
+        <div class="stamp">00:31</div>
+        <div class="msg her">你玩过这个吗</div>
+        <div class="slot" data-for="w5" style="height:286px"></div>
+        <div class="msg you">你哪来的</div>
+        <div class="msg her">一直有</div>
+        <div style="height:14px"></div>
+
+        <div class="stamp">00:49</div>
+        <div class="msg her">猜一个</div>
+        <div class="msg her">就是刚才放给你听的那张</div>
+        <div class="slot" data-for="w6" style="height:168px"></div>
+        <div class="msg you">太难了</div>
+        <div class="msg her">不难，你听了三遍</div>
+        <div style="height:14px"></div>
+
+        <div class="stamp">01:12</div>
+        <div class="msg you">明天早上十点叫我起来</div>
+        <div class="msg her">行</div>
+        <div class="slot" data-for="w7" style="height:196px"></div>
+        <div class="msg her">那我十点见你</div>
+        <div style="height:40px"></div>
+
+        <div class="wg" id="w7" style="left:38px">
+          <div class="alm">
+            <div class="tab">SHE SET THIS</div>
+            <div class="lcd"><svg id="almSet" viewBox="0 0 208 62"></svg></div>
+            <div class="almrow">
+              <div class="almnow">
+                <div class="lcd"><svg id="almNow" viewBox="0 0 104 34"></svg></div>
+                <div class="cap2">NOW</div>
+              </div>
+              <div class="leg">
+                <div><i></i>今天</div>
+                <div class="on"><i></i>明天</div>
+                <div><i></i>后天</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wg" id="w5" style="left:66px" data-drag="edge">
+          <div class="gb">
+            <canvas class="nodrag" id="snk" width="156" height="176"></canvas>
+            <div class="pad nodrag">
+              <b class="sp"></b><b data-d="u"></b><b class="sp"></b>
+              <b data-d="l"></b><b class="sp"></b><b data-d="r"></b>
+              <b class="sp"></b><b data-d="d"></b><b class="sp"></b>
+            </div>
+            <div class="cap">SHE WAS PLAYING</div>
+          </div>
+        </div>
+
+        <div class="wg" id="w6" style="left:34px">
+          <div class="gz">
+            <div class="tian" id="tian">
+              <i data-c="凌"></i><i data-c="晨"><b>晨</b></i><i data-c="的"></i><i data-c="车"></i><i data-c="站"><b>站</b></i>
+            </div>
+            <div class="hint">你今天听过它三遍</div>
+          </div>
+        </div>
+
+        <div class="wg" id="w4" style="left:78px;top:1500px">
+          <div class="stk p-lilac" style="transform:rotate(-2deg)">
+            <p>你说你不喜欢别人问你在忙什么</p>
+          </div>
+        </div>
+
+        <div class="wg" id="w1" style="left:20px;top:196px">
+          <div class="vt">
+            <div class="platter">
+              <div class="disc">
+                <i style="width:56px;height:56px;border:0.5px solid #302F35"></i>
+                <i style="width:24px;height:24px;background:#9A86D6"></i>
+                <i style="width:5px;height:5px;background:#0F0E11"></i>
+              </div>
+              <div class="arm"></div><div class="pivot"></div>
+            </div>
+            <div class="meta">
+              <div class="kicker">SHE PUT THIS ON</div>
+              <div class="title">凌晨的车站</div>
+              <div class="sub">第三次听</div>
+              <div class="bar"><span></span></div>
+              <div class="clock"><b>04:38</b><em>05:29</em></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wg" id="w2" style="left:46px;top:648px">
+          <div class="wx" style="position:relative">
+            <div class="cloud" style="left:-10%;top:40%;width:78%;height:18%;background:rgba(160,165,190,.4)"></div>
+            <div class="cloud" style="right:-12%;top:70%;width:74%;height:18%;background:rgba(255,255,255,.55)"></div>
+            <div class="top">
+              <div class="lbl" style="color:rgba(255,255,255,.75)">她 · 上海 · 23:41</div>
+              <div class="val" style="color:#fff">雨 11°</div>
+            </div>
+            <div class="bot">
+              <div class="lbl" style="color:rgba(70,84,110,.85)">你 · 柏林 · 16:41</div>
+              <div class="val" style="color:#3C4A63">晴 19°</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wg" id="w3" style="left:42px;top:1160px">
+          <div class="cal">
+            <div class="mo">八月</div>
+            <div class="grid">
+              <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i>
+              <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i>
+              <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="today"></i>
+              <i class="future"></i><i class="future"></i><i class="mark"></i><i class="future"></i><i class="future"></i><i class="future"></i><i class="future"></i>
+              <i class="future"></i><i class="future"></i><i class="future"></i>
+            </div>
+            <div class="note">
+              <div class="d">二十四日</div>
+              <div class="s">你说那天要给我看照片</div>
+            </div>
+          </div>
+        </div>
+
+        <canvas class="cur" id="cur"></canvas>
+      </div>
+    </div>
+    <div class="composer">
+      <div class="cfield">
+        <div class="chips"></div>
+        <textarea class="cin" rows="1" enterkeyhint="send" placeholder="说点什么"></textarea>
+      </div>
+      <input type="file" accept="image/*" class="cfile" hidden>
+      <button class="cbtn pic" aria-label="发一张图">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.6" y="4.2" width="16.8" height="13.6" rx="2.6"/>
+          <circle cx="7.9" cy="9.1" r="1.5"/>
+          <path d="M3.4 15.6 L8.5 11.3 L12.2 14.3 L15.4 11.7 L19 14.8"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- 演示菜单：测试期的脚手架，对应原提案规范面板上的控制按钮。上线前整块删掉 -->
+  <div class="dev" id="dev">
+    <button class="devbtn" aria-label="演示菜单">···</button>
+    <div class="devmenu">
+      <span class="devnote">DEMO</span>
+      <button data-act="restart">从头走一遍</button>
+      <button data-act="draw">播放她画画</button>
+      <button data-act="canvas">看 widget 画布</button>
+      <button data-act="her" id="herBtn">让她来一趟</button>
+      <button data-act="guess">猜对一个字</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 大 widget 在时间线上的位置用一段占位来定，不写死坐标：
+   文案一改，它自己跟着走 */
+document.querySelectorAll('.slot').forEach(function(s){
+  var v=document.getElementById(s.dataset.for);
+  if(v) v.style.top=(s.offsetTop+10)+'px';
+});
+var glow=document.getElementById('glow');
+var ds=document.getElementById('drawScreen');
+var afterDraw=document.getElementById('afterDraw');
+var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 光 ---------- */
+var pools=[
+ ["160% 92%","-8% 6%","247,219,203",.42],
+ ["150% 88%","108% 20%","230,219,242",.38],
+ ["170% 95%","88% 78%","252,238,214",.40],
+ ["155% 90%","-6% 96%","213,229,241",.34],
+ ["180% 110%","46% 52%","246,221,219",.30]
+];
+glow.style.background=pools.map(function(p){
+  return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) 74%)";
+}).join(",");
+
+/* ---------- 屏 ---------- */
+function go(n){
+  go.now=n;
+  stopDraw();
+  if(n!==4) herStop();
+  if(n===4){ snkStart(); almStart(); } else { snkStop(); almStop(); }
+  document.querySelectorAll('.screen').forEach(function(s){
+    var on = +s.dataset.s===n;
+    s.classList.toggle('on', on);
+    s.inert = !on;
+    /* 她的话是到达的，不是已经在那儿的。进屏时重放一次 */
+    if(on) s.querySelectorAll('.thread .msg').forEach(function(m){
+      if(m===afterDraw) return;
+      m.style.animation='none'; m.getBoundingClientRect(); m.style.animation='';
+    });
+  });
+  document.body.classList.toggle('warmlit', n>=2);
+  if(n===4) requestAnimationFrame(dim);
+}
+
+/* ---------- 扁头笔 ----------
+   一笔的时长由这一笔在屏幕上的实际长度决定，不是每笔都 1000ms。
+   短笔快、长笔慢，才像一支笔在动。纵向 0.42 的压缩要算进长度里。 */
+var SQUASH=0.42, SPEED=560, MIN_MS=160, MAX_MS=1200;
+var TEMPO={slow:{k:0.68,gap:480}, normal:{k:1,gap:340}, quick:{k:1.5,gap:190}};
+var ACCENT_PAUSE=520, FIRST_PAUSE=1600, AFTER_PAUSE=500;
+
+var strokes=[].slice.call(ds.querySelectorAll('.ink path, .ink ellipse'));
+var timers=[];
+
+function visibleLength(el){
+  if(el.tagName!=='path') return 0;
+  var raw=el.getTotalLength(), n=24, prev=null, sum=0;
+  for(var i=0;i<=n;i++){
+    var p=el.getPointAtLength(raw*i/n), q={x:p.x,y:p.y*SQUASH};
+    if(prev) sum+=Math.hypot(q.x-prev.x, q.y-prev.y);
+    prev=q;
+  }
+  return sum;
+}
+strokes.forEach(function(el){
+  if(el.tagName!=='path') return;
+  var raw=el.getTotalLength();
+  el._raw=raw;
+  el._ms=Math.min(MAX_MS,Math.max(MIN_MS,
+    visibleLength(el)/(SPEED*TEMPO[el.dataset.tempo||'normal'].k)*1000));
+  el.style.strokeDasharray=raw;
+});
+
+function stopDraw(){
+  timers.forEach(clearTimeout); timers=[];
+  strokes.forEach(function(el){
+    el.classList.remove('lay');
+    el.style.transition='none';
+    if(el.tagName==='path') el.style.strokeDashoffset=el._raw;
+  });
+  afterDraw.style.transition='none';
+  afterDraw.style.opacity=0;
+}
+
+function drawScene(){
+  go(3);
+  var t=calm?200:FIRST_PAUSE;
+  strokes.forEach(function(el){
+    var tempo=TEMPO[el.dataset.tempo||'normal'];
+    /* accent 那一笔之前多停一下。重点靠停顿造出来，不靠加粗 */
+    if(el.dataset.accent && !calm) t+=ACCENT_PAUSE;
+    timers.push(setTimeout(function(){
+      el.classList.add('lay');
+      if(el.tagName==='path'){
+        el.style.transition='stroke-dashoffset '+el._ms+'ms cubic-bezier(.22,.61,.36,1)';
+        el.getBoundingClientRect();
+        el.style.strokeDashoffset=0;
+      }
+    },t));
+    t+=(el._ms||260)+(calm?90:tempo.gap);
+  });
+  timers.push(setTimeout(function(){
+    afterDraw.style.transition='opacity 450ms';
+    afterDraw.style.opacity=1;
+  }, t+(calm?100:AFTER_PAUSE)));
+}
+
+/* ---------- widget 消隐 ----------
+   雾把 widget 从画布上托起来，气泡按到 widget 的距离变淡，远的不动。 */
+var track=document.getElementById('track');
+var widgets=['w1','w2','w3','w4','w5','w6','w7'].map(function(id){return document.getElementById(id)});
+var bubbles=[].slice.call(track.querySelectorAll('.msg'));
+bubbles.forEach(function(m){ m.style.animation='none'; });
+var FALL=130, FLOOR=0.30, queued=false;
+
+function dim(){
+  queued=false;
+  var boxes=widgets.map(function(v){
+    return {l:v.offsetLeft,t:v.offsetTop,r:v.offsetLeft+v.offsetWidth,b:v.offsetTop+v.offsetHeight};
+  });
+  bubbles.forEach(function(m){
+    var l=m.offsetLeft,t=m.offsetTop,r=l+m.offsetWidth,b=t+m.offsetHeight,near=Infinity;
+    boxes.forEach(function(w){
+      var dx=Math.max(w.l-r, l-w.r, 0), dy=Math.max(w.t-b, t-w.b, 0);
+      near=Math.min(near, Math.hypot(dx,dy));
+    });
+    var k=Math.min(1, near/FALL);
+    k=k*k*(3-2*k);
+    m.style.opacity=(FLOOR+(1-FLOOR)*k).toFixed(3);
+  });
+}
+function queueDim(){ if(!queued){ queued=true; requestAnimationFrame(dim); } }
+
+/* ---------- 拖动 ---------- */
+var lastRelease=0;
+widgets.forEach(function(v,i){
+  var dx=0, dy=0, on=false;
+  v.addEventListener('pointerdown',function(e){
+    /* 可玩的部分不是抓手。抓取退到边框，否则一按方向键 widget 就被拖走了 */
+    if(e.target.closest('.nodrag')){ v._busy=performance.now(); lastRelease=v._busy; return; }
+    on=true; v._held=true; v.classList.add('drag'); v.style.zIndex=5;
+    v.style.transition=''; v.setPointerCapture(e.pointerId);
+    herLetGo(i);
+    var r=v.getBoundingClientRect(); dx=e.clientX-r.left; dy=e.clientY-r.top;
+    e.preventDefault(); e.stopPropagation();
+  });
+  v.addEventListener('pointermove',function(e){
+    if(!on) return;
+    var p=track.getBoundingClientRect();
+    var x=e.clientX-p.left-dx, y=e.clientY-p.top-dy;
+    v.style.left=clampX(v,x)+'px'; v.style.top=clampY(v,y)+'px';
+    queueDim(); e.preventDefault();
+  });
+  function end(){
+    if(!on) return;
+    on=false; v._held=false; lastRelease=performance.now();
+    v.classList.remove('drag'); v.style.zIndex='';
+  }
+  v.addEventListener('pointerup',end);
+  v.addEventListener('pointercancel',end);
+});
+function clampX(v,x){ return Math.max(4,Math.min(track.offsetWidth-v.offsetWidth-4,x)); }
+function clampY(v,y){ return Math.max(4,Math.min(track.offsetHeight-v.offsetHeight-4,y)); }
+
+/* ---------- 贪吃蛇 ----------
+   分数就是蛇的长度。屏幕上不出现任何数字——它已经在那儿了，画出来的。
+   单色点阵只有一种颜色，所以食物只能靠闪来和身体区分，这是屏幕本身的限制，不是风格选择。 */
+var SNK={col:13,row:15,cell:12,pad:0,body:[],dir:[0,-1],turn:null,food:null,
+         alive:true,mine:false,blink:0,dead:0,timer:0,ctx:null};
+var SNK_MS=150, SNK_HANDBACK=8000;
+var LIT='#D8A54E', DIM='#241E1B', SCR='#141216';
+
+function snkInit(taken){
+  var c=(SNK.col/2)|0, r=(SNK.row/2)|0;
+  SNK.body=[]; for(var i=0;i<5;i++) SNK.body.push([c,r+i]);
+  SNK.dir=[0,-1]; SNK.turn=null; SNK.alive=true; SNK.mine=!!taken; SNK.dead=0;
+  snkFeed();
+}
+function snkFeed(){
+  var free=[];
+  for(var x=0;x<SNK.col;x++) for(var y=0;y<SNK.row;y++)
+    if(!SNK.body.some(function(b){return b[0]===x&&b[1]===y})) free.push([x,y]);
+  SNK.food=free.length?free[(Math.random()*free.length)|0]:null;
+}
+function snkFree(x,y,body){
+  if(x<0||y<0||x>=SNK.col||y>=SNK.row) return false;
+  for(var i=0;i<body.length-1;i++) if(body[i][0]===x&&body[i][1]===y) return false;
+  return true;
+}
+/* 她玩得不好也不坏：朝食物走，能走就走，走不了换一边 */
+function snkThink(){
+  var h=SNK.body[0], f=SNK.food; if(!f) return SNK.dir;
+  var want=[];
+  if(f[0]!==h[0]) want.push([f[0]>h[0]?1:-1,0]);
+  if(f[1]!==h[1]) want.push([0,f[1]>h[1]?1:-1]);
+  want.push([1,0],[-1,0],[0,1],[0,-1]);
+  for(var i=0;i<want.length;i++){
+    var d=want[i];
+    if(d[0]===-SNK.dir[0]&&d[1]===-SNK.dir[1]) continue;
+    if(snkFree(h[0]+d[0],h[1]+d[1],SNK.body)) return d;
+  }
+  return SNK.dir;
+}
+function snkStep(){
+  var now=performance.now();
+  if(!SNK.alive){
+    /* 死了就躺着。不闪、不弹字、不计数。过一会儿她自己再拿起来 */
+    if(now-SNK.dead>SNK_HANDBACK){ snkInit(false); }
+    snkDraw(); return;
+  }
+  var d = SNK.mine ? (SNK.turn||SNK.dir) : snkThink();
+  if(d[0]===-SNK.dir[0]&&d[1]===-SNK.dir[1]) d=SNK.dir;
+  SNK.dir=d; SNK.turn=null;
+  var h=SNK.body[0], nx=h[0]+d[0], ny=h[1]+d[1];
+  if(!snkFree(nx,ny,SNK.body)){ SNK.alive=false; SNK.dead=now; snkDraw(); return; }
+  SNK.body.unshift([nx,ny]);
+  if(SNK.food && nx===SNK.food[0] && ny===SNK.food[1]) snkFeed();
+  else SNK.body.pop();
+  SNK.blink++;
+  snkDraw();
+}
+function snkDraw(){
+  var g=SNK.ctx; if(!g) return;
+  var s=SNK.cell, on=SNK.body;
+  g.fillStyle=SCR; g.fillRect(0,0,SNK.col*s,SNK.row*s);
+  for(var x=0;x<SNK.col;x++) for(var y=0;y<SNK.row;y++){
+    g.fillStyle=DIM;                       /* 熄灭的点是看得见的，点阵屏就是这样 */
+    g.fillRect(x*s+2,y*s+2,s-4,s-4);
+  }
+  g.fillStyle=LIT;
+  for(var i=0;i<on.length;i++) g.fillRect(on[i][0]*s+2,on[i][1]*s+2,s-4,s-4);
+  if(SNK.food && (SNK.blink%4)<3 && SNK.alive)
+    g.fillRect(SNK.food[0]*s+2,SNK.food[1]*s+2,s-4,s-4);
+}
+function snkStart(){
+  if(!SNK.ctx){
+    var el=document.getElementById('snk');
+    el.width=SNK.col*SNK.cell; el.height=SNK.row*SNK.cell;
+    SNK.ctx=el.getContext('2d');
+    snkInit(false);
+  }
+  clearInterval(SNK.timer); SNK.timer=setInterval(snkStep,SNK_MS);
+}
+function snkStop(){ clearInterval(SNK.timer); SNK.timer=0; }
+
+document.querySelectorAll('.pad b[data-d]').forEach(function(k){
+  k.addEventListener('pointerdown',function(e){
+    e.preventDefault(); e.stopPropagation();
+    var m={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[k.dataset.d];
+    /* 你按第一下方向键，就算接手了 */
+    if(!SNK.alive){ snkInit(true); SNK.turn=m; return; }
+    SNK.mine=true; SNK.turn=m;
+  });
+});
+
+/* ---------- 猜词 ----------
+   输入永远发生在输入框里，widget 只是那张纸。这里的按钮只是原型用来演示状态推进的。 */
+function guessOne(){
+  var slots=[].slice.call(document.querySelectorAll('#tian i'));
+  var blank=slots.filter(function(s){return !s.firstChild});
+  if(!blank.length){ slots.forEach(function(s){ if(s.dataset.c!=='晨'&&s.dataset.c!=='站') s.innerHTML=''; }); return; }
+  var s=blank[0], b=document.createElement('b');
+  b.textContent=s.dataset.c; s.appendChild(b);
+}
+
+/* ---------- 闹钟 ----------
+   段式屏。熄灭的段要画出来——这是和贪吃蛇熄灭点同一条规则，也是这块屏最像屏的地方。
+   段式屏显示不了汉字，所以所有中文都是印在玻璃上的固定字样，只能变深浅，不能变内容。 */
+var SEG={'0':'abcdef','1':'bc','2':'abged','3':'abgcd','4':'fgbc','5':'afgcd',
+         '6':'afgedc','7':'abc','8':'abcdefg','9':'abcdfg'};
+var LCD_INK='#24221D', ON_OP=0.88, OFF_OP=0.10;
+
+function segPoly(x,y,L,t,horiz){
+  var p = horiz
+    ? [[x,y+t/2],[x+t/2,y],[x+L-t/2,y],[x+L,y+t/2],[x+L-t/2,y+t],[x+t/2,y+t]]
+    : [[x+t/2,y],[x+t,y+t/2],[x+t,y+L-t/2],[x+t/2,y+L],[x,y+L-t/2],[x,y+t/2]];
+  return p.map(function(q){return q[0].toFixed(2)+','+q[1].toFixed(2)}).join(' ');
+}
+function makeDigit(svg,ox,oy,W,H,t){
+  var g=1.15, half=(H-t)/2, out={};
+  var spec={
+    a:[ox+t/2+g, oy,            W-t-2*g, 1],
+    g:[ox+t/2+g, oy+half,       W-t-2*g, 1],
+    d:[ox+t/2+g, oy+H-t,        W-t-2*g, 1],
+    f:[ox,       oy+t/2+g,      half-2*g, 0],
+    b:[ox+W-t,   oy+t/2+g,      half-2*g, 0],
+    e:[ox,       oy+half+t/2+g, half-2*g, 0],
+    c:[ox+W-t,   oy+half+t/2+g, half-2*g, 0]
+  };
+  Object.keys(spec).forEach(function(k){
+    var s=spec[k], el=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    el.setAttribute('points',segPoly(s[0],s[1],s[2],t,s[3]));
+    el.setAttribute('fill',LCD_INK); el.setAttribute('opacity',OFF_OP);
+    svg.appendChild(el); out[k]=el;
+  });
+  return out;
+}
+function makeColon(svg,ox,oy,H,t){
+  var d=[];
+  [oy+H*0.30, oy+H*0.66].forEach(function(cy){
+    var el=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    el.setAttribute('x',ox); el.setAttribute('y',cy);
+    el.setAttribute('width',t*0.9); el.setAttribute('height',t*0.9);
+    el.setAttribute('fill',LCD_INK); el.setAttribute('opacity',ON_OP);
+    svg.appendChild(el); d.push(el);
+  });
+  return d;
+}
+function makeLegend(svg,x,y,txt,on){
+  var el=document.createElementNS('http://www.w3.org/2000/svg','text');
+  el.setAttribute('x',x); el.setAttribute('y',y);
+  el.setAttribute('fill',LCD_INK); el.setAttribute('opacity',on?ON_OP:OFF_OP+0.06);
+  el.setAttribute('font-size','9'); el.setAttribute('letter-spacing','0.5');
+  el.setAttribute('font-family','ui-monospace,Menlo,monospace');
+  el.textContent=txt; svg.appendChild(el); return el;
+}
+function buildClock(id,W,H,t,x0,gap,legends){
+  var svg=document.getElementById(id), digits=[], x=x0, y=(+svg.viewBox.baseVal.height-H)/2;
+  for(var i=0;i<4;i++){
+    digits.push(makeDigit(svg,x,y,W,H,t)); x+=W+gap;
+    if(i===1){ makeColon(svg,x+gap*0.3,y,H,t); x+=t+gap*1.6; }
+  }
+  if(legends) legends(svg,x,y,H);
+  return digits;
+}
+function showTime(digits,hh,mm){
+  var s=(hh<10?'0':'')+hh+(mm<10?'0':'')+mm;
+  digits.forEach(function(d,i){
+    var lit=SEG[s[i]]||'';
+    Object.keys(d).forEach(function(k){
+      d[k].setAttribute('opacity', lit.indexOf(k)>=0?ON_OP:OFF_OP);
+    });
+  });
+}
+var ALM={set:null,now:null,timer:0,h:10,m:0};
+function almBuild(){
+  if(ALM.set) return;
+  ALM.set=buildClock('almSet',31,46,6.5,10,5,function(svg,x,y,H){
+    makeLegend(svg,x+8,y+13,'AM',true);
+    makeLegend(svg,x+8,y+H-1,'PM',false);
+  });
+  ALM.now=buildClock('almNow',15,22,3.4,10,4,null);
+  showTime(ALM.set,ALM.h,ALM.m);
+  almTick();
+}
+function almTick(){
+  var d=new Date();
+  showTime(ALM.now,d.getHours(),d.getMinutes());
+}
+function almStart(){ almBuild(); clearInterval(ALM.timer); ALM.timer=setInterval(almTick,10000); }
+function almStop(){ clearInterval(ALM.timer); ALM.timer=0; }
+
+/* ---------- 输入区 ----------
+   右边永远只有一个控件。空着的时候它是图片，有东西可发的时候它就是发送。
+   一次只做一件事，和日历底栏、贴纸上一句话是同一条。 */
+document.querySelectorAll('.composer').forEach(function(c){
+  var field=c.querySelector('.cfield'), input=c.querySelector('.cin');
+  var chips=c.querySelector('.chips'), file=c.querySelector('.cfile');
+  var pic=c.querySelector('.pic');
+  var screen=c.closest('.screen');
+  var sink=screen.querySelector('.track') || screen.querySelector('.thread');
+  var scroll=screen.querySelector('.scroll');
+  var img=null;
+
+  function grow(){ input.style.height='auto'; input.style.height=input.scrollHeight+'px'; }
+  function sync(){
+    /* 图片键常驻。发送不做键——键盘弹上来自带一个 */
+    field.classList.toggle('has', input.value.trim().length>0 || !!img);
+  }
+  function clearImg(){ img=null; chips.innerHTML=''; file.value=''; sync(); }
+
+  pic.addEventListener('click',function(){ file.click(); });
+  file.addEventListener('change',function(){
+    var f=file.files&&file.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      img=r.result; chips.innerHTML='';
+      var w=document.createElement('div'); w.className='chip';
+      var i=document.createElement('img'); i.src=img; i.alt='';
+      var x=document.createElement('button'); x.type='button'; x.textContent='×';
+      x.setAttribute('aria-label','去掉这张图');
+      x.addEventListener('click',clearImg);
+      w.appendChild(i); w.appendChild(x); chips.appendChild(w); sync();
+    };
+    r.readAsDataURL(f);
+  });
+
+  input.addEventListener('input',function(){ grow(); sync(); });
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+  });
+
+  function send(){
+    var txt=input.value.trim();
+    if(!txt && !img) return;
+    var m=document.createElement('div'); m.className='msg you';
+    if(img){ var i=document.createElement('img'); i.src=img; i.alt=''; m.appendChild(i); }
+    if(txt) m.appendChild(document.createTextNode(txt));
+    sink.appendChild(m);
+    /* 入场动画放完就摘掉，否则它会盖住 widget 消隐算出来的透明度 */
+    setTimeout(function(){
+      m.style.animation='none';
+      if(sink===sink.closest('.track') && typeof bubbles!=='undefined'){
+        bubbles.push(m); queueDim();
+      }
+    },500);
+    input.value=''; grow(); clearImg();
+    if(scroll) scroll.scrollTop=scroll.scrollHeight;
+  }
+  grow(); sync();
+});
+
+/* ---------- 她的光标 ----------
+   同一支扁头笔的笔尖。画在纸上的留下，走过的地方不留，所以拖尾是一层每帧重画的布。
+   她不常驻：来一趟，待几秒，走掉。
+   运动模型见规范「她的光标 · 怎么动」一节。要点是：一次动作是一条预先规划好的轨迹，
+   规划完就按时间播完，中途不重新决定。每帧算方向的做法（lerp、弹簧、steering）
+   模拟的是物理不是手，必然发飘。 */
+var cvs=document.getElementById('cur'), ctx=cvs.getContext('2d');
+var scroller=track.parentNode;
+var homes=widgets.map(function(v){return {x:v.offsetLeft,y:v.offsetTop}});
+
+/* 笔尖是一个横宽纵窄的椭圆，半轴 3.2 与 1.33，比 2.4 比 1 */
+var NIB_A=3.2, NIB_B=3.2/2.4;
+var TRAIL_MS=1600, TRAIL_LEN=210, TRAIL_A=0.52, INK='138,114,99';
+
+/* 时长：Fitts。距离越远越久，但是对数不是线性 */
+var T_BASE=380, T_SCALE=260, T_UNIT=55;
+var SLOWER={drift:3.6, reach:1.4, haul:2.2, enter:1.1, leave:0.95};
+/* 三分之二次幂：曲率越大速度越低。EPS 定的是直线段的上限速度 */
+var CURVE_EPS=1/320;
+/* 一趟的长度与间隔。原型是秒，真实产品该是分钟到小时 */
+var STAY_MIN=7000, STAY_VAR=6000, GAP_MIN=9000, GAP_VAR=9000, FIRST_IN=1100;
+var POUNCE_WAIT=1500, HOLD_MS=300, SETTLE_MS=460, STRAY=8, GRAB_R=14;
+
+var her={live:false,x:0,y:0,hx:1,hy:0,trail:[],dirty:null,
+         hold:-1,ox:0,oy:0,aim:-1,tries:0,until:0,raf:0,act:null};
+var visit={on:false,timer:0};
+
+/* ---- 轨迹 ---- */
+function minJerk(t){ return t*t*t*(10+t*(-15+6*t)); }
+function bez(P,u){
+  var v=1-u, a=v*v*v, b=3*v*v*u, c=3*v*u*u, d=u*u*u;
+  return {x:a*P[0].x+b*P[1].x+c*P[2].x+d*P[3].x,
+          y:a*P[0].y+b*P[1].y+c*P[2].y+d*P[3].y};
+}
+function bezD(P,u){
+  var v=1-u, a=3*v*v, b=6*v*u, c=3*u*u;
+  return {x:a*(P[1].x-P[0].x)+b*(P[2].x-P[1].x)+c*(P[3].x-P[2].x),
+          y:a*(P[1].y-P[0].y)+b*(P[2].y-P[1].y)+c*(P[3].y-P[2].y)};
+}
+function bezDD(P,u){
+  var v=1-u;
+  return {x:6*v*(P[2].x-2*P[1].x+P[0].x)+6*u*(P[3].x-2*P[2].x+P[1].x),
+          y:6*v*(P[2].y-2*P[1].y+P[0].y)+6*u*(P[3].y-2*P[2].y+P[1].y)};
+}
+function curvature(P,u){
+  var d=bezD(P,u), dd=bezDD(P,u);
+  var s=Math.pow(d.x*d.x+d.y*d.y,1.5);
+  return s<1e-6 ? 0 : Math.abs(d.x*dd.y-d.y*dd.x)/s;
+}
+/* 把 [0,1] 的贝塞尔参数换成「走完它要花的时间份额」。
+   曲率大的地方每单位长度耗时更多，这就是三分之二次幂定律 */
+function warp(P){
+  var N=40, pts=[], cum=[0], last=bez(P,0), arc=0;
+  for(var i=1;i<=N;i++){
+    var u=i/N, p=bez(P,u);
+    var ds=Math.hypot(p.x-last.x,p.y-last.y); arc+=ds;
+    var k=curvature(P,(i-0.5)/N);
+    cum.push(cum[i-1]+ds*Math.pow(k+CURVE_EPS,1/3));
+    last=p;
+  }
+  var tot=cum[N]||1;
+  for(i=0;i<=N;i++) cum[i]/=tot;
+  return {cum:cum,N:N,arc:arc};
+}
+function unwarp(W,s){
+  var c=W.cum, lo=0, hi=W.N;
+  while(hi-lo>1){ var m=(lo+hi)>>1; if(c[m]<s) lo=m; else hi=m; }
+  var span=c[hi]-c[lo];
+  return (lo+(span?(s-c[lo])/span:0))/W.N;
+}
+/* 起手方向接上一次的行进方向，两段动作之间才不会有折角 */
+function plan(kind,tx,ty,now){
+  var p0={x:her.x,y:her.y}, p1={x:tx,y:ty};
+  var D=Math.hypot(tx-her.x,ty-her.y)||1;
+  var bow=(kind==='drift'?0.26:0.15)*D*(Math.random()<.5?-1:1)*(0.6+Math.random()*0.8);
+  var ux=(tx-her.x)/D, uy=(ty-her.y)/D, nx=-uy, ny=ux;
+  var P=[p0,
+    {x:her.x+her.hx*D*0.34+nx*bow*0.5, y:her.y+her.hy*D*0.34+ny*bow*0.5},
+    {x:tx-ux*D*0.30+nx*bow, y:ty-uy*D*0.30+ny*bow},
+    p1];
+  var W=warp(P);
+  var T=(T_BASE+T_SCALE*Math.log2(1+W.arc/T_UNIT))*(SLOWER[kind]||1);
+  her.act={kind:kind,P:P,W:W,t0:now,T:T};
+}
+function still(ms,now){ her.act={kind:'hold',P:null,t0:now,T:ms}; }
+
+/* ---- 场景 ---- */
+function fitCanvas(){
+  var w=track.offsetWidth, h=track.offsetHeight, dpr=Math.min(2,window.devicePixelRatio||1);
+  cvs.width=w*dpr; cvs.height=h*dpr;
+  cvs.style.width=w+'px'; cvs.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function band(){
+  var t=scroller.scrollTop;
+  return {top:t+52, bot:t+scroller.clientHeight-52, l:30, r:track.offsetWidth-30};
+}
+function strayed(){
+  var b=band(), pick=-1, far=STRAY, now=performance.now();
+  widgets.forEach(function(v,i){
+    if(v._held) return;
+    if(v._busy && now-v._busy<2600) return;   /* 你正在用的东西她不动 */
+    var d=Math.hypot(v.offsetLeft-homes[i].x, v.offsetTop-homes[i].y);
+    var cy=v.offsetTop+v.offsetHeight/2;
+    if(d>far && cy>b.top && cy<b.bot){ far=d; pick=i; }
+  });
+  return pick;
+}
+function grabPoint(i){
+  var v=widgets[i];
+  return {x:v.offsetLeft+v.offsetWidth*0.28, y:v.offsetTop+16};
+}
+function herLetGo(i){
+  if(her.hold!==i) return;
+  /* 你一碰她就撒手，往回缩一小步。缩也是一次规划好的动作，不是瞬移 */
+  widgets[her.hold].style.transition='';
+  her.hold=-1; her.aim=-1;
+  plan('reach', her.x-her.hx*46, her.y-her.hy*46, performance.now());
+}
+
+/* ---- 一趟 ---- */
+function toggleHer(){
+  if(go.now!==4) go(4);
+  visit.on ? sessionOff() : sessionOn();
+}
+function sessionOn(){
+  if(calm){ tidyNow(); return; }
+  visit.on=true; label('她在的时候会来');
+  clearTimeout(visit.timer);
+  visit.timer=setTimeout(function(){ if(visit.on) herIn(); }, FIRST_IN);
+}
+function sessionOff(){
+  visit.on=false; clearTimeout(visit.timer);
+  if(her.live) herOut(); else label('让她来一趟');
+}
+function label(s){ var b=document.getElementById('herBtn'); if(b) b.textContent=s; }
+function tidyNow(){
+  widgets.forEach(function(v,i){
+    v.style.transition='left 1ms,top 1ms';
+    v.style.left=homes[i].x+'px'; v.style.top=homes[i].y+'px';
+  });
+  queueDim();
+}
+function herIn(){
+  if(her.live) return;
+  fitCanvas();
+  var b=band(), now=performance.now();
+  her.live=true; her.trail.length=0; her.dirty=null;
+  her.hold=-1; her.aim=-1; her.tries=0;
+  her.x=b.l+Math.random()*(b.r-b.l); her.y=b.top-80;
+  her.hx=0; her.hy=1;                       /* 进来的时候已经在动了 */
+  her.until=now+STAY_MIN+Math.random()*STAY_VAR;
+  plan('enter', her.x+(Math.random()-.5)*90, b.top+80, now);
+  cvs.classList.add('here');
+  her.raf=requestAnimationFrame(tick);
+}
+function herOut(){
+  if(!her.live || (her.act&&her.act.kind==='leave')) return;
+  her.hold=-1; her.aim=-1;
+  var b=band();
+  plan('leave', her.x+(Math.random()-.5)*130, b.top-110, performance.now());
+}
+function herOff(reschedule){
+  her.live=false; her.act=null; her.hold=-1; her.aim=-1;
+  her.trail.length=0; her.dirty=null;
+  cancelAnimationFrame(her.raf); cvs.classList.remove('here');
+  ctx.clearRect(0,0,track.offsetWidth,track.offsetHeight);
+  if(reschedule && visit.on){
+    clearTimeout(visit.timer);
+    visit.timer=setTimeout(function(){ if(visit.on) herIn(); },
+      GAP_MIN+Math.random()*GAP_VAR);
+  }
+}
+function herStop(){ visit.on=false; clearTimeout(visit.timer); herOff(false); label('让她来一趟'); }
+
+/* 一个动作播完了，决定下一个。决定只发生在这里，不发生在每一帧 */
+function next(now){
+  var k=her.act?her.act.kind:'';
+  if(k==='leave'){ herOff(true); return false; }
+
+  if(k==='reach'){
+    if(her.aim>=0){
+      var g=grabPoint(her.aim), v=widgets[her.aim];
+      if(v._held){ her.aim=-1; }
+      else if(Math.hypot(g.x-her.x,g.y-her.y)<GRAB_R){
+        her.hold=her.aim; her.ox=her.x-v.offsetLeft; her.oy=her.y-v.offsetTop;
+        still(HOLD_MS,now); return true;      /* 按住的那一下，手是停的 */
+      }else if(her.tries++<2){
+        plan('reach',g.x,g.y,now); return true;  /* 它挪了。再够一次，不是每帧追 */
+      }else her.aim=-1;
+    }
+  }
+  if(k==='hold' && her.hold>=0){
+    plan('haul', homes[her.hold].x+her.ox, homes[her.hold].y+her.oy, now);
+    return true;
+  }
+  if(k==='haul' && her.hold>=0){
+    var w=widgets[her.hold];
+    w.style.transition='left 200ms cubic-bezier(.22,.61,.36,1),top 200ms cubic-bezier(.22,.61,.36,1)';
+    w.style.left=homes[her.hold].x+'px'; w.style.top=homes[her.hold].y+'px';
+    her.hold=-1; her.aim=-1; her.tries=0; queueDim();
+    still(SETTLE_MS,now); return true;         /* 放下之后看它一眼 */
+  }
+
+  if(now>her.until && her.hold<0){ herOut(); return true; }
+
+  if(now-lastRelease>POUNCE_WAIT){
+    var i=strayed();
+    if(i>=0){ her.aim=i; her.tries=0; var p=grabPoint(i); plan('reach',p.x,p.y,now); return true; }
+  }
+  var b=band();
+  plan('drift', b.l+Math.random()*(b.r-b.l),
+                b.top+Math.random()*Math.max(50,b.bot-b.top), now);
+  return true;
+}
+
+/* ---- 每帧 ---- */
+function tick(now){
+  if(!her.live) return;
+  var a=her.act;
+  if(!a){ if(!next(now)) return; a=her.act; }
+
+  var tau=Math.min(1,(now-a.t0)/a.T);
+  if(a.P){
+    var u=unwarp(a.W, minJerk(tau));
+    var p=bez(a.P,u), d=bezD(a.P,u), m=Math.hypot(d.x,d.y);
+    her.x=p.x; her.y=p.y;
+    if(m>1e-4){ her.hx=d.x/m; her.hy=d.y/m; }
+  }
+  if(tau>=1){ if(!next(now)) return; }
+
+  if(her.hold>=0){
+    var h=widgets[her.hold];
+    h.style.left=clampX(h,her.x-her.ox)+'px';
+    h.style.top=clampY(h,her.y-her.oy)+'px';
+    queueDim();
+  }
+
+  her.trail.push({x:her.x,y:her.y,t:now});
+  trim(now);
+  paintHer(now);
+  her.raf=requestAnimationFrame(tick);
+}
+function trim(now){
+  var p=her.trail, run=0, cut=0;
+  for(var i=p.length-1;i>0;i--){
+    run+=Math.hypot(p[i].x-p[i-1].x, p[i].y-p[i-1].y);
+    if(run>TRAIL_LEN || now-p[i].t>TRAIL_MS){ cut=i; break; }
+  }
+  if(cut>0) p.splice(0,cut);
+}
+
+/* ---- 拖尾 ----
+   不是一堆描边段，是笔尖扫出来的一条带。每一小段填成一个四边形，
+   相邻两段共用同一条边，所以没有缺口、没有端点、也不会在接缝处叠深。 */
+function offset(dx,dy){
+  var m=Math.hypot(dx,dy); if(m<1e-6) return {x:0,y:NIB_B};
+  var nx=-dy/m, ny=dx/m;
+  /* 轴对齐椭圆在法线方向上的支撑长度。横走取薄边，竖走取满幅，几何自己给出 2.4 比 1 */
+  var r=Math.sqrt(NIB_A*NIB_A*nx*nx + NIB_B*NIB_B*ny*ny);
+  return {x:nx*r, y:ny*r};
+}
+function catmull(p,i,t){
+  var p0=p[Math.max(0,i-1)], p1=p[i], p2=p[Math.min(p.length-1,i+1)], p3=p[Math.min(p.length-1,i+2)];
+  var t2=t*t, t3=t2*t;
+  return {x:0.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+          y:0.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3),
+          t:p1.t+(p2.t-p1.t)*t};
+}
+function paintHer(now){
+  var d=her.dirty;
+  if(d) ctx.clearRect(d.x,d.y,d.w,d.h);
+  var src=her.trail;
+  if(src.length>1){
+    var s=[];                                 /* Catmull-Rom 加密，转弯处才没有棱 */
+    for(var i=0;i<src.length-1;i++) for(var j=0;j<3;j++) s.push(catmull(src,i,j/3));
+    s.push(src[src.length-1]);
+    var x0=her.x,y0=her.y,x1=her.x,y1=her.y;
+    for(i=0;i<s.length-1;i++){
+      var a=s[i], b=s[i+1], ex=b.x-a.x, ey=b.y-a.y;
+      var len=Math.hypot(ex,ey); if(len<1e-4) continue;
+      var o=offset(ex,ey), gx=ex/len*0.4, gy=ey/len*0.4;   /* 微微加长，消掉接缝 */
+      var k=1-(now-b.t)/TRAIL_MS; if(k<=0) continue;
+      var head=i/(s.length-1);
+      ctx.fillStyle='rgba('+INK+','+(TRAIL_A*k*k*(0.3+0.7*head)).toFixed(3)+')';
+      ctx.beginPath();
+      ctx.moveTo(a.x+o.x-gx, a.y+o.y-gy);
+      ctx.lineTo(b.x+o.x+gx, b.y+o.y+gy);
+      ctx.lineTo(b.x-o.x+gx, b.y-o.y+gy);
+      ctx.lineTo(a.x-o.x-gx, a.y-o.y-gy);
+      ctx.closePath(); ctx.fill();
+      x0=Math.min(x0,a.x,b.x); y0=Math.min(y0,a.y,b.y);
+      x1=Math.max(x1,a.x,b.x); y1=Math.max(y1,a.y,b.y);
+    }
+    her.dirty={x:x0-11,y:y0-11,w:x1-x0+22,h:y1-y0+22};
+  }else her.dirty={x:her.x-11,y:her.y-11,w:22,h:22};
+  /* 笔尖。扁头笔点不出正圆 */
+  ctx.fillStyle='rgba('+INK+',0.9)';
+  ctx.beginPath(); ctx.ellipse(her.x,her.y,5.4,3.2,0,0,Math.PI*2); ctx.fill();
+}
+
+window.addEventListener('resize',function(){ if(her.live) fitCanvas(); });
+
+/* ---------- 演示菜单（测试脚手架） ---------- */
+var dev=document.getElementById('dev');
+dev.querySelector('.devbtn').addEventListener('click',function(){ dev.classList.toggle('open'); });
+dev.querySelectorAll('.devmenu button').forEach(function(b){
+  b.addEventListener('click',function(){
+    var a=b.dataset.act;
+    if(a==='restart') go(0);
+    else if(a==='draw') drawScene();
+    else if(a==='canvas') go(4);
+    else if(a==='her') toggleHer();
+    else if(a==='guess') guessOne();
+    dev.classList.remove('open');
+  });
+});
+
+/* ---------- iOS 键盘 ----------
+   软键盘弹起时把 #app 的高度收到可视视口，让输入区一直露在键盘上方 */
+var app=document.getElementById('app');
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',function(){
+    app.style.height=window.visualViewport.height+'px';
+    window.scrollTo(0,0);
+  });
+}
+
+stopDraw();
+go(0);
+</script>
 </body>
 </html>
