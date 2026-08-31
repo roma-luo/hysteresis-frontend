@@ -44,18 +44,16 @@ body.warmlit .glow{opacity:1;transform:none}
    但这三条不是你可以不同意的东西——它是平台在告诉你，不是在问你 */
 .terms{list-style:none;margin-bottom:auto}
 .terms li{position:relative;padding-left:17px;font-size:12.5px;line-height:1.9;
-  color:var(--cold-ink);margin-bottom:16px;opacity:0}
+  color:var(--cold-ink);margin-bottom:16px;
+  opacity:0;transform:translateY(6px);
+  transition:opacity 620ms var(--ease),transform 620ms var(--ease)}
 .terms li::before{content:"";position:absolute;left:0;top:.74em;
   width:4px;height:4px;border-radius:50%;background:var(--cold-2nd)}
-/* 一条一条落下来，落完了「继续」才出现。动画挂在 .on 上，
-   所以退回来再进会重放一遍 */
-.screen.on .terms li{animation:termrise 620ms var(--ease) both}
-.screen.on .terms li:nth-child(1){animation-delay:240ms}
-.screen.on .terms li:nth-child(2){animation-delay:820ms}
-.screen.on .terms li:nth-child(3){animation-delay:1400ms}
-.terms-screen .coldbtn{opacity:0}
-.screen.on.terms-screen .coldbtn{animation:termrise 700ms var(--ease) 2060ms both}
-@keyframes termrise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.terms li.in{opacity:1;transform:none}
+/* 一条一条地给：第一条自己出来，之后每按一次「继续」出一条，
+   三条都在了再按才走。这一页不该是一屏铺开、一眼划过去的东西 */
+.terms-screen .coldbtn{opacity:0;transition:opacity 620ms var(--ease)}
+.terms-screen.on .coldbtn{opacity:1;transition-delay:700ms}
 .coldbtn{background:var(--cold-ink);color:#fff;border:none;border-radius:6px;padding:12px;font-size:12.5px;
   width:100%;font-family:inherit;cursor:pointer;letter-spacing:.04em}
 .coldbtn:hover{background:#3A3A42}
@@ -455,7 +453,7 @@ body::-webkit-scrollbar-button:vertical:end:increment{
         <li>在 AFTER 里，它会和你保持长久的友谊，也会记得一切关于你的事情。</li>
         <li>你的数据拥有完全的隐私。</li>
       </ul>
-      <button class="coldbtn" onclick="go(8)">继续</button>
+      <button class="coldbtn" onclick="termsNext()">继续</button>
     </div>
   </section>
 
@@ -806,6 +804,7 @@ function go(n){
   });
   document.body.classList.toggle('warmlit', WARM.indexOf(n)>=0);
   paintProgress(n);
+  if(n===1) termsReset();
   if(n===4) requestAnimationFrame(dim);
 }
 
@@ -1116,6 +1115,29 @@ function almTick(){
 }
 function almStart(){ almBuild(); clearInterval(ALM.timer); ALM.timer=setInterval(almTick,10000); }
 function almStop(){ clearInterval(ALM.timer); ALM.timer=0; }
+
+/* ---------- 协议 ----------
+   一条一条地给。第一条自己出来，之后每按一次「继续」出一条；
+   三条都在了，再按才走。三条告知不是一屏读完的东西，
+   分三次给，每次只让你读一句 */
+var termsScreen=document.querySelector('.terms-screen');
+var termItems=[].slice.call(termsScreen.querySelectorAll('.terms li'));
+var termShown=0, termTimer=0;
+
+function termsReset(){
+  clearTimeout(termTimer);
+  termShown=0;
+  termItems.forEach(function(li){ li.classList.remove('in'); });
+  termTimer=setTimeout(termsNext, calm?0:260);
+}
+function termsNext(){
+  if(termShown<termItems.length){
+    termItems[termShown].classList.add('in');
+    termShown++;
+  }else{
+    go(8);
+  }
+}
 
 /* ---------- 选项 ----------
    选中不前进，只是把下面那个「继续」交出来。走不走仍然是你按的，
