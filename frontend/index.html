@@ -40,8 +40,22 @@ body.warmlit .glow{opacity:1;transform:none}
 .field{background:var(--cold-surface);border:0.5px solid var(--cold-line);border-radius:6px;
   padding:12px 13px;font-size:13px;color:#A9A9B2}
 .legal{font-size:11px;line-height:1.8;color:var(--cold-2nd);margin-top:14px}
-.terms{font-size:12px;line-height:2.4;margin-bottom:auto}
-.terms b{font-weight:400;display:inline-block;width:15px;color:var(--cold-2nd)}
+/* 三条告知。圆点而不是方框：方框看起来像等着你去勾的复选框，
+   但这三条不是你可以不同意的东西——它是平台在告诉你，不是在问你 */
+.terms{list-style:none;margin-bottom:auto}
+.terms li{position:relative;padding-left:17px;font-size:12.5px;line-height:1.9;
+  color:var(--cold-ink);margin-bottom:16px;opacity:0}
+.terms li::before{content:"";position:absolute;left:0;top:.74em;
+  width:4px;height:4px;border-radius:50%;background:var(--cold-2nd)}
+/* 一条一条落下来，落完了「继续」才出现。动画挂在 .on 上，
+   所以退回来再进会重放一遍 */
+.screen.on .terms li{animation:termrise 620ms var(--ease) both}
+.screen.on .terms li:nth-child(1){animation-delay:240ms}
+.screen.on .terms li:nth-child(2){animation-delay:820ms}
+.screen.on .terms li:nth-child(3){animation-delay:1400ms}
+.terms-screen .coldbtn{opacity:0}
+.screen.on.terms-screen .coldbtn{animation:termrise 700ms var(--ease) 2060ms both}
+@keyframes termrise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .coldbtn{background:var(--cold-ink);color:#fff;border:none;border-radius:6px;padding:12px;font-size:12.5px;
   width:100%;font-family:inherit;cursor:pointer;letter-spacing:.04em}
 .coldbtn:hover{background:#3A3A42}
@@ -339,6 +353,12 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .screen.auth .mid{opacity:0}
 .screen.auth.on .mid{animation:footrise 900ms var(--ease) 260ms both}
 
+/* 选完才出现的「继续」。没选之前它不在——屏幕上不该有一个按不动的键。
+   同时挂 disabled：只靠 pointer-events 挡得住手指，挡不住 Tab 加回车 */
+.step-next{opacity:0;transform:translateY(6px);pointer-events:none;
+  transition:opacity 420ms var(--ease),transform 520ms var(--ease)}
+.step-next.ready{opacity:1;transform:none;pointer-events:auto}
+
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
 .dev{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:40}
 .dev>.devbtn{position:relative;width:24px;height:24px;border-radius:50%;border:0;cursor:pointer;
@@ -421,7 +441,7 @@ body::-webkit-scrollbar-button:vertical:end:increment{
     </div>
   </section>
 
-  <section class="screen cold" data-s="1">
+  <section class="screen cold terms-screen" data-s="1">
     <div class="body">
       <div class="navrow">
         <button class="back" onclick="back()" aria-label="返回">
@@ -430,11 +450,11 @@ body::-webkit-scrollbar-button:vertical:end:increment{
         </button>
         <div class="prog"><i></i></div>
       </div>
-      <div class="terms">
-        <b>□</b>接下来跟你说话的是一个 AI 角色，不是自然人。<br>
-        <b>□</b>它会记住发生过的事，那些事不能被撤回。<br>
-        <b>□</b>你的数据可以随时导出或删除。
-      </div>
+      <ul class="terms">
+        <li>在 AFTER 里，与你对话的是 AI，而非真实的人类。</li>
+        <li>在 AFTER 里，它会和你保持长久的友谊，也会记得一切关于你的事情。</li>
+        <li>你的数据拥有完全的隐私。</li>
+      </ul>
       <button class="coldbtn" onclick="go(8)">继续</button>
     </div>
   </section>
@@ -450,10 +470,11 @@ body::-webkit-scrollbar-button:vertical:end:increment{
       </div>
       <div class="ask">你为什么想使用 AFTER？</div>
       <div class="opts">
-        <button class="opt" data-next="9">我想分享生活中的琐事，让情绪有一个出口</button>
-        <button class="opt" data-next="9">我想有一个私人的人工助手</button>
-        <button class="opt" data-next="9">我只是单纯的好奇</button>
+        <button class="opt">我想分享生活中的琐事，让情绪有一个出口</button>
+        <button class="opt">我想有一个私人的人工助手</button>
+        <button class="opt">我只是单纯的好奇</button>
       </div>
+      <button class="coldbtn step-next" data-next="9" disabled>继续</button>
     </div>
   </section>
 
@@ -468,14 +489,15 @@ body::-webkit-scrollbar-button:vertical:end:increment{
       </div>
       <div class="ask">你是怎么知道 AFTER 的？</div>
       <div class="opts">
-        <button class="opt" data-next="2">朋友 / 家人</button>
-        <button class="opt" data-next="2">搜索引擎</button>
-        <button class="opt" data-next="2">社区 / 组织</button>
-        <button class="opt" data-next="2">抖音</button>
-        <button class="opt" data-next="2">应用商店</button>
-        <button class="opt" data-next="2">其他</button>
-        <button class="opt" data-next="2">我不方便透露</button>
+        <button class="opt">朋友 / 家人</button>
+        <button class="opt">搜索引擎</button>
+        <button class="opt">社区 / 组织</button>
+        <button class="opt">抖音</button>
+        <button class="opt">应用商店</button>
+        <button class="opt">其他</button>
+        <button class="opt">我不方便透露</button>
       </div>
+      <button class="coldbtn step-next" data-next="2" disabled>继续</button>
     </div>
   </section>
 
@@ -1096,13 +1118,19 @@ function almStart(){ almBuild(); clearInterval(ALM.timer); ALM.timer=setInterval
 function almStop(){ clearInterval(ALM.timer); ALM.timer=0; }
 
 /* ---------- 选项 ----------
-   先让选中被看见，再走。立刻跳走等于没给回应 */
+   选中不前进，只是把下面那个「继续」交出来。走不走仍然是你按的，
+   和协议页同一条：这几页都要你自己按下一步 */
 document.querySelectorAll('.opt').forEach(function(b){
   b.addEventListener('click',function(){
-    b.parentNode.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('sel'); });
+    var body=b.closest('.body');
+    body.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('sel'); });
     b.classList.add('sel');
-    setTimeout(function(){ go(+b.dataset.next); }, calm?0:280);
+    var next=body.querySelector('.step-next');
+    if(next){ next.disabled=false; next.classList.add('ready'); }
   });
+});
+document.querySelectorAll('.step-next').forEach(function(b){
+  b.addEventListener('click',function(){ go(+b.dataset.next); });
 });
 
 /* ---------- 输入区 ----------
