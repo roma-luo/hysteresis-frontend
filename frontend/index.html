@@ -357,6 +357,26 @@ body::-webkit-scrollbar-button:vertical:end:increment{
   transition:opacity 420ms var(--ease),transform 520ms var(--ease)}
 .step-next.ready{opacity:1;transform:none;pointer-events:auto}
 
+/* 进入。镜面：一道缓慢扫过的高光，加顶边一线反光——墨面被打磨过的样子。
+   高光取暖色不取白：这块镜子反的是画布上那五团光，不是一盏白灯。
+   这是全篇唯一一处允许有光泽的表面，因为它只出现一次，就在你要进门那一下 */
+.mirror{position:relative;overflow:hidden;color:var(--base);
+  background:linear-gradient(176deg,#4A453F 0%,#3E3A36 40%,#332F2B 100%)}
+.mirror span{position:relative;z-index:1}
+.mirror::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,rgba(252,251,250,0),rgba(252,251,250,.32),rgba(252,251,250,0))}
+.mirror::after{content:"";position:absolute;top:-60%;bottom:-60%;left:0;width:40%;
+  pointer-events:none;
+  background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(250,238,222,.14) 36%,
+    rgba(255,250,244,.30) 50%,rgba(250,238,222,.14) 64%,rgba(255,255,255,0) 100%);
+  animation:sheen 5200ms ease-in-out 1100ms infinite}
+/* 扫完停一会儿再扫。一直扫就成了加载条 */
+@keyframes sheen{
+  0%{transform:translateX(-170%) skewX(-14deg)}
+  52%,100%{transform:translateX(330%) skewX(-14deg)}
+}
+.mirror:hover{background:linear-gradient(176deg,#544E47 0%,#48433D 40%,#3B3733 100%)}
+
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
 .dev{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:40}
 .dev>.devbtn{position:relative;width:24px;height:24px;border-radius:50%;border:0;cursor:pointer;
@@ -387,6 +407,13 @@ body::-webkit-scrollbar-button:vertical:end:increment{
     </div>
   </section>
 
+  <section class="screen warm start" data-s="10" id="enterScreen">
+    <div class="brand"><span>After</span></div>
+    <div class="btns">
+      <button class="startbtn mirror" onclick="go(2)"><span>进入</span></button>
+    </div>
+  </section>
+
   <section class="screen warm auth" data-s="6">
     <div class="navrow"><button class="back" onclick="back()" aria-label="返回">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
@@ -412,14 +439,14 @@ body::-webkit-scrollbar-button:vertical:end:increment{
         <input class="tin" type="text" placeholder="邮箱、手机号或用户名"
                autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
         <input class="tin" type="password" placeholder="密码" autocomplete="current-password">
-        <button class="startbtn primary" onclick="go(2)">登录</button>
+        <button class="startbtn primary" onclick="go(10)">登录</button>
         <button class="forgot" type="button">忘记密码</button>
       </div>
     </div>
     <div class="foot">
-      <button class="startbtn quiet" onclick="go(2)">微信登录</button>
-      <button class="startbtn quiet" onclick="go(2)">邮箱登录</button>
-      <button class="startbtn quiet" onclick="go(2)">Apple ID 登录</button>
+      <button class="startbtn quiet" onclick="go(10)">微信登录</button>
+      <button class="startbtn quiet" onclick="go(10)">邮箱登录</button>
+      <button class="startbtn quiet" onclick="go(10)">Apple ID 登录</button>
     </div>
   </section>
 
@@ -495,7 +522,7 @@ body::-webkit-scrollbar-button:vertical:end:increment{
         <button class="opt">其他</button>
         <button class="opt">我不方便透露</button>
       </div>
-      <button class="coldbtn step-next" data-next="2" disabled>继续</button>
+      <button class="coldbtn step-next" data-next="10" disabled>继续</button>
     </div>
   </section>
 
@@ -774,7 +801,7 @@ glow.style.background=pools.map(function(p){
    注册表单的四步：年龄、协议、为什么来、从哪知道。进度条按它算，返回键按它退。
    暖屏是开始页、注册第一步、登录页和对话画布；冷屏只有平台要你办的那四件事。 */
 var FORM=[0,1,8,9];
-var WARM=[2,3,4,5,6,7];
+var WARM=[2,3,4,5,6,7,10];
 var BACK={0:6, 1:0, 8:1, 9:8, 6:5, 7:5};
 
 function paintProgress(n){
@@ -805,6 +832,7 @@ function go(n){
   document.body.classList.toggle('warmlit', WARM.indexOf(n)>=0);
   paintProgress(n);
   if(n===1) termsReset();
+  if(n===10) openWith(enterScreen);
   if(n===4) requestAnimationFrame(dim);
 }
 
@@ -1547,13 +1575,21 @@ if(window.visualViewport){
    字慢慢出现，微微发光地停在那儿；约五秒后按钮慢慢浮上来。字不走。 */
 var SPLASH_LIT=260, BTNS_AT=5200;
 var startScreen=document.getElementById('startScreen');
+var enterScreen=document.getElementById('enterScreen');
 var splashTimers=[];
-function boot(){
+
+/* 字标慢慢出现、微微发光，隔一会儿下面的键才浮上来。
+   开始页和走完一圈之后的进入页共用这一套——你回到的是同一块布，
+   只是这次下面只剩一个键 */
+function openWith(el){
   splashTimers.forEach(clearTimeout); splashTimers=[];
-  startScreen.classList.remove('in','lit');
+  el.classList.remove('in','lit');
+  splashTimers.push(setTimeout(function(){ el.classList.add('lit'); }, calm?60:SPLASH_LIT));
+  splashTimers.push(setTimeout(function(){ el.classList.add('in'); }, calm?240:BTNS_AT));
+}
+function boot(){
   go(5);
-  splashTimers.push(setTimeout(function(){ startScreen.classList.add('lit'); }, calm?60:SPLASH_LIT));
-  splashTimers.push(setTimeout(function(){ startScreen.classList.add('in'); }, calm?240:BTNS_AT));
+  openWith(startScreen);
 }
 
 stopDraw();
