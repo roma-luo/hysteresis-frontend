@@ -371,6 +371,27 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .glass:active{background:rgba(255,255,255,.22)}
 .glass:focus-visible{outline:2px solid var(--ink-2);outline-offset:3px}
 
+/* 个人信息。还是平台在收资料，冷屏表单的延续。
+   下拉用原生 select：选择器是系统的事，用系统的语气——和选图用系统选择器同一条 */
+.finfo{display:flex;flex-direction:column;gap:14px;margin-bottom:auto;overflow-y:auto;
+  padding-bottom:8px}
+.flabel{font-size:11px;color:var(--cold-2nd);letter-spacing:.05em;margin-bottom:6px}
+.fin{width:100%;background:var(--cold-surface);border:0.5px solid var(--cold-line);
+  border-radius:6px;padding:12px 13px;font-size:13px;font-family:inherit;
+  color:var(--cold-ink);outline:none;
+  transition:border-color 140ms var(--ease)}
+.fin::placeholder{color:#A9A9B2}
+.fin:focus{border-color:var(--cold-2nd)}
+.frow{display:flex;gap:9px}
+.frow>*{flex:1;min-width:0}
+.selwrap{position:relative}
+.selwrap::after{content:"";position:absolute;right:14px;top:50%;width:7px;height:7px;
+  border-right:1.2px solid var(--cold-2nd);border-bottom:1.2px solid var(--cold-2nd);
+  transform:translateY(-70%) rotate(45deg);pointer-events:none}
+select.fin{-webkit-appearance:none;appearance:none;background-color:var(--cold-surface);
+  padding-right:32px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，和占位字同灰 */
+
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
 .dev{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:40}
 .dev>.devbtn{position:relative;width:24px;height:24px;border-radius:50%;border:0;cursor:pointer;
@@ -398,6 +419,60 @@ body::-webkit-scrollbar-button:vertical:end:increment{
     <div class="btns">
       <button class="startbtn primary" onclick="go(6)">注册</button>
       <button class="startbtn quiet" onclick="go(7)">登录</button>
+    </div>
+  </section>
+
+  <section class="screen cold" data-s="11">
+    <div class="body">
+      <div class="navrow">
+        <button class="back" onclick="back()" aria-label="返回">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+        </button>
+        <div class="prog"><i></i></div>
+      </div>
+      <div class="ask">关于你</div>
+      <div class="finfo">
+        <div>
+          <div class="flabel">用户名</div>
+          <input class="fin" type="text" autocomplete="username"
+                 autocapitalize="none" autocorrect="off" spellcheck="false">
+        </div>
+        <div class="frow">
+          <div>
+            <div class="flabel">姓</div>
+            <input class="fin" type="text" autocomplete="family-name">
+          </div>
+          <div>
+            <div class="flabel">名</div>
+            <input class="fin" type="text" autocomplete="given-name">
+          </div>
+        </div>
+        <div>
+          <div class="flabel">性别</div>
+          <div class="selwrap">
+            <select class="fin" required>
+              <option value="" selected disabled>请选择</option>
+              <option>男性</option>
+              <option>女性</option>
+              <option>非二元性别</option>
+              <option>我不愿透露</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <div class="flabel">生日</div>
+          <div class="frow">
+            <div class="selwrap"><select class="fin" id="bdD" required aria-label="日">
+              <option value="" selected disabled>DD</option></select></div>
+            <div class="selwrap"><select class="fin" id="bdM" required aria-label="月">
+              <option value="" selected disabled>MM</option></select></div>
+            <div class="selwrap"><select class="fin" id="bdY" required aria-label="年">
+              <option value="" selected disabled>YYYY</option></select></div>
+          </div>
+        </div>
+      </div>
+      <button class="coldbtn" onclick="go(10)">继续</button>
     </div>
   </section>
 
@@ -516,7 +591,7 @@ body::-webkit-scrollbar-button:vertical:end:increment{
         <button class="opt">其他</button>
         <button class="opt">我不方便透露</button>
       </div>
-      <button class="coldbtn step-next" data-next="10" disabled>继续</button>
+      <button class="coldbtn step-next" data-next="11" disabled>继续</button>
     </div>
   </section>
 
@@ -794,9 +869,9 @@ glow.style.background=pools.map(function(p){
 /* ---------- 屏 ----------
    注册表单的四步：年龄、协议、为什么来、从哪知道。进度条按它算，返回键按它退。
    暖屏是开始页、注册第一步、登录页和对话画布；冷屏只有平台要你办的那四件事。 */
-var FORM=[0,1,8,9];
+var FORM=[0,1,8,9,11];
 var WARM=[2,3,4,5,6,7,10];
-var BACK={0:6, 1:0, 8:1, 9:8, 6:5, 7:5};
+var BACK={0:6, 1:0, 8:1, 9:8, 11:9, 6:5, 7:5};
 
 function paintProgress(n){
   var i=FORM.indexOf(n); if(i<0) return;
@@ -1137,6 +1212,22 @@ function almTick(){
 }
 function almStart(){ almBuild(); clearInterval(ALM.timer); ALM.timer=setInterval(almTick,10000); }
 function almStop(){ clearInterval(ALM.timer); ALM.timer=0; }
+
+/* ---------- 生日 ----------
+   年从满 18 岁那年起往回排：年龄门槛在第一步就立了，这里不再提供未成年的年份 */
+(function(){
+  function fill(id,from,to,step,pad){
+    var sel=document.getElementById(id);
+    for(var i=from; step>0?i<=to:i>=to; i+=step){
+      var o=document.createElement('option');
+      o.textContent=pad&&i<10?'0'+i:i;
+      sel.appendChild(o);
+    }
+  }
+  fill('bdD',1,31,1,true);
+  fill('bdM',1,12,1,true);
+  fill('bdY',new Date().getFullYear()-18,1920,-1,false);
+})();
 
 /* ---------- 协议 ----------
    一条一条地给。第一条自己出来，之后每按一次「继续」出一条；
