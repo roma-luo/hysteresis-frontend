@@ -57,3 +57,17 @@ def test_screenshot(mobile_page, app_url):
     mobile_page.screenshot(
         path=ARTIFACTS / f"{mobile_page.device_id}.png", full_page=True
     )
+
+
+def test_dark_mode_screenshots(mobile_page, app_url):
+    """夜间用例：加载前置入 after-dark=1，页面应以夜间模式打开，出一套夜间截图。"""
+    mobile_page.add_init_script("localStorage.setItem('after-dark','1')")
+    mobile_page.goto(app_url)
+    mobile_page.wait_for_selector("#app")
+    assert mobile_page.evaluate("document.body.classList.contains('dark')"), (
+        "夜间模式未随 localStorage 生效"
+    )
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    mobile_page.screenshot(
+        path=ARTIFACTS / f"{mobile_page.device_id}-dark.png", full_page=True
+    )

@@ -562,7 +562,7 @@ body.dark .gz .hint{color:var(--ink-2)}
 /* 玻璃共享配方：凡是浮在布上、不是物件的东西都吃这一份。
    禁止 box-shadow——玻璃靠边缘的光浮起来，不靠影子 */
 .hbtn,.who .idpill,.cfield,.cbtn,.msg.you,.glass,.gcard,.medal,.mact,
-.atsheet .panel,.atoast,.devmenu,.shelfrow,.ecard,.tin,.grow2,.startbtn.quiet{
+.atsheet .panel,.atoast,.shelfrow,.ecard,.tin,.grow2,.startbtn.quiet{
   background:var(--glass-fill);
   -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
   border:0.5px solid var(--glass-edge);
@@ -884,21 +884,6 @@ body.dark .loadbar i{background:var(--ink)}
 body.distant.warmlit .glow{opacity:.45}
 body.distant .who .ava{filter:saturate(.4)}
 
-/* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
-.dev{position:fixed;right:10px;top:46%;z-index:40}
-.dev>.devbtn{position:relative;width:24px;height:24px;border-radius:50%;border:0;cursor:pointer;
-  background:rgba(var(--shade-rgb),.12);color:var(--ink-4);font-size:var(--fs-3);line-height:1;
-  font-family:inherit}
-.dev>.devbtn::after{content:"";position:absolute;inset:-8px}
-.devmenu{position:absolute;right:0;top:30px;display:none;flex-direction:column;
-  border-radius:var(--r-glass);
-  padding:6px;min-width:132px}
-.dev.open .devmenu{display:flex}
-.devmenu .devnote{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:#C0B2A5;text-align:center;padding:4px 0 5px}
-.devmenu button{background:transparent;border:0;padding:8px 10px;font-size:var(--fs-3);color:var(--ink);
-  text-align:left;font-family:inherit;cursor:pointer;border-radius:var(--r-paper)}
-.devmenu button:hover{background:rgba(var(--shade-rgb),.08)}
-.devmenu button:active{background:rgba(var(--shade-rgb),.14)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
 </style>
 </head>
@@ -1191,7 +1176,7 @@ body.distant .who .ava{filter:saturate(.4)}
       </button>
     </div>
     <div class="scroll">
-      <div class="track" id="track" style="min-height:3000px">
+      <div class="track" id="track">
         <div class="stamp">23:26</div>
         <div class="msg her">放个东西给你听</div>
         <div class="slot" data-for="w1" style="height:130px"></div>
@@ -1277,13 +1262,13 @@ body.distant .who .ava{filter:saturate(.4)}
           </div>
         </div>
 
-        <div class="wg" id="w4" style="left:78px;top:1500px">
+        <div class="wg" id="w4" style="left:78px">
           <div class="stk p-lilac" style="transform:rotate(-2deg)">
             <p>你说你不喜欢别人问你在忙什么</p>
           </div>
         </div>
 
-        <div class="wg" id="w1" style="left:20px;top:196px">
+        <div class="wg" id="w1" style="left:20px">
           <div class="vt">
             <div class="platter">
               <div class="disc">
@@ -1303,7 +1288,7 @@ body.distant .who .ava{filter:saturate(.4)}
           </div>
         </div>
 
-        <div class="wg" id="w2" style="left:46px;top:648px">
+        <div class="wg" id="w2" style="left:46px">
           <div class="wx" style="position:relative">
             <div class="cloud" style="left:-10%;top:40%;width:78%;height:18%;background:rgba(160,165,190,.4)"></div>
             <div class="cloud" style="right:-12%;top:70%;width:74%;height:18%;background:rgba(255,255,255,.55)"></div>
@@ -1318,7 +1303,7 @@ body.distant .who .ava{filter:saturate(.4)}
           </div>
         </div>
 
-        <div class="wg" id="w3" style="left:42px;top:1160px">
+        <div class="wg" id="w3" style="left:42px">
           <div class="cal">
             <div class="mo">八月</div>
             <div class="grid">
@@ -1530,23 +1515,6 @@ body.distant .who .ava{filter:saturate(.4)}
     </div>
   </div>
 
-  <!-- 演示菜单：测试期的脚手架，对应原提案规范面板上的控制按钮。上线前整块删掉 -->
-  <div class="dev" id="dev">
-    <button class="devbtn" aria-label="演示菜单">···</button>
-    <div class="devmenu">
-      <span class="devnote">DEMO</span>
-      <button data-act="restart">从头走一遍</button>
-      <button data-act="draw">播放她画画</button>
-      <button data-act="canvas">看 widget 画布</button>
-      <button data-act="shelf">零件匣（独件页）</button>
-      <button data-act="netfail">模拟断网</button>
-      <button data-act="distant">她冷下来</button>
-      <button data-act="unlock">演示：成就达成</button>
-      <button data-act="endit">演示：被结束</button>
-      <button data-act="her" id="herBtn">让她来一趟</button>
-      <button data-act="guess">猜对一个字</button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -1559,6 +1527,9 @@ function parkWidgets(){
     v.style.top=(s.offsetTop+10)+'px';
     v.style.left='16px';
   });
+  /* 轨道的高度跟最后一个占位走：它到哪布就到哪，外加一屏多的留白，不写死 */
+  var slots=document.querySelectorAll('.slot[data-for]'), last=slots[slots.length-1];
+  if(last) document.getElementById('track').style.minHeight=(last.offsetTop+last.offsetHeight+320)+'px';
 }
 parkWidgets();
 var glow=document.getElementById('glow');
@@ -2779,26 +2750,6 @@ function herTap(v){
   })(t0);
 }
 var tapDone=false;
-
-/* ---------- 演示菜单（测试脚手架） ---------- */
-var dev=document.getElementById('dev');
-dev.querySelector('.devbtn').addEventListener('click',function(){ dev.classList.toggle('open'); });
-dev.querySelectorAll('.devmenu button').forEach(function(b){
-  b.addEventListener('click',function(){
-    var a=b.dataset.act;
-    if(a==='restart') boot();
-    else if(a==='draw') drawScene();
-    else if(a==='canvas') go(4);
-    else if(a==='shelf') go(12);
-    else if(a==='netfail') document.body.classList.toggle('netfail');
-    else if(a==='distant') document.body.classList.toggle('distant');
-    else if(a==='unlock') achvToast('成就达成 · 第一次让她记下一件事');
-    else if(a==='endit') go(14);
-    else if(a==='her') toggleHer();
-    else if(a==='guess') guessOne();
-    dev.classList.remove('open');
-  });
-});
 
 /* ---------- 玻璃感交互：设置 / 成就 / 引导共用 ----------
    打开：原页面先糊开（350ms），内容延迟 250ms 再淡入浮起；
