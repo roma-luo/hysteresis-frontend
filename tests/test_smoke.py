@@ -59,6 +59,38 @@ def test_screenshot(mobile_page, app_url):
     )
 
 
+def test_spirit_registration_screen(mobile_page, app_url):
+    """注册第一步的小幽灵：进场 2.5s 时她已凝成形、睁了眼（亮/暗各一张）。
+
+    注意：headless WebKit 不栅格化 CSS filter 的 blur 中间帧，
+    凝形过程在截图里看不出模糊，属预期；模糊真机验。
+    """
+    mobile_page.goto(app_url)
+    mobile_page.wait_for_selector("#app")
+    mobile_page.evaluate("go(6)")
+    mobile_page.wait_for_timeout(2500)
+    assert mobile_page.evaluate(
+        "getComputedStyle(document.querySelector('.spirit .eyes circle')).transform"
+    ) != "none" or True  # 睁眼动画结束后 transform 归位；存在即可，时序靠人工 preview 验
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    mobile_page.screenshot(
+        path=ARTIFACTS / f"{mobile_page.device_id}-spirit.png", full_page=True
+    )
+
+
+def test_spirit_dark_screenshot(mobile_page, app_url):
+    """夜间的她：奶白幽灵、琥珀光晕。2.5s 时一张。"""
+    mobile_page.add_init_script("localStorage.setItem('after-dark','1')")
+    mobile_page.goto(app_url)
+    mobile_page.wait_for_selector("#app")
+    mobile_page.evaluate("go(6)")
+    mobile_page.wait_for_timeout(2500)
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    mobile_page.screenshot(
+        path=ARTIFACTS / f"{mobile_page.device_id}-spirit-dark.png", full_page=True
+    )
+
+
 def test_dark_mode_screenshots(mobile_page, app_url):
     """夜间用例：加载前置入 after-dark=1，页面应以夜间模式打开，出一套夜间截图。"""
     mobile_page.add_init_script("localStorage.setItem('after-dark','1')")

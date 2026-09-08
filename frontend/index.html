@@ -15,7 +15,8 @@
 /* ========== 材质宪法 ==========
    这块布上只有四种东西，每个组件必须属于其中一种，不得混用配方。
 
-   布  ：--base 加光层。她的话直接落在布上，没有容器。
+   布  ：--base 加光层。她的话用最轻一档的玻璃（--glass-fill-quiet），
+         比你的气泡淡一档，但看得见。
    纸  ：不透明、暖、--r-paper、0.5px --line 描边、没有投影。
          贴纸、日历、格纸、冷屏的表单与按钮。
    玻璃：backdrop-filter --glass-blur、填充 --glass-fill、0.5px --glass-edge 边、
@@ -24,6 +25,7 @@
          顶栏三件、输入胶囊与两颗圆键、你的气泡、雾层上的卡、长按菜单、
          附件面板、toast、零件匣的行、事件卡、登录框。
    机器：--machine 实色、--r-widget。唱机、游戏机、闹钟。
+   她的形：墨。身后是光，动作背后有一层落后 180ms 的残影。
    ================================ */
 :root{
   /* 纸与墨（已有） */
@@ -504,21 +506,53 @@ body.dark .gz .hint{color:var(--ink-2)}
   align-items:center;justify-content:center;gap:24px}
 .auth .foot{flex:none;display:flex;flex-direction:column;gap:10px}
 
-/* PLACEHOLDER：她没有形象，这里先放一团会呼吸的光占位，
-   等真正的进场动画进来把这一块连注释一起删掉 */
-.ph{width:104px;height:104px;border-radius:50%;
+/* ---------- 她的形 ----------
+   材质是墨：身体 var(--ink)，眼睛 var(--base)，身后是现有那团琥珀光。
+   残影是同一条路径、落后 180ms 的自己——滞后是她的名字（HYSTERESIS）。
+   所有周期都是 3600ms，和字标同拍。夜间不用另写规则：token 自己反转 */
+.spirit{position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.spirit .halo{position:absolute;inset:0;border-radius:50%;
   background:radial-gradient(circle,rgba(216,165,78,.34) 0%,rgba(247,178,145,.18) 46%,rgba(247,178,145,0) 70%);
-  animation:phbreath 3600ms ease-in-out infinite}
-@keyframes phbreath{
-  0%,100%{transform:scale(.90);opacity:.66}
-  50%{transform:scale(1.08);opacity:1}
-}
-.ph-note{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:var(--ink-3);text-transform:uppercase}
+  opacity:0;transform:scale(.9);transition:opacity 900ms var(--ease),transform 1200ms var(--ease)}
+.spirit.on .halo{opacity:1;transform:none;animation:halobreath 3600ms ease-in-out 1200ms infinite}
+@keyframes halobreath{0%,100%{transform:scale(.94);opacity:.8}50%{transform:scale(1.06);opacity:1}}
+.spirit svg{width:96px;height:104px;overflow:visible;position:relative}
+.spirit .body,.spirit .after{fill:var(--ink);transform-box:fill-box;transform-origin:50% 12%}
+.spirit .after{opacity:.14}
+.spirit .eyes circle{fill:var(--base);transform-box:fill-box;transform-origin:50% 50%}
+/* 凝：从一团模糊的墨里聚出来。眼睛最后才睁 */
+.spirit .body,.spirit .after{opacity:0;filter:blur(16px);transform:scale(.85)}
+.spirit.on .body{animation:condense 1240ms var(--ease) 0ms both,float 3600ms ease-in-out 1240ms infinite}
+.spirit.on .after{animation:condenseAfter 1240ms var(--ease) 0ms both,float 3600ms ease-in-out 1420ms infinite}
+@keyframes condense{from{opacity:0;filter:blur(16px);transform:scale(.85)}60%{opacity:1}to{opacity:1;filter:blur(0);transform:none}}
+@keyframes condenseAfter{from{opacity:0;filter:blur(16px);transform:scale(.85)}to{opacity:.14;filter:blur(0);transform:none}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-5px) rotate(-1.4deg)}
+  70%{transform:translateY(-2px) rotate(1.2deg)}}
+.spirit .eyes circle{transform:scaleY(0)}
+.spirit.on .eyes circle{animation:open 220ms var(--spring) 1240ms both}
+.spirit.on .eyes circle:nth-child(2){animation-delay:1300ms}
+@keyframes open{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.spirit.on.awake .eyes circle{animation:none;transform:scaleY(1);transition:transform 120ms var(--ease)}
+.spirit.blink .eyes circle{transform:scaleY(.08)!important}
+/* 眼睛跟着你的手指走一点 */
+.spirit .eyes{transition:transform 320ms var(--ease)}
+/* 点她一下：压扁再弹起，光晕跟着亮一下 */
+.spirit.poke svg{animation:poke 480ms var(--spring)}
+@keyframes poke{0%{transform:none}30%{transform:scale(1.1,.9) translateY(4px)}100%{transform:none}}
+.spirit.poke .halo{animation:halopulse 600ms var(--ease)}
+@keyframes halopulse{0%{transform:scale(1);opacity:1}40%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:.85}}
+/* 散：她反过来散回光里，和屏幕变冷同时发生 */
+.spirit.leaving .body,.spirit.leaving .after{animation:none;filter:blur(14px);opacity:0;transform:scale(.9);
+  transition:filter 380ms var(--ease),opacity 380ms var(--ease),transform 380ms var(--ease)}
+.spirit.leaving .halo{animation:none;opacity:0;transform:scale(.8);transition:opacity 380ms,transform 380ms}
 
 /* 底部那一件事等中间的东西先站住，再自己浮上来。延迟里用 both 撑住起始态，
-   否则它会先闪一下满不透明度再退回去 */
+   否则它会先闪一下满不透明度再退回去。
+   注册页她先看了门，门才出现（2100ms）；登录页没有她，照旧 900ms */
 .screen.auth .foot{opacity:0}
-.screen.auth.on .foot{animation:footrise 900ms var(--ease) 900ms both}
+.screen.auth.on .foot{animation:footrise 900ms var(--ease) 2100ms both}
+.screen.auth.login.on .foot{animation-delay:900ms}
 @keyframes footrise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* 选项是一行可以按的字，不是一个控件——没有单选圆点，选中即前进。
@@ -976,11 +1010,17 @@ body.devmode .dev{display:block}
              stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
       </button></div>
     <div class="mid">
-      <!-- PLACEHOLDER：真正的进场动画进来后，替掉 .ph 和 .ph-note 这两行 -->
-      <div class="ph"></div>
-      <div class="ph-note">placeholder</div>
+      <div class="spirit" id="spirit" role="img" aria-label="她还没有形状">
+        <div class="halo"></div>
+        <svg viewBox="-6 -8 192 216" aria-hidden="true">
+          <defs><path id="ghost" d="M127.6,198.6 C134.0,195.5 144.8,183.4 152.9,170.3 C172.6,138.3 182.7,94.0 178.0,59.4 C167.8,-16.2 64.2,-21.1 45.9,53.1 C45.6,54.1 45.0,58.5 44.4,62.9 C38.9,103.8 26.1,129.5 7.5,136.8 C-1.5,140.4 -2.4,145.4 4.8,151.9 C9.6,156.3 14.1,157.5 27.3,158.0 C43.0,158.5 45.5,160.3 48.0,172.2 C51.2,188.0 59.8,190.8 80.3,182.6 C93.8,177.2 99.1,179.2 105.8,192.0 C110.5,200.9 118.1,203.2 127.6,198.6 Z"/></defs>
+          <use class="after" href="#ghost"/>
+          <use class="body" href="#ghost"/>
+          <g class="eyes" id="spiritEyes"><circle cx="94.1" cy="63.6" r="8"/><circle cx="142.7" cy="63.6" r="8"/></g>
+        </svg>
+      </div>
     </div>
-    <div class="foot"><button class="startbtn primary" onclick="go(0)">继续</button></div>
+    <div class="foot"><button class="startbtn primary" onclick="spiritLeave()">继续</button></div>
   </section>
 
   <section class="screen warm auth login" data-s="7">
@@ -1607,6 +1647,58 @@ function paintGlow(){
 }
 paintGlow();
 
+/* ---------- 她的形 ----------
+   她不是出现，是从光里凝出来；离开这一页就散回光里。
+   分镜：260ms 凝（1240ms）→ 睁眼 → 1820ms 醒了开始眨眼跟手 →
+   1900ms 看一眼门（向下 3px，600ms）→ 2100ms 「继续」浮上来（在 CSS 的 foot 延迟里） */
+var spirit=document.getElementById('spirit'), spiritEyes=document.getElementById('spiritEyes');
+var spiritTimers=[], spiritBlinkT=0;
+function spiritEnter(){
+  spiritReset();
+  spiritTimers.push(setTimeout(function(){ spirit.classList.add('on'); }, 260));
+  spiritTimers.push(setTimeout(function(){ spirit.classList.add('awake'); spiritScheduleBlink(); }, 1820));
+  /* 她先看了一眼门，门才出现 */
+  spiritTimers.push(setTimeout(function(){ spiritEyes.style.transform='translateY(3px)'; }, 1900));
+  spiritTimers.push(setTimeout(function(){ spiritEyes.style.transform=''; }, 2500));
+}
+function spiritReset(){
+  spiritTimers.forEach(clearTimeout); spiritTimers=[];
+  clearTimeout(spiritBlinkT);
+  spirit.classList.remove('on','awake','blink','poke','leaving');
+  spiritEyes.style.transform='';
+}
+function spiritBlink(twice){
+  spirit.classList.add('blink');
+  setTimeout(function(){ spirit.classList.remove('blink');
+    if(twice) setTimeout(function(){ spiritBlink(false); },160); },120);
+}
+function spiritScheduleBlink(){
+  spiritBlinkT=setTimeout(function(){ spiritBlink(Math.random()<.18); spiritScheduleBlink(); },
+    2800+Math.random()*3200);
+}
+function spiritLeave(){
+  spirit.classList.add('leaving');
+  go(0);
+}
+/* 眼睛跟手指：最多 3px，只在她醒着、且这一页还在台上时 */
+addEventListener('pointermove',function(e){
+  if(!spirit.classList.contains('awake') || go.now!==6) return;
+  var r=spirit.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  var dx=Math.max(-1,Math.min(1,(e.clientX-cx)/240)), dy=Math.max(-1,Math.min(1,(e.clientY-cy)/240));
+  spiritEyes.style.transform='translate('+(dx*3)+'px,'+(dy*3)+'px)';
+});
+addEventListener('pointerleave',function(){ spiritEyes.style.transform=''; });
+/* 点一下：压扁弹起、眨一下、光晕脉冲、轻轻一震；按住 380ms 闭眼，松手睁开 */
+spirit.addEventListener('pointerdown',function(){
+  spirit._hold=setTimeout(function(){ spirit.classList.add('blink'); spirit._held=1; },380);
+});
+spirit.addEventListener('pointerup',function(){
+  clearTimeout(spirit._hold);
+  if(spirit._held){ spirit._held=0; spirit.classList.remove('blink'); return; }
+  spirit.classList.remove('poke'); void spirit.offsetWidth; spirit.classList.add('poke');
+  spiritBlink(false); buzz(6);
+});
+
 /* ---------- 屏 ----------
    注册表单的五步：年龄、协议、为什么来、从哪知道、关于你。进度条按它算，返回键按它退。
    暖屏是开始页、注册第一步、登录页和对话画布；冷屏只有平台要你办的那五件事。 */
@@ -1646,6 +1738,7 @@ function go(n){
   document.body.classList.toggle('warmlit', WARM.indexOf(n)>=0);
   paintProgress(n);
   if(n===1) termsReset();
+  if(n===6) spiritEnter(); else spiritReset();
   if(n===2) setTimeout(maybeGuide, 700);
   if(n===10) openWith(enterScreen);
   if(n===4 && !tapDone){
