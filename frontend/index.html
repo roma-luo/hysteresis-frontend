@@ -67,6 +67,9 @@
   --ease:cubic-bezier(.22,.61,.36,1);
   --spring:cubic-bezier(.3,1.5,.55,1);
   --t-fast:140ms; --t-base:300ms; --t-slow:900ms;
+
+  /* 一款衬线，只给她：字标、她的名字、时间戳、结束页。其他一切保持 PingFang */
+  --serif:"Songti SC","STSong","Noto Serif SC","SimSun",serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -81,11 +84,30 @@ body.warmlit{background-color:var(--base)}
 .glow{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;transform:scale(1.05);
   transition:opacity 1200ms var(--ease),transform 1600ms var(--ease),filter 380ms ease-out}
 body.warmlit .glow{opacity:1;transform:none}
+/* 光是三层，各自慢慢漂移，速度不一样，光才是活的。inset 留出漂移的余量 */
+.glow i{position:absolute;inset:-8%;will-change:transform;
+  transition:filter 600ms var(--ease)}
+.glow i:nth-child(1){animation:drift1 96s ease-in-out infinite alternate}
+.glow i:nth-child(2){animation:drift2 128s ease-in-out infinite alternate}
+.glow i:nth-child(3){animation:drift3 160s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(2.5%,-1.5%) scale(1.05)}}
+@keyframes drift2{to{transform:translate(-2%,2%) scale(1.04)}}
+@keyframes drift3{to{transform:translate(1.5%,2.5%) scale(1.06)}}
+/* 她在打字的时候，她那侧的光抬一点。用 filter 不用 opacity，opacity 已经用来做距离感 */
+body.hertyping .glow i:nth-child(1){filter:brightness(1.06) saturate(1.1)}
 .screen{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;opacity:0;
   visibility:hidden;pointer-events:none;
   transition:opacity .4s var(--ease),visibility 0s linear .4s,filter 380ms ease-out}
 .screen.on{opacity:1;visibility:visible;pointer-events:auto;
   transition:opacity .4s var(--ease),visibility 0s,filter 380ms ease-out}
+/* 冷屏进出有方向：前进从右边来，返回回到左边去。暖屏之间保持溶解，不加位移。
+   .on 那两条要带上自己的 transition：进来时 visibility 不等那 .4s，否则会先隐形再硬跳 */
+.screen.cold{transform:translateX(18px);
+  transition:opacity .4s var(--ease),transform .4s var(--ease),visibility 0s linear .4s,filter 380ms ease-out}
+.screen.cold.on{transform:none;
+  transition:opacity .4s var(--ease),transform .4s var(--ease),visibility 0s,filter 380ms ease-out}
+body.going-back .screen.cold{transform:translateX(-18px)}
+body.going-back .screen.cold.on{transform:none}
 /* 玻璃感交互的第一段：模糊直接加在原页面自己身上（filter: blur，不靠 backdrop-filter），
    覆盖层的白雾与内容随后淡入。任何引擎都渲得出 */
 body.glassed .screen{filter:blur(18px)}
@@ -803,6 +825,10 @@ body.dark .loadbar i{background:var(--ink)}
 .endpage .endsub{font-size:var(--fs-2);line-height:2;color:var(--ink-2);margin-top:14px}
 .endpage .startbtn{margin-top:46px;width:min(72%,260px)}
 
+/* 衬线的领地：字标、她的名字、时间戳、结束页的字。其他一切保持 PingFang */
+.start .brand span,.welcome,.who .name,.stamp,.endpage .endline,.endpage .fin2,
+#wvName,.gsubhead .t,.dname{font-family:var(--serif);font-weight:400}
+
 /* 设置二级页：在设置层的雾里再压一层 */
 .gsub{position:absolute;inset:0;background:var(--base);opacity:0;pointer-events:none;
   transform:translateY(12px);transition:opacity 260ms var(--ease),transform 320ms var(--ease);
@@ -878,7 +904,7 @@ body.distant .who .ava{filter:saturate(.4)}
 </head>
 <body>
 <div id="app">
-  <div class="glow" id="glow"></div>
+  <div class="glow" id="glow"><i></i><i></i><i></i></div>
 
   <section class="screen warm start on" data-s="5" id="startScreen">
     <div class="brand"><span>After</span></div>
@@ -1560,9 +1586,14 @@ var poolsDark=[
 function paintGlow(){
   var dark=document.body.classList.contains('dark');
   var src=dark?poolsDark:pools, stop=dark?62:74;
-  glow.style.background=src.map(function(p){
-    return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) "+stop+"%)";
-  }).join(",");
+  /* 光分三层各自漂移：0+2 一层、1+3 一层、4 一层 */
+  var layers=[[0,2],[1,3],[4]], is=glow.children;
+  for(var i=0;i<3;i++){
+    is[i].style.background=layers[i].map(function(k){
+      var p=src[k];
+      return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) "+stop+"%)";
+    }).join(",");
+  }
 }
 paintGlow();
 
@@ -1582,7 +1613,8 @@ function paintProgress(n){
 }
 function back(){
   var b=BACK[go.now];
-  if(b!==undefined) go(b);
+  /* 返回给冷屏一个反方向：从左边滑回来 */
+  if(b!==undefined){ document.body.classList.add('going-back'); go(b); }
 }
 
 function go(n){
@@ -1612,6 +1644,7 @@ function go(n){
     setTimeout(function(){ herTap(document.getElementById('w1')); }, 1100);
   }
   if(n===4) requestAnimationFrame(dim);
+  setTimeout(function(){document.body.classList.remove('going-back')},450);
 }
 
 /* ---------- 扁头笔 ----------
@@ -2176,10 +2209,11 @@ function herSay(sink,scroll,text,cb){
   var t=document.createElement('div'); t.className='msg her typing';
   t.innerHTML='<i></i><i></i><i></i>';
   sink.appendChild(t); st.typing=t;
+  document.body.classList.add('hertyping');
   if(scroll) scroll.scrollTop=scroll.scrollHeight;
   var hold=Math.min(2600, 700+text.length*140);
   st.t=setTimeout(function(){
-    t.remove(); st.typing=null;
+    t.remove(); st.typing=null; document.body.classList.remove('hertyping');
     var old=sink.querySelector('.seen'); if(old) old.remove();
     sink.classList.add('live'); maybeStamp(sink);
     var m=document.createElement('div'); m.className='msg her';
@@ -2202,9 +2236,10 @@ function herCard(sink,scroll,text,opts){
   var t=document.createElement('div'); t.className='msg her typing';
   t.innerHTML='<i></i><i></i><i></i>';
   sink.appendChild(t); st.typing=t;
+  document.body.classList.add('hertyping');
   if(scroll) scroll.scrollTop=scroll.scrollHeight;
   st.t=setTimeout(function(){
-    t.remove(); st.typing=null;
+    t.remove(); st.typing=null; document.body.classList.remove('hertyping');
     sink.classList.add('live'); maybeStamp(sink);
     setPresence('在线');
     var card=document.createElement('div'); card.className='ecard';
@@ -2229,7 +2264,7 @@ function herCard(sink,scroll,text,opts){
 function herTurn(sink,scroll){
   var st=sink._her || (sink._her={t:0,typing:null});
   clearTimeout(st.t);
-  if(st.typing){ st.typing.remove(); st.typing=null; }
+  if(st.typing){ st.typing.remove(); st.typing=null; document.body.classList.remove('hertyping'); }
   st.t=setTimeout(function(){
     markSeen(sink);
     herSay(sink,scroll,REPLIES[replyIdx++ % REPLIES.length]);
