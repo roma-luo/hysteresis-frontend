@@ -192,9 +192,11 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .stamp{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:var(--ink-3);margin-bottom:20px;text-align:center;flex:none}
 .msg{border-radius:var(--r-glass);padding:10px 14px;font-size:var(--fs-3);line-height:1.8;margin-bottom:8px;
   animation:rise .45s var(--ease) both}
-/* 她的话直接落在布上，没有容器 */
-.msg.her{background:transparent;padding:6px 2px;align-self:flex-start;max-width:86%}
-.msg.typing{background:transparent}
+/* 她的话原来是裸字落在布上——真机上对比度不够，看不出来这是一条消息。
+   给她最轻的一档玻璃：比你的气泡淡一档，还是浮在布上，但看得见 */
+.msg.her{background:var(--glass-fill-quiet);border:0.5px solid var(--glass-edge);
+  box-shadow:inset 0 1px 0 var(--glass-hilite);
+  align-self:flex-start;max-width:86%}
 .msg.you{align-self:flex-end;max-width:78%;color:var(--ink-2);margin-left:auto}
 /* 发送手感：你的话从指尖弹出去——原地快速放大，起点在右下角，像从输入框长出来的。
    她的话不动，照旧从下方浮上来，到达感本来就不一样 */
