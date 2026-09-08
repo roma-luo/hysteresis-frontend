@@ -2789,8 +2789,9 @@ function herTap(v){
 var tapDone=false;
 
 /* ---------- 演示菜单（测试脚手架） ----------
-   默认藏掉；URL 带 ?dev=1 才出现 */
-if(location.search.indexOf('dev=1')>=0) document.body.classList.add('devmode');
+   默认藏掉；URL 带 ?dev=1，或触屏设备（手机）上常驻那颗小钮 */
+if(location.search.indexOf('dev=1')>=0 || matchMedia('(pointer:coarse)').matches)
+  document.body.classList.add('devmode');
 var dev=document.getElementById('dev');
 dev.querySelector('.devbtn').addEventListener('click',function(){ dev.classList.toggle('open'); });
 dev.querySelectorAll('.devmenu button').forEach(function(b){
