@@ -97,7 +97,8 @@ body.glassed .glow{filter:blur(18px)}
 .hbtn:hover{color:var(--ink)}
 .hbtn:active{transform:scale(.92)}
 .hbtn:focus-visible{outline:2px solid var(--ink-2);outline-offset:2px}
-.thread{flex:1;padding:6px 16px 0;display:flex;flex-direction:column;overflow:hidden}
+.thread{flex:1;padding:6px 16px 0;display:flex;flex-direction:column;overflow-y:auto;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 /* 滚动条：无箭头、无轨道 */
 .scroll,html{scrollbar-width:thin;scrollbar-color:rgba(140,120,105,.18) transparent}
 .scroll::-webkit-scrollbar,body::-webkit-scrollbar{width:4px;height:4px;-webkit-appearance:none}
@@ -150,6 +151,9 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 /* 长按气泡：带一点回弹的弹簧曲线，放大时有过冲才不死板 */
 .msg{-webkit-touch-callout:none}
 .msg.held{transform:scale(1.05)}
+/* widget 也吃同一套长按：按住不放，微微放大 */
+.wg{transition:transform 420ms cubic-bezier(.3,1.5,.55,1)}
+.wg.held{transform:scale(1.04)}
 /* 按下去的 acknowledge：可点的都轻轻缩一下，松手弹回 */
 .startbtn,.coldbtn,.opt,.forgot,.glass{transition-property:background,border-color,color,transform;
   transition-duration:140ms}
@@ -263,6 +267,9 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 .cal .note{border-top:0.5px solid rgba(140,110,90,.14);padding-top:11px}
 .cal .note .d{font-size:9px;color:#BCAFA3;margin-bottom:4px}
 .cal .note .s{font-size:11.5px;line-height:1.8;color:var(--ink)}
+/* 红记号是她定的，动不得。你点别的日子，画的是和「今天」同款的橙色描边圈 */
+.grid i.pick{width:15px;height:15px;border:1.5px solid #C99A7E;box-sizing:border-box;
+  background:transparent}
 
 .stk{width:158px;border-radius:6px;padding:14px}
 .stk p{font-size:11.5px;line-height:1.8;color:#2E2A28}
@@ -270,13 +277,14 @@ body::-webkit-scrollbar-button:vertical:end:increment{
 /* 游戏机。机器是黑色实体设备，和唱机同族 */
 .gb{width:180px;background:#1A191C;border-radius:17px;padding:12px 12px 13px}
 .gb canvas{display:block;border-radius:7px;background:#141216}
-.pad{display:grid;grid-template-columns:repeat(3,26px);gap:5px;
-  justify-content:center;margin-top:12px}
-.pad b{height:23px;border-radius:6px;background:#2B292F;cursor:pointer;
-  transition:background 90ms linear}
-.pad b:hover{background:#35333C}
-.pad b:active{background:#403E49}
-.pad .sp{background:transparent;cursor:default}
+/* 摇杆：街机那套。球跟手指走，方向咬主轴；松手球回中，蛇不停 */
+.stick{position:relative;width:86px;height:86px;margin:14px auto 0;border-radius:50%;
+  background:#232227;touch-action:none;cursor:grab}
+.stick .knob{position:absolute;left:50%;top:50%;width:36px;height:36px;border-radius:50%;
+  background:#3A3842;pointer-events:none;
+  transform:translate(-50%,-50%);transition:transform 160ms var(--ease)}
+.stick.live{cursor:grabbing}
+.stick.live .knob{transition:none}
 .gb .cap{font-size:8px;letter-spacing:.2em;color:#5E5A66;text-align:center;margin-top:10px}
 
 /* 猜词。它是一页练字的格纸，不是卡片 */
@@ -509,7 +517,7 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
 .dname{font-size:15px;color:var(--ink)}
 .dacct{font-size:11px;color:var(--ink-3);margin-top:3px}
 .ddetail{max-height:0;overflow:hidden;
-  transition:max-height 420ms var(--ease);
+  transition:max-height 780ms cubic-bezier(.4,0,.2,1);
   border-bottom:0.5px solid rgba(140,110,90,0)}
 .ddetail.xp{max-height:280px;border-bottom-color:rgba(140,110,90,.14)}
 .ddetail .row{display:flex;justify-content:space-between;align-items:baseline;
@@ -535,6 +543,93 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
 .gcard .gs{font-size:12px;line-height:1.8;color:var(--ink-2)}
 .gcard .startbtn{width:100%;margin-top:4px}
 
+/* ---------- 夜间模式 ----------
+   只动颜色不动形：纸变深、墨变浅，她的光和 widget 的材质原样保留。
+   切换走 body.dark，亮暗过渡吃 body 自带的 900ms */
+body.dark{
+  --base:#1B1916;
+  --ink:#E9E3DB; --ink-2:#A99E92; --ink-3:#6E6459; --ink-4:#8B7F72; --ink-5:#4E4842;
+  --cold-bg:#121215; --cold-surface:#1F1F26; --cold-ink:#E9E9EE; --cold-2nd:#9B9BA5; --cold-line:#383840;
+}
+body.dark .msg.her{background:rgba(44,40,36,.82)}
+body.dark .msg.you{background:rgba(58,52,46,.55)}
+body.dark .cfield,body.dark .hbtn,body.dark .who .idpill,body.dark .cbtn{background:rgba(44,40,36,.85)}
+body.dark .cbtn.mic{background:rgba(255,255,255,.10)}
+body.dark .glass{background:rgba(30,27,24,.35);border-color:rgba(255,255,255,.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+body.dark .glass:hover{background:rgba(30,27,24,.50)}
+body.dark .govl .gblur{background:rgba(8,7,6,.45)}
+body.dark .gcard{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+body.dark .tin{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.14);color:var(--ink)}
+body.dark .tin:focus{background:rgba(255,255,255,.16)}
+body.dark .chip{background:rgba(255,255,255,.14)}
+body.dark .dmenu button:hover{background:rgba(255,255,255,.07)}
+body.dark .dmenu button:active{background:rgba(255,255,255,.12)}
+body.dark .dhead,body.dark .ddetail.xp{border-bottom-color:rgba(255,255,255,.12)}
+body.dark .loadbar{background:rgba(255,255,255,.14)}
+body.dark .loadbar i{background:var(--ink)}
+body.dark .startbtn.quiet{background:rgba(255,255,255,.10)}
+body.dark .medal{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);box-shadow:none}
+
+/* 夜间模式开关：设置页里唯一一个当场生效的项 */
+.dmenu .dtoggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sw{position:relative;flex:none;width:38px;height:23px;border-radius:999px;
+  background:rgba(140,120,105,.25);transition:background 180ms var(--ease)}
+.sw i{position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;
+  background:#fff;transition:transform 220ms var(--ease)}
+.dtoggle.on .sw{background:var(--ink)}
+.dtoggle.on .sw i{transform:translateX(15px)}
+
+/* 成就页：每个成就独占一页，左右滑动翻看。占位阶段只有一枚圆 */
+.achvpage{padding:0}
+.pgr{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab}
+.pgr::-webkit-scrollbar{display:none}
+.pgr .pg{flex:0 0 100%;scroll-snap-align:center;display:flex;align-items:center;justify-content:center}
+.medal{width:118px;height:118px;border-radius:50%;
+  background:rgba(255,255,255,.40);border:0.5px solid rgba(255,255,255,.60);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.50)}
+.dots{display:flex;justify-content:center;gap:7px;
+  padding-bottom:calc(44px + env(safe-area-inset-bottom))}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--ink-3);opacity:.45;
+  transition:opacity 200ms var(--ease)}
+.dots i.on{opacity:1}
+
+/* ---------- 零件匣与独件页 ----------
+   每个 widget 一个独立页面：居中放在布上，底下一行提示。
+   画布上它们是绝对定位的（.wg），进独件页归位成静态 */
+.shelf{flex:1;overflow-y:auto;padding:8px 22px 24px;display:flex;flex-direction:column;gap:9px}
+.shelfrow{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.55);
+  border:0.5px solid rgba(140,110,90,.16);border-radius:12px;padding:14px 15px;
+  font-family:inherit;text-align:left;cursor:pointer;width:100%;
+  transition:background 140ms var(--ease),transform 120ms var(--ease)}
+body.dark .shelfrow{background:rgba(44,40,36,.55)}
+.shelfrow:active{transform:scale(.98)}
+.shelfrow .wn{font-size:13.5px;color:var(--ink)}
+.shelfrow .wd{font-size:10.5px;color:var(--ink-3);margin-top:2px}
+.shelfrow svg{width:15px;height:15px;margin-left:auto;color:var(--ink-3);flex:none}
+.wstage{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:10px}
+.whint{flex:none;text-align:center;font-size:10px;letter-spacing:.14em;color:var(--ink-3);
+  padding:0 30px calc(26px + env(safe-area-inset-bottom))}
+/* 唱机：点一下，唱针抬起、碟停；再点，落下、转起来 */
+.vt .arm{transition:transform 600ms var(--ease)}
+.vt.paused .disc{animation-play-state:paused}
+.vt.paused .arm{transform:rotate(38deg)}
+/* 天气：点一下，在她和你之间换重点 */
+.wx .top,.wx .bot{transition:opacity 300ms var(--ease)}
+.wx .bot{opacity:.55}
+.wx.swap .bot{opacity:1}
+.wx.swap .top{opacity:.55}
+/* 贴纸：点一下换一种纸色 */
+.stk{transition:background 300ms var(--ease)}
+/* 猜词：空格可以点，翻出来的字像写上去的 */
+.tian i{cursor:pointer}
+.tian i b{animation:rise .4s var(--ease) both}
+/* 闹钟：段式屏可以点——左半边加时，右半边加分；下面三个日子可以切 */
+.alm .lcd{cursor:pointer}
+.alm .leg div{cursor:pointer}
+
 /* 相机：IG 式全屏取景。黑底、右上关闭与翻转、底部中央大白圈快门。
    拍到之后定住那一帧，底部换成「重拍 / 使用照片」 */
 .camshot{position:fixed;inset:0;z-index:70;background:#0E0D0F;display:none;flex-direction:column}
@@ -554,6 +649,150 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
   padding:12px 22px;font-size:13px;font-family:inherit;cursor:pointer;
   transition:background 140ms var(--ease),transform 120ms var(--ease)}
 .camact:active{transform:scale(.96)}
+
+/* ---------- 语音 ----------
+   按住麦克风说话：胶囊换成录音态；松手发送，少于一拍不算。
+   语音气泡：播放键 + 条纹 + 时长，条纹的高低是画出来的节奏 */
+.cfield.rec{background:rgba(255,255,255,.9)}
+/* 录音时只隐输入框，不隐整行——麦克风一消失，按住它的手指会被系统判成 pointerleave */
+.cfield.rec .cin{visibility:hidden}
+.recmeta{display:none;align-items:center;gap:9px;padding:9px 13px;font-size:13px;color:var(--ink)}
+.cfield.rec .recmeta{display:flex}
+.recmeta .dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+.recmeta .rnote{margin-left:auto;font-size:10.5px;color:var(--ink-3)}
+.msg.voice{display:flex;align-items:center;gap:9px;cursor:pointer;min-width:118px}
+.msg.voice .vplay{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center}
+.msg.voice .vplay svg{width:13px;height:13px}
+.vbars{display:flex;align-items:center;gap:2.5px;height:18px}
+.vbars i{width:2px;background:var(--ink-3);border-radius:1px;display:block}
+.msg.voice.playing .vbars i{animation:vb .7s ease-in-out infinite alternate}
+.msg.voice.playing .vbars i:nth-child(2n){animation-delay:.16s}
+.msg.voice.playing .vbars i:nth-child(3n){animation-delay:.32s}
+@keyframes vb{from{transform:scaleY(.45)}to{transform:scaleY(1.25)}}
+.msg.voice .vlen{font-size:10px;color:var(--ink-3);margin-left:2px}
+
+/* 图片查看器：点图片气泡全屏，左右滑翻同屏的图，点任意处关掉 */
+.lbx{position:fixed;inset:0;z-index:80;background:rgba(14,13,15,.96);
+  display:none;opacity:0;transition:opacity 240ms var(--ease)}
+.lbx.open{display:block;opacity:1}
+.lbx .lbxtrack{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  width:100%;height:100%;scrollbar-width:none}
+.lbx .lbxtrack::-webkit-scrollbar{display:none}
+.lbx figure{flex:0 0 100%;scroll-snap-align:center;display:flex;
+  align-items:center;justify-content:center;margin:0;padding:18px}
+.lbx img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.lbx .lbxclose{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px;z-index:2;
+  background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
+
+/* 长按气泡的菜单：一块小玻璃浮在气泡上方 */
+.mact{position:absolute;z-index:30;display:flex;gap:2px;padding:4px;
+  background:rgba(255,255,255,.88);border:0.5px solid rgba(140,110,90,.18);
+  border-radius:11px;box-shadow:0 4px 18px rgba(62,58,54,.10);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  animation:mactin 220ms cubic-bezier(.3,1.5,.55,1) both}
+@keyframes mactin{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.mact button{border:0;background:transparent;padding:7px 13px;font-size:12px;
+  font-family:inherit;color:var(--ink);cursor:pointer;border-radius:8px}
+.mact button:active{background:rgba(140,120,105,.12)}
+body.dark .mact{background:rgba(38,34,31,.94)}
+
+/* 发送不是瞬间：先半透明转个小圈，到了才坐实；失败留一个红点，点它重发 */
+.msg{position:relative}
+.msg.pending{opacity:.55}
+.msg .st{position:absolute;top:50%;left:-24px;width:16px;height:16px;border-radius:50%;
+  transform:translateY(-50%);display:flex;align-items:center;justify-content:center;
+  font-size:10px;line-height:1}
+.msg.pending .st{border:1.2px solid var(--ink-3);border-top-color:transparent;
+  animation:spin2 .7s linear infinite}
+@keyframes spin2{to{transform:translateY(-50%) rotate(360deg)}}
+.msg.fail .st{background:var(--red);color:#fff;cursor:pointer}
+.msg.fail .st::before{content:"!"}
+
+/* 事件卡：她把一件事摆到你面前。选项是卡的一部分，选了才收 */
+.ecard{align-self:flex-start;max-width:86%;background:rgba(255,255,255,.80);
+  border-radius:15px;padding:12px 14px;margin-bottom:8px;
+  animation:rise .45s var(--ease) both}
+body.dark .ecard{background:rgba(44,40,36,.82)}
+.ecard .et{font-size:14px;line-height:1.8;color:var(--ink)}
+.ecard .eopts{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.ecard .eopt{border:0.5px solid rgba(140,110,90,.25);background:transparent;border-radius:9px;
+  padding:9px 12px;font-size:12.5px;font-family:inherit;color:var(--ink);text-align:left;cursor:pointer;
+  transition:background 140ms var(--ease),transform 120ms var(--ease)}
+.ecard .eopt:active{transform:scale(.98)}
+.ecard .eopt.sel{background:var(--ink);color:var(--base);border-color:var(--ink)}
+.ecard.done .eopt{pointer-events:none;opacity:.5}
+.ecard.done .eopt.sel{opacity:1}
+
+/* 关系结束页：没有读档的那一页 */
+.endpage{justify-content:center;align-items:center;text-align:center;
+  padding:40px 34px}
+.endpage .fin2{font-size:9px;letter-spacing:.32em;color:var(--ink-3);margin-bottom:26px}
+.endpage .endline{font-size:17px;color:var(--ink);line-height:1.9}
+.endpage .endsub{font-size:11.5px;line-height:2;color:var(--ink-2);margin-top:14px}
+.endpage .startbtn{margin-top:46px;width:min(72%,260px)}
+
+/* 设置二级页：在设置层的雾里再压一层 */
+.gsub{position:absolute;inset:0;background:var(--base);opacity:0;pointer-events:none;
+  transform:translateY(12px);transition:opacity 260ms var(--ease),transform 320ms var(--ease);
+  display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 22px) 0 24px}
+.gsub.open{opacity:1;pointer-events:auto;transform:none}
+.gsubhead{display:flex;align-items:center;gap:12px;padding:0 22px 16px;
+  border-bottom:0.5px solid rgba(140,110,90,.14)}
+.gsubhead .t{font-size:15px;color:var(--ink)}
+.gsubbody{flex:1;overflow-y:auto;padding:16px 22px;display:flex;flex-direction:column;gap:9px}
+.grow2{background:rgba(255,255,255,.55);border:0.5px solid rgba(140,110,90,.14);
+  border-radius:10px;padding:13px 14px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+body.dark .grow2{background:rgba(255,255,255,.06)}
+
+/* 附件面板：点「+」先出这层，相机和相册在这里分家 */
+.atsheet{position:fixed;inset:0;z-index:75;visibility:hidden;transition:visibility 0s linear .38s}
+.atsheet.open{visibility:visible;transition:none}
+.atsheet .scrim2{position:absolute;inset:0;background:rgba(62,58,54,.22);opacity:0;
+  transition:opacity 260ms var(--ease)}
+.atsheet.open .scrim2{opacity:1}
+.atsheet .stack{position:absolute;left:10px;right:10px;
+  bottom:calc(10px + env(safe-area-inset-bottom));
+  transform:translateY(112%);transition:transform 320ms var(--ease)}
+.atsheet.open .stack{transform:none}
+.atsheet .panel{border-radius:16px;overflow:hidden;
+  background:rgba(255,255,255,.92);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+body.dark .atsheet .panel{background:rgba(38,34,31,.94)}
+.atsheet .panel button{display:flex;align-items:center;gap:12px;width:100%;border:0;
+  background:transparent;padding:15px 18px;font-size:13.5px;font-family:inherit;
+  color:var(--ink);cursor:pointer;text-align:left}
+.atsheet .panel button+button{border-top:0.5px solid rgba(140,110,90,.14)}
+.atsheet .panel button:active{background:rgba(140,120,105,.10)}
+.atsheet .panel svg{width:18px;height:18px;color:var(--ink-4);flex:none}
+.atsheet .cancel{margin-top:8px}
+.atsheet .cancel button{justify-content:center;color:var(--ink-2)}
+
+/* 成就达成 toast：从顶上一颗小胶囊滑进来 */
+.atoast{position:fixed;top:calc(env(safe-area-inset-top) + 14px);left:50%;z-index:90;
+  transform:translate(-50%,-16px);display:flex;align-items:center;gap:10px;
+  padding:9px 16px 9px 9px;border-radius:999px;
+  background:rgba(255,255,255,.88);border:0.5px solid rgba(255,255,255,.6);
+  box-shadow:0 6px 24px rgba(62,58,54,.12);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  opacity:0;pointer-events:none;
+  transition:opacity 300ms var(--ease),transform 420ms cubic-bezier(.3,1.5,.55,1)}
+body.dark .atoast{background:rgba(38,34,31,.94)}
+.atoast.show{opacity:1;transform:translate(-50%,0)}
+.atoast .m{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--base);
+  display:flex;align-items:center;justify-content:center}
+.atoast .m svg{width:13px;height:13px}
+.atoast .t{font-size:12px;color:var(--ink);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:64vw}
+
+/* 空对话：话还没来的时候，一行淡字占着位子 */
+.ehint{margin:auto;font-size:11px;letter-spacing:.1em;color:var(--ink-3);
+  transition:opacity 400ms var(--ease)}
+.thread.live .ehint{display:none}
+
+/* 她冷下来的时候：光收一半，画布跟着沉。不动形，只动光 */
+body.distant.warmlit .glow{opacity:.45}
+body.distant .who .ava{filter:saturate(.4)}
 
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉 */
 .dev{position:fixed;right:10px;top:46%;z-index:40}
@@ -764,6 +1003,7 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
     </div>
     <div class="thread">
       <div class="stamp">23:04</div>
+      <div class="ehint">这里还空着。她在想第一句话。</div>
     </div>
     <div class="composer">
       <button class="cbtn pic" aria-label="发一张图" type="button">
@@ -771,6 +1011,7 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
       </button>
       <div class="cfield">
         <div class="chips"></div>
+        <div class="recmeta"><i class="dot"></i><span class="rtime">0:00</span><span class="rnote">松手发送</span></div>
         <div class="crow">
           <textarea class="cin" rows="1" enterkeyhint="send" placeholder="说点什么"></textarea>
           <button class="cbtn mic" aria-label="语音输入，有内容时是发送" type="button">
@@ -827,6 +1068,7 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
       </button>
       <div class="cfield">
         <div class="chips"></div>
+        <div class="recmeta"><i class="dot"></i><span class="rtime">0:00</span><span class="rnote">松手发送</span></div>
         <div class="crow">
           <textarea class="cin" rows="1" enterkeyhint="send" placeholder="说点什么"></textarea>
           <button class="cbtn mic" aria-label="语音输入，有内容时是发送" type="button">
@@ -912,8 +1154,8 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
 
         <div class="wg" id="w7" style="left:38px">
           <div class="alm">
-            <div class="tab">SHE SET THIS</div>
-            <div class="lcd"><svg id="almSet" viewBox="0 0 208 62"></svg></div>
+            <div class="tab">闹钟</div>
+            <div class="lcd nodrag"><svg id="almSet" viewBox="0 0 208 62"></svg></div>
             <div class="almrow">
               <div class="almnow">
                 <div class="lcd"><svg id="almNow" viewBox="0 0 104 34"></svg></div>
@@ -922,7 +1164,7 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
               <div class="leg">
                 <div><i></i>今天</div>
                 <div class="on"><i></i>明天</div>
-                <div><i></i>后天</div>
+                <div><i></i>每天</div>
               </div>
             </div>
           </div>
@@ -931,11 +1173,7 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
         <div class="wg" id="w5" style="left:66px" data-drag="edge">
           <div class="gb">
             <canvas class="nodrag" id="snk" width="156" height="176"></canvas>
-            <div class="pad nodrag">
-              <b class="sp"></b><b data-d="u"></b><b class="sp"></b>
-              <b data-d="l"></b><b class="sp"></b><b data-d="r"></b>
-              <b class="sp"></b><b data-d="d"></b><b class="sp"></b>
-            </div>
+            <div class="stick nodrag"><div class="knob"></div></div>
             <div class="cap">SHE WAS PLAYING</div>
           </div>
         </div>
@@ -1016,6 +1254,7 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
       </button>
       <div class="cfield">
         <div class="chips"></div>
+        <div class="recmeta"><i class="dot"></i><span class="rtime">0:00</span><span class="rnote">松手发送</span></div>
         <div class="crow">
           <textarea class="cin" rows="1" enterkeyhint="send" placeholder="说点什么"></textarea>
           <button class="cbtn mic" aria-label="语音输入，有内容时是发送" type="button">
@@ -1032,6 +1271,37 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
       </div>
       <input type="file" accept="image/*" class="cfile" hidden>
     </div>
+  </section>
+
+  <!-- 零件匣：每个 widget 一页，先在这里排开 -->
+  <section class="screen warm" data-s="12">
+    <div class="who">
+      <button class="hbtn" onclick="back()" aria-label="返回" type="button">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+      </button>
+      <div class="idpill"><div><div class="name">零件匣</div><div class="tag">WIDGETS</div></div></div>
+    </div>
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <!-- 独件页：一件一物 -->
+  <section class="screen warm" data-s="13" id="wview">
+    <div class="who">
+      <button class="hbtn" onclick="go(12)" aria-label="返回零件匣" type="button">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+      </button>
+      <div class="idpill"><div><div class="name" id="wvName">—</div><div class="tag">WIDGET</div></div></div>
+    </div>
+    <div class="wstage" id="wvStage"></div>
+    <div class="whint" id="wvHint"></div>
+  </section>
+
+  <!-- 关系结束页 -->
+  <section class="screen warm endpage" data-s="14">
+    <div class="fin2">THIS ENDS HERE</div>
+    <div class="endline">陈小满结束了这段关系。</div>
+    <div class="endsub">没有读档，没有撤回。<br>你们之间发生过的事，都被记住了。</div>
+    <button class="startbtn quiet" onclick="boot()">申请新的角色</button>
   </section>
 
   <!-- 设置与档案：两条杠打开。整块布糊成毛玻璃，档案与菜单浮在雾上。
@@ -1052,29 +1322,90 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
         <div class="row"><b>性别</b><span id="dSex">—</span></div>
       </div>
       <nav class="dmenu">
-        <button type="button">管理订阅</button>
+        <button type="button" class="dtoggle" id="darkToggle" aria-pressed="false">晚安<span class="sw"><i></i></span></button>
+        <button type="button">订阅</button>
         <button type="button">通知</button>
         <button type="button">隐私</button>
         <button type="button">设置</button>
-        <button type="button">给我们评分</button>
-        <button type="button">报告问题</button>
+        <button type="button">评分</button>
+        <button type="button">报告</button>
         <button type="button">帮助</button>
       </nav>
+      <!-- 二级页：在雾里再压一层 -->
+      <div class="gsub" id="gsub">
+        <div class="gsubhead">
+          <button class="hbtn" id="gsubBack" aria-label="返回设置" type="button">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
+          </button>
+          <span class="t" id="gsubTitle">—</span>
+        </div>
+        <div class="gsubbody" id="gsubBody"></div>
+      </div>
     </div>
   </div>
 
-  <!-- 成就：右上角奖章打开。目前还没有可得的成就 -->
-  <div class="govl" id="achv" aria-hidden="true">
+  <!-- 权限前置说明：第一次拉起相机前，先讲清楚为什么 -->
+  <div class="govl" id="perm" aria-hidden="true">
     <div class="gblur"></div>
     <div class="gpage">
       <div class="gcard">
-        <div class="gicon">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.6" r="4"/><path d="M7.4 10.9L6 16.4l4-2.3 4 2.3-1.4-5.5"/></svg>
-        </div>
-        <div class="gt">成就</div>
-        <div class="gs">暂时无任何成就</div>
-        <button class="startbtn glass" id="achvClose" type="button">关闭</button>
+        <div class="gt">需要你的相机</div>
+        <div class="gs">她放东西给你看的时候，你也想让她看到你拍的。照片只经过你和她。</div>
+        <button class="startbtn glass" id="permOk" type="button">好，打开相机</button>
+        <button class="startbtn quiet" id="permNo" type="button" style="margin-top:2px">暂不</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 附件面板：相机和相册在这里分家 -->
+  <div class="atsheet" id="atsheet" aria-hidden="true">
+    <div class="scrim2" id="atsheetScrim"></div>
+    <div class="stack">
+      <div class="panel">
+        <button type="button" id="atCam">
+          <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="17" height="13" rx="2.6"/><circle cx="11" cy="12.4" r="3.4"/><path d="M8 6l1.2-2.2h3.6L14 6"/></svg>
+          相机
+        </button>
+        <button type="button" id="atAlbum">
+          <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="4.2" width="16.8" height="13.6" rx="2.6"/><circle cx="7.9" cy="9.1" r="1.5"/><path d="M3.4 15.6 L8.5 11.3 L12.2 14.3 L15.4 11.7 L19 14.8"/></svg>
+          相册
+        </button>
+      </div>
+      <div class="panel cancel">
+        <button type="button" id="atCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成就达成 toast -->
+  <div class="atoast" id="atoast">
+    <span class="m"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.6" r="4"/><path d="M7.4 10.9L6 16.4l4-2.3 4 2.3-1.4-5.5"/></svg></span>
+    <span class="t">成就达成</span>
+  </div>
+
+  <!-- 图片查看器 -->
+  <div class="lbx" id="lbx" aria-hidden="true">
+    <div class="lbxtrack" id="lbxTrack"></div>
+    <button class="hbtn lbxclose" id="lbxClose" aria-label="关闭" type="button">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg>
+    </button>
+  </div>
+
+  <!-- 成就：右上角奖章打开。每个成就独占一页，左右滑动翻看；占位阶段一页一枚圆 -->
+  <div class="govl" id="achv" aria-hidden="true">
+    <div class="gblur"></div>
+    <div class="gpage achvpage">
+      <button class="hbtn gclose" id="achvClose" aria-label="关闭成就" type="button">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg>
+      </button>
+      <div class="pgr" id="achvPgr">
+        <section class="pg"><div class="medal"></div></section>
+        <section class="pg"><div class="medal"></div></section>
+        <section class="pg"><div class="medal"></div></section>
+        <section class="pg"><div class="medal"></div></section>
+        <section class="pg"><div class="medal"></div></section>
+      </div>
+      <div class="dots" id="achvDots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
     </div>
   </div>
 
@@ -1117,6 +1448,11 @@ select.fin:invalid{color:#A9A9B2}   /* 还停在「请选择」上的时候，�
       <button data-act="restart">从头走一遍</button>
       <button data-act="draw">播放她画画</button>
       <button data-act="canvas">看 widget 画布</button>
+      <button data-act="shelf">零件匣（独件页）</button>
+      <button data-act="netfail">模拟断网</button>
+      <button data-act="distant">她冷下来</button>
+      <button data-act="unlock">演示：成就达成</button>
+      <button data-act="endit">演示：被结束</button>
       <button data-act="her" id="herBtn">让她来一趟</button>
       <button data-act="guess">猜对一个字</button>
     </div>
@@ -1148,16 +1484,29 @@ var pools=[
  ["155% 90%","-6% 96%","213,229,241",.34],
  ["180% 110%","46% 52%","246,221,219",.30]
 ];
-glow.style.background=pools.map(function(p){
-  return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) 74%)";
-}).join(",");
+/* 同一组光，夜间的颜色：位置形状一模一样，只是沉进暗色系——
+   蜜桃成茶褐、淡紫成黛紫、琥珀成深檀、天青成墨蓝 */
+var poolsDark=[
+ ["160% 92%","-8% 6%","74,52,44",.40],
+ ["150% 88%","108% 20%","52,44,66",.38],
+ ["170% 95%","88% 78%","66,54,36",.38],
+ ["155% 90%","-6% 96%","34,44,58",.36],
+ ["180% 110%","46% 52%","62,40,40",.32]
+];
+function paintGlow(){
+  var src=document.body.classList.contains('dark')?poolsDark:pools;
+  glow.style.background=src.map(function(p){
+    return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) 74%)";
+  }).join(",");
+}
+paintGlow();
 
 /* ---------- 屏 ----------
    注册表单的五步：年龄、协议、为什么来、从哪知道、关于你。进度条按它算，返回键按它退。
    暖屏是开始页、注册第一步、登录页和对话画布；冷屏只有平台要你办的那五件事。 */
 var FORM=[0,1,8,9,11];
-var WARM=[2,3,4,5,6,7,10];
-var BACK={0:6, 1:0, 8:1, 9:8, 11:9, 6:5, 7:5};
+var WARM=[2,3,4,5,6,7,10,12,13,14];
+var BACK={0:6, 1:0, 8:1, 9:8, 11:9, 6:5, 7:5, 12:4, 13:12};
 
 function paintProgress(n){
   var i=FORM.indexOf(n); if(i<0) return;
@@ -1175,7 +1524,8 @@ function go(n){
   go.now=n;
   stopDraw();
   if(n!==4) herStop();
-  if(n===4){ snkStart(); almStart(); } else { snkStop(); almStop(); }
+  if(n===4){ trackSnake.start(); trackAlm.start(); } else { trackSnake.stop(); trackAlm.stop(); }
+  if(n!==13) wvLeave();
   document.querySelectorAll('.screen').forEach(function(s){
     var on = +s.dataset.s===n;
     s.classList.toggle('on', on);
@@ -1306,12 +1656,15 @@ widgets.forEach(function(v,i){
     var p=track.getBoundingClientRect();
     var x=e.clientX-p.left-dx, y=e.clientY-p.top-dy;
     v.style.left=clampX(v,x)+'px'; v.style.top=clampY(v,y)+'px';
+    v._dragged=true;
     queueDim(); e.preventDefault();
   });
   function end(){
     if(!on) return;
     on=false; v._held=false; lastRelease=performance.now(); v._moved=true;
     v.classList.remove('drag'); v.style.zIndex='';
+    /* 拖过的那一下不算点：click 会紧跟在 pointerup 后面来，看一眼就撤 */
+    setTimeout(function(){ v._dragged=false; },350);
   }
   v.addEventListener('pointerup',end);
   v.addEventListener('pointercancel',end);
@@ -1321,94 +1674,114 @@ function clampY(v,y){ return Math.max(4,Math.min(track.offsetHeight-v.offsetHeig
 
 /* ---------- 贪吃蛇 ----------
    分数就是蛇的长度。屏幕上不出现任何数字——它已经在那儿了，画出来的。
-   单色点阵只有一种颜色，所以食物只能靠闪来和身体区分，这是屏幕本身的限制，不是风格选择。 */
-var SNK={col:13,row:15,cell:12,pad:0,body:[],dir:[0,-1],turn:null,food:null,
-         alive:true,mine:false,blink:0,dead:0,timer:0,ctx:null};
+   单色点阵只有一种颜色，所以食物只能靠闪来和身体区分，这是屏幕本身的限制，不是风格选择。
+   一台机器一条蛇：makeSnake 包出独立实例，画布上那台和独件页里那台互不干扰 */
 var SNK_MS=150, SNK_HANDBACK=8000;
 var LIT='#D8A54E', DIM='#241E1B', SCR='#141216';
 
-function snkInit(taken){
-  var c=(SNK.col/2)|0, r=(SNK.row/2)|0;
-  SNK.body=[]; for(var i=0;i<5;i++) SNK.body.push([c,r+i]);
-  SNK.dir=[0,-1]; SNK.turn=null; SNK.alive=true; SNK.mine=!!taken; SNK.dead=0;
-  snkFeed();
-}
-function snkFeed(){
-  var free=[];
-  for(var x=0;x<SNK.col;x++) for(var y=0;y<SNK.row;y++)
-    if(!SNK.body.some(function(b){return b[0]===x&&b[1]===y})) free.push([x,y]);
-  SNK.food=free.length?free[(Math.random()*free.length)|0]:null;
-}
-function snkFree(x,y,body){
-  if(x<0||y<0||x>=SNK.col||y>=SNK.row) return false;
-  for(var i=0;i<body.length-1;i++) if(body[i][0]===x&&body[i][1]===y) return false;
-  return true;
-}
-/* 她玩得不好也不坏：朝食物走，能走就走，走不了换一边 */
-function snkThink(){
-  var h=SNK.body[0], f=SNK.food; if(!f) return SNK.dir;
-  var want=[];
-  if(f[0]!==h[0]) want.push([f[0]>h[0]?1:-1,0]);
-  if(f[1]!==h[1]) want.push([0,f[1]>h[1]?1:-1]);
-  want.push([1,0],[-1,0],[0,1],[0,-1]);
-  for(var i=0;i<want.length;i++){
-    var d=want[i];
-    if(d[0]===-SNK.dir[0]&&d[1]===-SNK.dir[1]) continue;
-    if(snkFree(h[0]+d[0],h[1]+d[1],SNK.body)) return d;
-  }
-  return SNK.dir;
-}
-function snkStep(){
-  var now=performance.now();
-  if(!SNK.alive){
-    /* 死了就躺着。不闪、不弹字、不计数。过一会儿她自己再拿起来 */
-    if(now-SNK.dead>SNK_HANDBACK){ snkInit(false); }
-    snkDraw(); return;
-  }
-  var d = SNK.mine ? (SNK.turn||SNK.dir) : snkThink();
-  if(d[0]===-SNK.dir[0]&&d[1]===-SNK.dir[1]) d=SNK.dir;
-  SNK.dir=d; SNK.turn=null;
-  var h=SNK.body[0], nx=h[0]+d[0], ny=h[1]+d[1];
-  if(!snkFree(nx,ny,SNK.body)){ SNK.alive=false; SNK.dead=now; snkDraw(); return; }
-  SNK.body.unshift([nx,ny]);
-  if(SNK.food && nx===SNK.food[0] && ny===SNK.food[1]) snkFeed();
-  else SNK.body.pop();
-  SNK.blink++;
-  snkDraw();
-}
-function snkDraw(){
-  var g=SNK.ctx; if(!g) return;
-  var s=SNK.cell, on=SNK.body;
-  g.fillStyle=SCR; g.fillRect(0,0,SNK.col*s,SNK.row*s);
-  for(var x=0;x<SNK.col;x++) for(var y=0;y<SNK.row;y++){
-    g.fillStyle=DIM;                       /* 熄灭的点是看得见的，点阵屏就是这样 */
-    g.fillRect(x*s+2,y*s+2,s-4,s-4);
-  }
-  g.fillStyle=LIT;
-  for(var i=0;i<on.length;i++) g.fillRect(on[i][0]*s+2,on[i][1]*s+2,s-4,s-4);
-  if(SNK.food && (SNK.blink%4)<3 && SNK.alive)
-    g.fillRect(SNK.food[0]*s+2,SNK.food[1]*s+2,s-4,s-4);
-}
-function snkStart(){
-  if(!SNK.ctx){
-    var el=document.getElementById('snk');
-    el.width=SNK.col*SNK.cell; el.height=SNK.row*SNK.cell;
-    SNK.ctx=el.getContext('2d');
-    snkInit(false);
-  }
-  clearInterval(SNK.timer); SNK.timer=setInterval(snkStep,SNK_MS);
-}
-function snkStop(){ clearInterval(SNK.timer); SNK.timer=0; }
+function makeSnake(root){
+  var cvs=root.querySelector('canvas');
+  var S={col:13,row:15,cell:12,body:[],dir:[0,-1],turn:null,food:null,
+         alive:true,mine:false,blink:0,dead:0,timer:0,started:false,
+         ctx:cvs.getContext('2d')};
+  cvs.width=S.col*S.cell; cvs.height=S.row*S.cell;
 
-document.querySelectorAll('.pad b[data-d]').forEach(function(k){
-  k.addEventListener('pointerdown',function(e){
-    e.preventDefault(); e.stopPropagation();
-    var m={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[k.dataset.d];
-    /* 你按第一下方向键，就算接手了 */
-    if(!SNK.alive){ snkInit(true); SNK.turn=m; return; }
-    SNK.mine=true; SNK.turn=m;
+  function init(taken){
+    var c=(S.col/2)|0, r=(S.row/2)|0;
+    S.body=[]; for(var i=0;i<5;i++) S.body.push([c,r+i]);
+    S.dir=[0,-1]; S.turn=null; S.alive=true; S.mine=!!taken; S.dead=0;
+    feed();
+  }
+  function feed(){
+    var free=[];
+    for(var x=0;x<S.col;x++) for(var y=0;y<S.row;y++)
+      if(!S.body.some(function(b){return b[0]===x&&b[1]===y})) free.push([x,y]);
+    S.food=free.length?free[(Math.random()*free.length)|0]:null;
+  }
+  function ok(x,y){
+    if(x<0||y<0||x>=S.col||y>=S.row) return false;
+    for(var i=0;i<S.body.length-1;i++) if(S.body[i][0]===x&&S.body[i][1]===y) return false;
+    return true;
+  }
+  /* 她玩得不好也不坏：朝食物走，能走就走，走不了换一边 */
+  function think(){
+    var h=S.body[0], f=S.food; if(!f) return S.dir;
+    var want=[];
+    if(f[0]!==h[0]) want.push([f[0]>h[0]?1:-1,0]);
+    if(f[1]!==h[1]) want.push([0,f[1]>h[1]?1:-1]);
+    want.push([1,0],[-1,0],[0,1],[0,-1]);
+    for(var i=0;i<want.length;i++){
+      var d=want[i];
+      if(d[0]===-S.dir[0]&&d[1]===-S.dir[1]) continue;
+      if(ok(h[0]+d[0],h[1]+d[1])) return d;
+    }
+    return S.dir;
+  }
+  function step(){
+    var now=performance.now();
+    if(!S.alive){
+      /* 死了就躺着。不闪、不弹字、不计数。过一会儿她自己再拿起来 */
+      if(now-S.dead>SNK_HANDBACK) init(false);
+      draw(); return;
+    }
+    var d = S.mine ? (S.turn||S.dir) : think();
+    if(d[0]===-S.dir[0]&&d[1]===-S.dir[1]) d=S.dir;
+    S.dir=d; S.turn=null;
+    var h=S.body[0], nx=h[0]+d[0], ny=h[1]+d[1];
+    if(!ok(nx,ny)){ S.alive=false; S.dead=now; draw(); return; }
+    S.body.unshift([nx,ny]);
+    if(S.food && nx===S.food[0] && ny===S.food[1]) feed();
+    else S.body.pop();
+    S.blink++;
+    draw();
+  }
+  function draw(){
+    var g=S.ctx, s=S.cell;
+    g.fillStyle=SCR; g.fillRect(0,0,S.col*s,S.row*s);
+    for(var x=0;x<S.col;x++) for(var y=0;y<S.row;y++){
+      g.fillStyle=DIM;                       /* 熄灭的点是看得见的，点阵屏就是这样 */
+      g.fillRect(x*s+2,y*s+2,s-4,s-4);
+    }
+    g.fillStyle=LIT;
+    for(var i=0;i<S.body.length;i++) g.fillRect(S.body[i][0]*s+2,S.body[i][1]*s+2,s-4,s-4);
+    if(S.food && (S.blink%4)<3 && S.alive)
+      g.fillRect(S.food[0]*s+2,S.food[1]*s+2,s-4,s-4);
+  }
+  /* 摇杆：球跟手指，方向咬主轴；推出死区就算接手这局 */
+  var stick=root.querySelector('.stick'), knob=root.querySelector('.knob');
+  var sid=null;
+  function steer(e){
+    var r=stick.getBoundingClientRect();
+    var dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+    var len=Math.hypot(dx,dy), R=26;
+    var kx=len>R?dx/len*R:dx, ky=len>R?dy/len*R:dy;
+    knob.style.transform='translate(calc(-50% + '+kx.toFixed(1)+'px),calc(-50% + '+ky.toFixed(1)+'px))';
+    if(len>10){
+      var m=Math.abs(dx)>Math.abs(dy)?[dx>0?1:-1,0]:[0,dy>0?1:-1];
+      if(!S.alive){ init(true); S.turn=m; }
+      else { S.mine=true; S.turn=m; }
+    }
+  }
+  stick.addEventListener('pointerdown',function(e){
+    sid=e.pointerId; stick.setPointerCapture(sid); stick.classList.add('live');
+    e.preventDefault(); e.stopPropagation(); steer(e);
   });
-});
+  stick.addEventListener('pointermove',function(e){ if(e.pointerId===sid) steer(e); });
+  function release(e){
+    if(e.pointerId!==sid) return;
+    sid=null; stick.classList.remove('live');
+    knob.style.transform='';
+  }
+  stick.addEventListener('pointerup',release);
+  stick.addEventListener('pointercancel',release);
+  return {
+    start:function(){
+      if(!S.started){ S.started=true; init(false); }
+      clearInterval(S.timer); S.timer=setInterval(step,SNK_MS);
+    },
+    stop:function(){ clearInterval(S.timer); S.timer=0; }
+  };
+}
 
 /* ---------- 猜词 ----------
    输入永远发生在输入框里，widget 只是那张纸。这里的按钮只是原型用来演示状态推进的。 */
@@ -1471,14 +1844,14 @@ function makeLegend(svg,x,y,txt,on){
   el.setAttribute('font-family','ui-monospace,Menlo,monospace');
   el.textContent=txt; svg.appendChild(el); return el;
 }
-function buildClock(id,W,H,t,x0,gap,legends){
-  var svg=document.getElementById(id), digits=[], x=x0, y=(+svg.viewBox.baseVal.height-H)/2;
+function buildClock(svg,W,H,t,x0,gap,legends){
+  var digits=[], x=x0, y=(+svg.viewBox.baseVal.height-H)/2;
   for(var i=0;i<4;i++){
     digits.push(makeDigit(svg,x,y,W,H,t)); x+=W+gap;
     if(i===1){ makeColon(svg,x+gap*0.3,y,H,t); x+=t+gap*1.6; }
   }
-  if(legends) legends(svg,x,y,H);
-  return digits;
+  var lg=legends?legends(svg,x,y,H):null;
+  return {digits:digits, legends:lg||[]};
 }
 function showTime(digits,hh,mm){
   var s=(hh<10?'0':'')+hh+(mm<10?'0':'')+mm;
@@ -1489,23 +1862,168 @@ function showTime(digits,hh,mm){
     });
   });
 }
-var ALM={set:null,now:null,timer:0,h:10,m:0};
-function almBuild(){
-  if(ALM.set) return;
-  ALM.set=buildClock('almSet',31,46,6.5,10,5,function(svg,x,y,H){
-    makeLegend(svg,x+8,y+13,'AM',true);
-    makeLegend(svg,x+8,y+H-1,'PM',false);
+/* 一台闹钟一个实例。定时间的大段式屏直接搓：上下滑动调时间，向下是加——
+   时钟 10 搓到 11、12、1，分钟同理；AM/PM 在屏的右缘，点一下切换。
+   下面印着的 今天/明天/每天 可以切。 */
+function makeAlarm(root){
+  var svgs=root.querySelectorAll('.lcd svg');
+  /* 独件页的副本是从建好的原件上克隆的，段码会一起带过来——
+     先清空再建，否则旧段码冻在屏上，新段码建到取景框外面 */
+  svgs[0].innerHTML=''; svgs[1].innerHTML='';
+  var setC=buildClock(svgs[0],31,46,6.5,10,5,function(svg,x,y,H){
+    return [makeLegend(svg,x+8,y+13,'AM',true), makeLegend(svg,x+8,y+H-1,'PM',false)];
   });
-  ALM.now=buildClock('almNow',15,22,3.4,10,4,null);
-  showTime(ALM.set,ALM.h,ALM.m);
-  almTick();
+  var nowC=buildClock(svgs[1],15,22,3.4,10,4,null);
+  var A={h:10,m:0,pm:false,timer:0};
+  function paint(){
+    showTime(setC.digits,A.h,A.m);
+    if(setC.legends.length===2){
+      setC.legends[0].setAttribute('opacity', A.pm?OFF_OP+0.06:ON_OP);
+      setC.legends[1].setAttribute('opacity', A.pm?ON_OP:OFF_OP+0.06);
+    }
+  }
+  function tick(){
+    var d=new Date();
+    showTime(nowC.digits,d.getHours(),d.getMinutes());
+  }
+  var sv=svgs[0], sy0=null, zone=null, acc=0, moved=0;
+  sv.style.touchAction='none';
+  sv.addEventListener('pointerdown',function(e){
+    var r=sv.getBoundingClientRect(), k=(e.clientX-r.left)/r.width;
+    zone=k<0.45?'h':(k<0.85?'m':'ampm');
+    sy0=e.clientY; acc=0; moved=0;
+    sv.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation();
+  });
+  sv.addEventListener('pointermove',function(e){
+    if(sy0===null) return;
+    var dy=e.clientY-sy0, STEP=14;
+    moved=Math.max(moved,Math.abs(dy));
+    if(zone==='ampm') return;
+    while(Math.abs(dy-acc)>=STEP){
+      var d=dy>acc?1:-1; acc+=STEP*d;        /* 向下搓是加 */
+      if(zone==='h') A.h=(A.h-1+d+12)%12+1;
+      else A.m=(A.m+d+60)%60;
+      paint(); buzz(4);
+    }
+  });
+  function off(e){
+    if(sy0===null) return;
+    if(zone==='ampm'&&moved<8){ A.pm=!A.pm; paint(); buzz(6); }
+    sy0=null; zone=null;
+  }
+  sv.addEventListener('pointerup',off);
+  sv.addEventListener('pointercancel',off);
+  root.querySelectorAll('.leg div').forEach(function(d){
+    d.addEventListener('click',function(){
+      root.querySelectorAll('.leg div').forEach(function(o){ o.classList.remove('on'); });
+      d.classList.add('on'); buzz(6);
+    });
+  });
+  paint(); tick();
+  return {
+    start:function(){ clearInterval(A.timer); A.timer=setInterval(tick,10000); },
+    stop:function(){ clearInterval(A.timer); A.timer=0; }
+  };
 }
-function almTick(){
-  var d=new Date();
-  showTime(ALM.now,d.getHours(),d.getMinutes());
+
+/* ---------- widget 交互 ----------
+   画布上的原件和独件页里的副本吃同一套交互。
+   画布里能拖着走，点与拖不打架：拖过的那一下不算点 */
+function tapped(e){
+  var wg=e.target.closest?e.target.closest('.wg'):null;
+  if(wg&&wg._dragged){ wg._dragged=false; return false; }
+  return true;
 }
-function almStart(){ almBuild(); clearInterval(ALM.timer); ALM.timer=setInterval(almTick,10000); }
-function almStop(){ clearInterval(ALM.timer); ALM.timer=0; }
+function initPlayer(root){
+  root.style.cursor='pointer';
+  root.addEventListener('click',function(e){ if(!tapped(e))return; root.classList.toggle('paused'); buzz(6); });
+}
+function initWx(root){
+  root.style.cursor='pointer';
+  root.addEventListener('click',function(e){ if(!tapped(e))return; root.classList.toggle('swap'); buzz(6); });
+}
+function initCal(root){
+  /* 红记号（.mark）和「今天」（.today）都不响应：一个是她定的，一个是日子本身。
+     你圈的圈是单选：点另一个，上一个就消掉；再点同一个取消。注记永远属于她的二十四日 */
+  root.querySelectorAll('.grid i.future').forEach(function(c){
+    c.style.cursor='pointer';
+    c.addEventListener('click',function(e){
+      if(!tapped(e)) return;
+      var was=c.classList.contains('pick');
+      root.querySelectorAll('.grid i.pick').forEach(function(o){ o.classList.remove('pick'); });
+      if(!was) c.classList.add('pick');
+      buzz(6);
+    });
+  });
+}
+var STK_COLORS=['p-lilac','p-peach','p-amber','p-blue','p-rose'];
+function initStk(root){
+  root.style.cursor='pointer';
+  root.addEventListener('click',function(e){
+    if(!tapped(e)) return;
+    var cur=-1;
+    STK_COLORS.forEach(function(c,i){ if(root.classList.contains(c)) cur=i; });
+    if(cur>=0) root.classList.remove(STK_COLORS[cur]);
+    root.classList.add(STK_COLORS[(cur+1)%STK_COLORS.length]);
+    buzz(6);
+  });
+}
+function initGuess(root){
+  root.querySelectorAll('.tian i').forEach(function(s){
+    s.addEventListener('click',function(e){
+      if(!tapped(e) || s.firstChild) return;
+      var b=document.createElement('b'); b.textContent=s.dataset.c; s.appendChild(b); buzz(6);
+    });
+  });
+}
+
+/* ---------- 零件匣与独件页 ---------- */
+var WIDGETS=[
+ {id:'w1', sel:'.vt',  name:'唱机',  desc:'她放了一张唱片',   hint:'点一下：唱针抬起；再点一下，落下', init:initPlayer},
+ {id:'w2', sel:'.wx',  name:'天气',  desc:'她在下雨，你这儿晴', hint:'点一下，在她和你之间换重点', init:initWx},
+ {id:'w3', sel:'.cal', name:'日历',  desc:'二十四日有个记号',  hint:'点其他的日子画个圈（只有一个）；她的记号动不了', init:initCal},
+ {id:'w4', sel:'.stk', name:'贴纸',  desc:'她贴的一句话',     hint:'点一下，换一张纸的颜色', init:initStk},
+ {id:'w5', sel:'.gb',  name:'游戏机', desc:'她的贪吃蛇',       hint:'摇杆一推，这局就归你了', init:null},
+ {id:'w6', sel:'.gz',  name:'猜词',  desc:'凌晨的车站',       hint:'点空格，翻出那个字', init:initGuess},
+ {id:'w7', sel:'.alm', name:'闹钟',  desc:'她设的十点',       hint:'上下搓段式屏调时间（向下是加）；右缘点 AM/PM；底下换日子', init:null}
+];
+var shelf=document.getElementById('shelf');
+WIDGETS.forEach(function(w,i){
+  var b=document.createElement('button'); b.type='button'; b.className='shelfrow';
+  b.innerHTML='<div><div class="wn">'+w.name+'</div><div class="wd">'+w.desc+'</div></div>'+
+    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M7.6 4.6L13 10l-5.4 5.4"/></svg>';
+  b.addEventListener('click',function(){ buzz(6); wvOpen(i); });
+  shelf.appendChild(b);
+});
+var wvStage=document.getElementById('wvStage'), wvInst=null;
+function wvOpen(i){
+  wvLeave();
+  var w=WIDGETS[i];
+  document.getElementById('wvName').textContent=w.name;
+  document.getElementById('wvHint').textContent=w.hint;
+  var src=document.querySelector('#'+w.id+' '+w.sel);
+  var c=src.cloneNode(true);
+  c.querySelectorAll('[id]').forEach(function(el){ el.removeAttribute('id'); });
+  wvStage.appendChild(c);
+  if(w.id==='w5') wvInst=makeSnake(c);
+  else if(w.id==='w7') wvInst=makeAlarm(c);
+  else if(w.init) w.init(c);
+  if(wvInst) wvInst.start();
+  go(13);
+}
+function wvLeave(){
+  if(wvInst){ wvInst.stop(); wvInst=null; }
+  wvStage.innerHTML='';
+}
+
+/* 画布上的原件：一台机器一台 */
+var trackSnake=makeSnake(document.getElementById('w5'));
+var trackAlm=makeAlarm(document.getElementById('w7'));
+initPlayer(document.querySelector('#w1 .vt'));
+initWx(document.querySelector('#w2 .wx'));
+initCal(document.querySelector('#w3 .cal'));
+initStk(document.querySelector('#w4 .stk'));
+initGuess(document.querySelector('#w6 .gz'));
 
 /* ---------- 生日 ----------
    生日只在注册第一步（data-s=0）问一次，最后一步不再重复——
@@ -1565,10 +2083,29 @@ function markSeen(sink){
   var s=document.createElement('div'); s.className='seen'; s.textContent='已读';
   last.insertAdjacentElement('afterend',s);
 }
+/* 她在不在、正在做什么，写在顶栏那一行小字里（身份注记不撤，状态跟在后面） */
+var presenceT=0;
+function setPresence(t){
+  document.querySelectorAll('.who .tag').forEach(function(el){
+    el.textContent='AI 角色 · '+t;
+  });
+  clearTimeout(presenceT);
+  if(t==='在线') presenceT=setTimeout(function(){ setPresence('离开'); },60000);
+}
+/* 隔得久了（5 分钟）插一个新的时间戳，和原有分节同款 */
+function maybeStamp(sink){
+  var now=Date.now();
+  if(!sink._lastTs || now-sink._lastTs>5*60000){
+    var s=document.createElement('div'); s.className='stamp'; s.textContent=nowTime();
+    sink.appendChild(s);
+  }
+  sink._lastTs=now;
+}
 /* 她说一句话的完整动作：正在输入 → 停留 → 话到达。回话和开场白共用这一套 */
 function herSay(sink,scroll,text,cb){
   var st=sink._her || (sink._her={t:0,typing:null});
   var onTrack = sink===sink.closest('.track') && typeof bubbles!=='undefined';
+  setPresence('正在输入…');
   var t=document.createElement('div'); t.className='msg her typing';
   t.innerHTML='<i></i><i></i><i></i>';
   sink.appendChild(t); st.typing=t;
@@ -1577,11 +2114,12 @@ function herSay(sink,scroll,text,cb){
   st.t=setTimeout(function(){
     t.remove(); st.typing=null;
     var old=sink.querySelector('.seen'); if(old) old.remove();
+    sink.classList.add('live'); maybeStamp(sink);
     var m=document.createElement('div'); m.className='msg her';
     m._time=nowTime();
     m.appendChild(document.createTextNode(text));
     sink.appendChild(m);
-    buzz(10);
+    buzz(10); setPresence('在线');
     setTimeout(function(){
       m.style.animation='none';
       if(onTrack){ bubbles.push(m); queueDim(); }
@@ -1589,6 +2127,37 @@ function herSay(sink,scroll,text,cb){
     if(scroll) scroll.scrollTop=scroll.scrollHeight;
     if(cb) cb();
   },hold);
+}
+/* 事件卡：她把一件事摆到你面前。你的选择会被采纳、被记住、被翻出来 */
+function herCard(sink,scroll,text,opts){
+  var st=sink._her || (sink._her={t:0,typing:null});
+  setPresence('正在输入…');
+  var t=document.createElement('div'); t.className='msg her typing';
+  t.innerHTML='<i></i><i></i><i></i>';
+  sink.appendChild(t); st.typing=t;
+  if(scroll) scroll.scrollTop=scroll.scrollHeight;
+  st.t=setTimeout(function(){
+    t.remove(); st.typing=null;
+    sink.classList.add('live'); maybeStamp(sink);
+    setPresence('在线');
+    var card=document.createElement('div'); card.className='ecard';
+    var p=document.createElement('div'); p.className='et'; p.textContent=text;
+    var box=document.createElement('div'); box.className='eopts';
+    card.appendChild(p); card.appendChild(box);
+    opts.forEach(function(o){
+      var b=document.createElement('button'); b.type='button'; b.className='eopt';
+      b.textContent=o.label;
+      b.addEventListener('click',function(){
+        if(card.classList.contains('done')) return;
+        card.classList.add('done'); b.classList.add('sel'); buzz(8);
+        setTimeout(function(){ herSay(sink,scroll,o.reply); },800);
+      });
+      box.appendChild(b);
+    });
+    sink.appendChild(card);
+    buzz(10);
+    if(scroll) scroll.scrollTop=scroll.scrollHeight;
+  },Math.min(2600,700+text.length*140));
 }
 function herTurn(sink,scroll){
   var st=sink._her || (sink._her={t:0,typing:null});
@@ -1601,8 +2170,14 @@ function herTurn(sink,scroll){
 }
 
 /* 第一次进聊天，对话框是空的——话不是摆在那儿的，是她当着你打出来的。
-   但在那之前，先给你一张玻璃小卡：你读的时候她等着，不抢话 */
-var HELLO=['你能不能帮我决定一件事。','楼下便利店还有十分钟关门。我现在下去，还是明天再说。'];
+   但在那之前，先给你一张玻璃小卡：你读的时候她等着，不抢话。
+   第二句话是一张事件卡：她真的在等你帮她定 */
+var HELLO='你能不能帮我决定一件事。';
+var HELLO_CARD={
+  text:'楼下便利店还有十分钟关门。我现在下去，还是明天再说。',
+  opts:[{label:'现在下去',reply:'好。那我下去一趟，很快回来。'},
+        {label:'明天再说',reply:'也行。明天再说。'}]
+};
 var helloDone=false, guideDone=false;
 var guideEl=document.getElementById('guide');
 function maybeGuide(){
@@ -1615,15 +2190,12 @@ document.getElementById('guideOk').addEventListener('click',function(){
 function hello(){
   if(helloDone) return; helloDone=true;
   var screen=document.querySelector('.screen[data-s="2"]');
-  var sink=screen.querySelector('.thread'), scroll=screen.querySelector('.scroll');
-  (function next(i){
-    if(i>=HELLO.length) return;
-    setTimeout(function(){
-      herSay(sink,scroll,HELLO[i],function(){
-        setTimeout(function(){ next(i+1); }, 900);
-      });
-    }, i===0?1100:0);
-  })(0);
+  var sink=screen.querySelector('.thread'), scroll=sink;
+  setTimeout(function(){
+    herSay(sink,scroll,HELLO,function(){
+      setTimeout(function(){ herCard(sink,scroll,HELLO_CARD.text,HELLO_CARD.opts); },900);
+    });
+  },1100);
 }
 
 /* ---------- 输入区 ----------
@@ -1635,7 +2207,7 @@ document.querySelectorAll('.composer').forEach(function(c){
   var pic=c.querySelector('.pic');
   var screen=c.closest('.screen');
   var sink=screen.querySelector('.track') || screen.querySelector('.thread');
-  var scroll=screen.querySelector('.scroll');
+  var scroll=screen.querySelector('.scroll') || screen.querySelector('.thread');
   var img=null;
 
   function grow(){ input.style.height='auto'; input.style.height=input.scrollHeight+'px'; }
@@ -1655,7 +2227,98 @@ document.querySelectorAll('.composer').forEach(function(c){
   }
   c._attach=attach;
 
-  pic.addEventListener('click',function(){ camOpen(c); });
+  pic.addEventListener('click',function(){ openAt(c); });
+
+  /* 发出去不是瞬间：先转圈，到了坐实；断网（演示）留红点，点红点重发 */
+  function deliver(m){
+    var st=document.createElement('div'); st.className='st'; m.appendChild(st);
+    m.classList.add('pending');
+    setTimeout(function(){
+      m.classList.remove('pending'); st.remove();
+      if(document.body.classList.contains('netfail')){
+        m.classList.add('fail');
+        var f=document.createElement('div'); f.className='st';
+        f.setAttribute('role','button'); f.title='重发';
+        f.addEventListener('click',function(e){
+          e.stopPropagation(); e.preventDefault();
+          m.classList.remove('fail'); f.remove(); deliver(m);
+        });
+        m.appendChild(f);
+      }else{
+        herTurn(sink,scroll);
+      }
+    },600);
+  }
+  function afterAppend(m){
+    /* 入场动画放完就摘掉，否则它会盖住 widget 消隐算出来的透明度 */
+    setTimeout(function(){
+      m.style.animation='none';
+      if(sink===sink.closest('.track') && typeof bubbles!=='undefined'){
+        bubbles.push(m); queueDim();
+      }
+    },500);
+    if(scroll) scroll.scrollTop=scroll.scrollHeight;
+  }
+  function send(){
+    var txt=input.value.trim();
+    if(!txt && !img) return;
+    sink.classList.add('live');
+    maybeStamp(sink);
+    var m=document.createElement('div'); m.className='msg you';
+    m._time=nowTime();
+    if(img){ var i=document.createElement('img'); i.src=img; i.alt=''; m.appendChild(i); }
+    if(txt) m.appendChild(document.createTextNode(txt));
+    sink.appendChild(m);
+    afterAppend(m);
+    input.value=''; grow(); clearImg();
+    deliver(m);
+  }
+  /* 语音：按住麦克风说话，松手发出去，少于一拍不算 */
+  function sendVoice(dur){
+    sink.classList.add('live'); maybeStamp(sink);
+    var m=document.createElement('div'); m.className='msg you voice';
+    m._time=nowTime();
+    var bars='';
+    for(var i=0;i<12;i++) bars+='<i style="height:'+(5+Math.round(Math.random()*11))+'px"></i>';
+    m.innerHTML='<span class="vplay"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4.5l9 5.5-9 5.5z"/></svg></span>'+
+      '<span class="vbars">'+bars+'</span><span class="vlen">'+dur+'″</span>';
+    m.addEventListener('click',function(){
+      m.classList.add('playing'); buzz(4);
+      clearTimeout(m._pt);
+      m._pt=setTimeout(function(){ m.classList.remove('playing'); },dur*1000);
+    });
+    sink.appendChild(m);
+    afterAppend(m);
+    deliver(m);
+  }
+  var mic=c.querySelector('.mic');
+  mic.addEventListener('click',function(){
+    if(field.classList.contains('has')) send();
+  });
+  var recT0=0, recTick=0, recMeta=c.querySelector('.recmeta');
+  mic.addEventListener('pointerdown',function(e){
+    if(field.classList.contains('has')) return;   /* 有字时它是发送键，不抢 */
+    e.preventDefault();
+    recT0=performance.now();
+    field.classList.add('rec');
+    recMeta.querySelector('.rtime').textContent='0:00';
+    recTick=setInterval(function(){
+      var s=Math.floor((performance.now()-recT0)/1000);
+      recMeta.querySelector('.rtime').textContent='0:'+(s<10?'0':'')+s;
+    },250);
+    buzz(6);
+  });
+  function recEnd(cancel){
+    if(!recT0) return;
+    var ms=performance.now()-recT0; recT0=0;
+    clearInterval(recTick);
+    field.classList.remove('rec');
+    if(cancel || ms<600) return;
+    sendVoice(Math.max(1,Math.round(ms/1000)));
+  }
+  mic.addEventListener('pointerup',function(){ recEnd(false); });
+  mic.addEventListener('pointercancel',function(){ recEnd(true); });
+  mic.addEventListener('pointerleave',function(){ recEnd(true); });
   file.addEventListener('change',function(){
     var f=file.files&&file.files[0]; if(!f) return;
     var r=new FileReader();
@@ -1667,29 +2330,6 @@ document.querySelectorAll('.composer').forEach(function(c){
   input.addEventListener('keydown',function(e){
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
   });
-  c.querySelector('.mic').addEventListener('click',function(){
-    if(field.classList.contains('has')) send();
-  });
-
-  function send(){
-    var txt=input.value.trim();
-    if(!txt && !img) return;
-    var m=document.createElement('div'); m.className='msg you';
-    m._time=nowTime();
-    if(img){ var i=document.createElement('img'); i.src=img; i.alt=''; m.appendChild(i); }
-    if(txt) m.appendChild(document.createTextNode(txt));
-    sink.appendChild(m);
-    /* 入场动画放完就摘掉，否则它会盖住 widget 消隐算出来的透明度 */
-    setTimeout(function(){
-      m.style.animation='none';
-      if(sink===sink.closest('.track') && typeof bubbles!=='undefined'){
-        bubbles.push(m); queueDim();
-      }
-    },500);
-    input.value=''; grow(); clearImg();
-    if(scroll) scroll.scrollTop=scroll.scrollHeight;
-    herTurn(sink,scroll);
-  }
   grow(); sync();
 });
 
@@ -2043,6 +2683,11 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
     if(a==='restart') boot();
     else if(a==='draw') drawScene();
     else if(a==='canvas') go(4);
+    else if(a==='shelf') go(12);
+    else if(a==='netfail') document.body.classList.toggle('netfail');
+    else if(a==='distant') document.body.classList.toggle('distant');
+    else if(a==='unlock') achvToast('成就达成 · 第一次让她记下一件事');
+    else if(a==='endit') go(14);
     else if(a==='her') toggleHer();
     else if(a==='guess') guessOne();
     dev.classList.remove('open');
@@ -2095,16 +2740,48 @@ dHead.addEventListener('click',function(){
   dHead.setAttribute('aria-expanded',xp);
   buzz(6);
 });
-drawer.querySelectorAll('.dmenu button').forEach(function(b){
-  b.addEventListener('click',function(){ buzz(6); closeG(drawer); });
+drawer.querySelectorAll('.dmenu button:not(.dtoggle)').forEach(function(b){
+  b.addEventListener('click',function(){ buzz(6); openSub(b.textContent.trim()); });
 });
 
-/* ---------- 成就页 ---------- */
+/* ---------- 夜间模式 ---------- */
+var darkToggle=document.getElementById('darkToggle');
+function setDark(on){
+  document.body.classList.toggle('dark',on);
+  darkToggle.classList.toggle('on',on);
+  darkToggle.setAttribute('aria-pressed',on);
+  paintGlow();
+  try{ localStorage.setItem('after-dark',on?'1':'0'); }catch(e){}
+}
+darkToggle.addEventListener('click',function(){
+  buzz(6); setDark(!document.body.classList.contains('dark'));
+});
+try{ if(localStorage.getItem('after-dark')==='1') setDark(true); }catch(e){}
+
+/* ---------- 成就页 ----------
+   左右滑翻页（scroll-snap），小圆点跟着走；桌面上按住也能拖 */
 var achv=document.getElementById('achv');
 document.querySelectorAll('.hbtn.achv').forEach(function(b){
   b.addEventListener('click',function(){ buzz(6); openG(achv); });
 });
 document.getElementById('achvClose').addEventListener('click',function(){ closeG(achv); });
+(function(){
+  var pgr=document.getElementById('achvPgr'), dots=document.getElementById('achvDots');
+  function syncDots(){
+    var i=Math.round(pgr.scrollLeft/pgr.clientWidth);
+    dots.querySelectorAll('i').forEach(function(d,k){ d.classList.toggle('on',k===i); });
+  }
+  pgr.addEventListener('scroll',function(){ requestAnimationFrame(syncDots); });
+  var px=null, sl=0;
+  pgr.addEventListener('pointerdown',function(e){ px=e.clientX; sl=pgr.scrollLeft; });
+  pgr.addEventListener('pointermove',function(e){
+    if(px===null) return;
+    pgr.scrollLeft=sl-(e.clientX-px);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+    pgr.addEventListener(ev,function(){ px=null; });
+  });
+})();
 
 /* ---------- 头像胶囊的点按 ---------- */
 document.querySelectorAll('.idpill').forEach(function(p){
@@ -2115,19 +2792,147 @@ document.querySelectorAll('.idpill').forEach(function(p){
   });
 });
 
+/* ---------- 图片查看器 ---------- */
+var lbx=document.getElementById('lbx'), lbxTrack=document.getElementById('lbxTrack');
+function openLbx(img){
+  var sink=img.closest('.thread')||img.closest('.track');
+  var imgs=[].slice.call(sink.querySelectorAll('.msg img'));
+  lbxTrack.innerHTML='';
+  imgs.forEach(function(im){
+    var f=document.createElement('figure');
+    var c=document.createElement('img'); c.src=im.src; c.alt='';
+    f.appendChild(c); lbxTrack.appendChild(f);
+  });
+  lbx.classList.add('open'); lbx.setAttribute('aria-hidden','false');
+  var i=imgs.indexOf(img);
+  if(i>0) lbxTrack.scrollLeft=i*lbxTrack.clientWidth;
+}
+function closeLbx(){ lbx.classList.remove('open'); lbx.setAttribute('aria-hidden','true'); }
+document.addEventListener('click',function(e){
+  var im=e.target.closest?e.target.closest('.msg img'):null;
+  if(im){ openLbx(im); return; }
+  if(lbx.classList.contains('open') && !e.target.closest('.lbxclose') && !e.target.closest('img'))
+    closeLbx();
+});
+document.getElementById('lbxClose').addEventListener('click',closeLbx);
+
+/* ---------- 附件面板 ---------- */
+var atsheet=document.getElementById('atsheet'), atComposer=null;
+function openAt(c){
+  atComposer=c;
+  atsheet.classList.add('open'); atsheet.setAttribute('aria-hidden','false');
+}
+function closeAt(){
+  atsheet.classList.remove('open'); atsheet.setAttribute('aria-hidden','true');
+}
+document.getElementById('atsheetScrim').addEventListener('click',closeAt);
+document.getElementById('atCancel').addEventListener('click',closeAt);
+document.getElementById('atAlbum').addEventListener('click',function(){
+  closeAt(); if(atComposer) atComposer.querySelector('.cfile').click();
+});
+document.getElementById('atCam').addEventListener('click',function(){
+  closeAt(); if(atComposer) maybePerm(function(){ camOpen(atComposer); });
+});
+
+/* ---------- 权限前置说明（相机，只问一次） ---------- */
+var permEl=document.getElementById('perm');
+var permAsked=false;
+try{ permAsked=localStorage.getItem('after-cam-asked')==='1'; }catch(e){}
+function maybePerm(fn){
+  if(permAsked) return fn();
+  openG(permEl);
+  document.getElementById('permOk').onclick=function(){
+    permAsked=true;
+    try{ localStorage.setItem('after-cam-asked','1'); }catch(e){}
+    closeG(permEl); fn();
+  };
+  document.getElementById('permNo').onclick=function(){ closeG(permEl); };
+}
+
+/* ---------- 设置二级页 ---------- */
+var SUBPAGES={
+  '订阅':['当前：1 席 · 基础档','席位是你同时维系的关系数。'],
+  '通知':['她的主动联系','频率上限与安静时段在这里管。'],
+  '隐私':['你的数据拥有完全的隐私。','删除账户与导出在这里。'],
+  '设置':['字号、语言与备份。'],
+  '评分':['如果这段关系对你有意义，告诉别人。'],
+  '报告':['她哪里做错了，写给我们。'],
+  '帮助':['常见问题与联系。']
+};
+var gsub=document.getElementById('gsub');
+function openSub(title){
+  document.getElementById('gsubTitle').textContent=title;
+  var body=document.getElementById('gsubBody');
+  body.innerHTML='';
+  (SUBPAGES[title]||['这里还没有内容。']).forEach(function(t){
+    var d=document.createElement('div'); d.className='grow2'; d.textContent=t;
+    body.appendChild(d);
+  });
+  gsub.classList.add('open');
+}
+document.getElementById('gsubBack').addEventListener('click',function(){
+  gsub.classList.remove('open');
+});
+
+/* ---------- 成就达成 toast ---------- */
+var atoastT=0;
+function achvToast(text){
+  var el=document.getElementById('atoast');
+  el.querySelector('.t').textContent=text||'成就达成';
+  el.classList.add('show'); buzz(10);
+  clearTimeout(atoastT);
+  atoastT=setTimeout(function(){ el.classList.remove('show'); },2600);
+}
+
+/* 顶栏状态初始值 */
+setPresence('在线');
+
 /* ---------- 长按气泡 ----------
    按住超过一拍：气泡轻轻放大、手机轻轻一震；手指移动超过一点就作废，
    松手落回去。滚动消息列表不该一路震过去 */
+/* 长按消息气泡出菜单：复制。浮在气泡上方，点别处收掉 */
+function closeMact(){
+  document.querySelectorAll('.mact').forEach(function(x){ x.remove(); });
+  document.removeEventListener('pointerdown',docCloseMact);
+}
+function docCloseMact(e){ if(!e.target.closest('.mact')) closeMact(); }
+function openMact(m){
+  closeMact();
+  var sink=m.parentNode;
+  var box=document.createElement('div'); box.className='mact';
+  var cp=document.createElement('button'); cp.type='button'; cp.textContent='复制';
+  cp.addEventListener('click',function(){
+    var txt=m.textContent||'';
+    if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(function(){});
+    buzz(6); closeMact();
+  });
+  box.appendChild(cp);
+  box.style.top=Math.max(4,m.offsetTop-44)+'px';
+  if(m.classList.contains('you'))
+    box.style.right=(sink.clientWidth-m.offsetLeft-m.offsetWidth)+'px';
+  else
+    box.style.left=m.offsetLeft+'px';
+  sink.appendChild(box);
+  setTimeout(function(){ document.addEventListener('pointerdown',docCloseMact); },0);
+}
+
 (function(){
   var t=0, m=null, x0=0, y0=0;
   document.addEventListener('pointerdown',function(e){
-    m=e.target.closest?e.target.closest('.msg'):null; if(!m) return;
+    m=e.target.closest?e.target.closest('.msg,.wg'):null; if(!m) return;
     x0=e.clientX; y0=e.clientY;
     clearTimeout(t);
-    t=setTimeout(function(){ if(m){ m.classList.add('held'); buzz(8); } },430);
+    t=setTimeout(function(){
+      if(m){
+        m.classList.add('held'); buzz(8);
+        if(m.classList.contains('msg')) openMact(m);
+      }
+    },430);
   });
   document.addEventListener('pointermove',function(e){
-    if(m && Math.hypot(e.clientX-x0,e.clientY-y0)>9) clearTimeout(t);
+    if(m && Math.hypot(e.clientX-x0,e.clientY-y0)>9){
+      clearTimeout(t); m.classList.remove('held');
+    }
   });
   function off(){ clearTimeout(t); if(m){ m.classList.remove('held'); m=null; } }
   document.addEventListener('pointerup',off);
