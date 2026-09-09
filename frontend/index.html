@@ -157,7 +157,8 @@ body.glassed .glow{filter:blur(18px)}
 /* 点一下她的胶囊，轻轻放大再弹回——和长按气泡同一根弹簧曲线 */
 .who .idpill.press{transform:scale(1.055)}
 .hbtn.achv{margin-left:auto}
-.who .ava{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--base);
+/* seed 与 ava 同一套样式：墨圆落进胶囊时同字同号，看不出来换了人 */
+.who .ava,.seed{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--base);
   display:flex;align-items:center;justify-content:center;font-size:var(--fs-2);flex:none}
 .who .name{font-size:var(--fs-3);color:var(--ink)}
 .who .tag{font-size:var(--fs-1);color:var(--ink-5);letter-spacing:var(--ls-text);margin-top:2px}
@@ -558,8 +559,7 @@ body.dark .spirit.formed.litup .lum3{--lo:.16}
 .spirit.hop svg{animation:hop 420ms var(--spring)}
 @keyframes hop{0%{transform:none}30%{transform:scale(1.06,.94) translateY(2px)}60%{transform:translateY(-6px)}100%{transform:none}}
 /* 化成头像：路径退，墨圆与「陈」进。seeding 状态下她不应答 */
-.seed{position:absolute;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--base);
-  display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:var(--fs-2);
+.seed{position:absolute;
   opacity:0;transform:scale(2.2);transition:opacity 900ms var(--ease),transform 1100ms var(--ease)}
 .spirit.seeding .body,.spirit.seeding .after,.spirit.seeding .lum,.spirit.seeding .eyes{
   animation:none!important;opacity:0;filter:blur(10px);transform:scale(.7);
@@ -567,8 +567,12 @@ body.dark .spirit.formed.litup .lum3{--lo:.16}
 .spirit.seeding .seed{opacity:1;transform:none}
 .spirit.seeding{cursor:default}
 /* 她化成头像的路上，名字胶囊里的圆先空着，等她落进来 */
-.who .ava{transition:opacity 300ms var(--ease)}
+/* 她化成头像的路上，名字胶囊里的圆先空着，等她落进来；
+   交接同一帧完成：她隐、头像现，没有淡入淡出，所以 transition 是 none */
+.who .ava{transition:none}
 body.spiritjourney:not(.avain) .who .ava{opacity:0}
+/* 进入页不再摆字标：欢迎语已经把名字说了 */
+#enterScreen .brand{display:none}
 
 /* 她站的那片地方亮起来：压扁的椭圆，远大于她，边界落在屏幕外。
    她在凝形的时候，屋子里的光被抽走一点：她是用这屋子的光做的 */
@@ -1739,8 +1743,9 @@ function spiritAnchor(n){
   var ar=app.getBoundingClientRect(), W=ar.width, H=ar.height;
   if(n===6||n===10) return {x:W/2, y:H/2-30, s:1};
   if(n===2){
+    /* 锚点不缩放：墨圆保持 30px 落进胶囊，大小不跳变 */
     var av=document.querySelector('.screen[data-s="2"] .who .ava').getBoundingClientRect();
-    return {x:av.left-ar.left+av.width/2, y:av.top-ar.top+av.height/2, s:30/104};
+    return {x:av.left-ar.left+av.width/2, y:av.top-ar.top+av.height/2, s:1};
   }
   var p=document.querySelector('.screen[data-s="'+n+'"] .perch');
   if(!p) return {x:W/2, y:H/2-30, s:1};
@@ -1888,12 +1893,16 @@ function spiritEnterPage(){
   }, 3200*SC));
 }
 function spiritArrive(){
-  /* 墨圆落进名字胶囊，成为她的头像。同一帧交接，不重影 */
-  spiritJourney=false;
   spiritTimers.push(setTimeout(function(){
-    spirit.classList.remove('on');
-    spiritReset();
+    /* 同一帧：她隐、头像现、胶囊被落进来的重量压一下 */
     document.body.classList.add('avain');
+    spirit.classList.remove('on');
+    var pill=document.querySelector('.screen[data-s="2"] .idpill');
+    pill.classList.add('press');
+    setTimeout(function(){ pill.classList.remove('press'); },300);
+    spiritReset();
+    spiritJourney=false;
+    document.body.classList.remove('spiritjourney');
   },760));
 }
 function spiritBirth(){
@@ -2009,14 +2018,21 @@ function go(n){
       spiritPlace(6); spirit.classList.add('litup'); document.body.classList.add('lit');
     }else spiritBirth();
   }
-  else if(spiritJourney){ spiritPlace(n); spiritScreen(n); }
+  else if(spiritJourney){
+    if(n===2){
+      /* 离开进入页时姿态归零，墨圆直直地落进头像 */
+      spirit.style.setProperty('--tilt','0deg');
+      spiritEyes.style.transform='';
+    }
+    spiritPlace(n); spiritScreen(n);
+  }
   if(n===10 && spiritJourney) spiritEnterPage();
   if(n===2 && spiritJourney) spiritArrive();
   if((n===5||n===7) && spiritJourney){
     spiritJourney=false; spiritReset();
     document.body.classList.remove('spiritjourney');
   }
-  if(n===2) setTimeout(maybeGuide, 700);
+  if(n===2) setTimeout(maybeGuide, spiritJourney?1600:700);   /* 她还在飞：引导层等她落地之后才出现 */
   if(n===10) openWith(enterScreen);
   if(n===4 && !tapDone){
     /* 第一次到画布：她的笔尖点一下唱机，让你知道这些东西是活的 */
