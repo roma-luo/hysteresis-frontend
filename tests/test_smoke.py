@@ -68,7 +68,7 @@ def test_spirit_registration_screen(mobile_page, app_url):
     mobile_page.goto(app_url)
     mobile_page.wait_for_selector("#app")
     mobile_page.evaluate("go(6)")
-    mobile_page.wait_for_timeout(2500)
+    mobile_page.wait_for_timeout(2800)
     assert mobile_page.evaluate(
         "getComputedStyle(document.querySelector('.spirit .eyes circle')).transform"
     ) != "none" or True  # 睁眼动画结束后 transform 归位；存在即可，时序靠人工 preview 验
@@ -84,7 +84,7 @@ def test_spirit_dark_screenshot(mobile_page, app_url):
     mobile_page.goto(app_url)
     mobile_page.wait_for_selector("#app")
     mobile_page.evaluate("go(6)")
-    mobile_page.wait_for_timeout(2500)
+    mobile_page.wait_for_timeout(2800)
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     mobile_page.screenshot(
         path=ARTIFACTS / f"{mobile_page.device_id}-spirit-dark.png", full_page=True

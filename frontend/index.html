@@ -51,6 +51,7 @@
   --glass-edge:rgba(var(--line-rgb),.20);   /* 亮色的玻璃边用暖描边：白边落在近白的布上等于没有 */
   --glass-hilite:rgba(255,255,255,.55);
   --glass-blur:blur(18px) saturate(1.4);
+  --lum:#F5C98A;                /* 她的光：在琥珀 #D8A54E 与桃 #F7B291 之间 */
 
   /* 圆角五档 */
   --r-paper:6px;     /* 纸 */
@@ -503,32 +504,67 @@ body.dark .gz .hint{color:var(--ink-2)}
       calc(30px + env(safe-area-inset-bottom))}
 .auth .navrow{margin-bottom:0}
 .auth .mid{flex:1;width:100%;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:24px}
-.auth .foot{flex:none;display:flex;flex-direction:column;gap:10px}
+  align-items:center;justify-content:center;gap:24px;position:relative;z-index:1}
+.auth .foot{flex:none;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
+/* 注册页的那片地面光垫在最底下，返回键也要能按 */
+.auth .navrow{position:relative;z-index:1}
 
 /* ---------- 她的形 ----------
-   材质是墨：身体 var(--ink)，眼睛 var(--base)，身后是现有那团琥珀光。
-   残影是同一条路径、落后 180ms 的自己——滞后是她的名字（HYSTERESIS）。
-   所有周期都是 3600ms，和字标同拍。夜间不用另写规则：token 自己反转 */
-.spirit{position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;
+   材质是墨：身体 var(--ink)，眼睛 var(--base)。光是取她自己的形：
+   同一条路径填暖色、放大、糊开，三层递进，越外越糊越淡——
+   光是从她身上漫出来的，不是她背后贴了一个圆。残影落后 180ms，光比她更懒。
+   她站的那片地方也亮起来（.pool，压扁的椭圆，收口在屏幕外）。
+   所有周期 3600ms，和字标同拍。夜间：token 反转，光降到余光档 */
+.spirit{position:relative;z-index:1;width:160px;height:160px;display:flex;align-items:center;justify-content:center;
   cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.spirit .halo{position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(circle,rgba(216,165,78,.34) 0%,rgba(247,178,145,.18) 46%,rgba(247,178,145,0) 70%);
-  opacity:0;transform:scale(.9);transition:opacity 900ms var(--ease),transform 1200ms var(--ease)}
-.spirit.on .halo{opacity:1;transform:none;animation:halobreath 3600ms ease-in-out 1200ms infinite}
-@keyframes halobreath{0%,100%{transform:scale(.94);opacity:.8}50%{transform:scale(1.06);opacity:1}}
 .spirit svg{width:96px;height:104px;overflow:visible;position:relative}
+.lum{fill:var(--lum);transform-box:fill-box;transform-origin:50% 50%}
+.lum1{filter:blur(9px);opacity:.55;transform:scale(1.06)}
+.lum2{filter:blur(22px);opacity:.40;transform:scale(1.16)}
+.lum3{filter:blur(44px);opacity:.28;transform:scale(1.34)}
+body.dark .lum1{opacity:.34}
+body.dark .lum2{opacity:.24}
+body.dark .lum3{opacity:.16}
 .spirit .body,.spirit .after{fill:var(--ink);transform-box:fill-box;transform-origin:50% 12%}
 .spirit .after{opacity:.14}
 .spirit .eyes circle{fill:var(--base);transform-box:fill-box;transform-origin:50% 50%}
+/* 她站的那片地方亮起来：压扁的椭圆，远大于她，边界落在屏幕外 */
+.pool{position:absolute;left:50%;top:50%;width:132vw;height:74vh;transform:translate(-50%,-52%);
+  pointer-events:none;z-index:0;opacity:0;transition:opacity 1400ms var(--ease);
+  background:
+    radial-gradient(52% 42% at 50% 46%,rgba(216,165,78,.20),rgba(216,165,78,0) 100%),
+    radial-gradient(76% 60% at 46% 52%,rgba(247,178,145,.13),rgba(247,178,145,0) 100%)}
+body.dark .pool{background:
+    radial-gradient(52% 42% at 50% 46%,rgba(216,165,78,.13),rgba(216,165,78,0) 100%),
+    radial-gradient(80% 62% at 46% 52%,rgba(247,178,145,.07),rgba(247,178,145,0) 100%)}
+body.lit .pool{opacity:1;animation:poolbreath 3600ms ease-in-out 1200ms infinite}
+@keyframes poolbreath{0%,100%{opacity:.82}50%{opacity:1}}
+/* 她在凝形的时候，屋子里的光被抽走一点：她是用这屋子的光做的 */
+body.gathering .glow{filter:brightness(.90) saturate(.95);transform:scale(1.02);
+  transition:filter 1200ms var(--ease),transform 1600ms var(--ease)}
+/* 她被碰了一下，是整块地方亮了 */
+body.poked .pool{animation:poolpulse 700ms var(--ease)}
+@keyframes poolpulse{0%,100%{opacity:1;filter:none}35%{opacity:1;filter:brightness(1.14)}}
 /* 凝：从一团模糊的墨里聚出来。眼睛最后才睁 */
-.spirit .body,.spirit .after{opacity:0;filter:blur(16px);transform:scale(.85)}
-.spirit.on .body{animation:condense 1240ms var(--ease) 0ms both,float 3600ms ease-in-out 1240ms infinite}
-.spirit.on .after{animation:condenseAfter 1240ms var(--ease) 0ms both,float 3600ms ease-in-out 1420ms infinite}
+.spirit .body,.spirit .after,.spirit .lum{opacity:0;transform:scale(.85)}
+.spirit .body,.spirit .after{filter:blur(16px)}
+.spirit.on .body{animation:condense 1240ms var(--ease) both,float 3600ms ease-in-out 1240ms infinite}
+.spirit.on .after{animation:condenseAfter 1240ms var(--ease) both,float 3600ms ease-in-out 1420ms infinite}
 @keyframes condense{from{opacity:0;filter:blur(16px);transform:scale(.85)}60%{opacity:1}to{opacity:1;filter:blur(0);transform:none}}
 @keyframes condenseAfter{from{opacity:0;filter:blur(16px);transform:scale(.85)}to{opacity:.14;filter:blur(0);transform:none}}
 @keyframes float{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-5px) rotate(-1.4deg)}
   70%{transform:translateY(-2px) rotate(1.2deg)}}
+/* 光比她慢一点到，也比她慢一点动：她动，光跟着晃，越外层越懒 */
+.spirit.on .lum1{animation:lumin 1400ms var(--ease) 200ms both,float 3600ms ease-in-out 1500ms infinite}
+.spirit.on .lum2{animation:lumin 1600ms var(--ease) 260ms both,float 3600ms ease-in-out 1620ms infinite}
+.spirit.on .lum3{animation:lumin 1800ms var(--ease) 320ms both,float 3600ms ease-in-out 1740ms infinite}
+@keyframes lumin{from{opacity:0;transform:scale(.85)}to{opacity:var(--lo,1);transform:var(--ls,none)}}
+.spirit.on .lum1{--lo:.55;--ls:scale(1.06)}
+.spirit.on .lum2{--lo:.40;--ls:scale(1.16)}
+.spirit.on .lum3{--lo:.28;--ls:scale(1.34)}
+body.dark .spirit.on .lum1{--lo:.34}
+body.dark .spirit.on .lum2{--lo:.24}
+body.dark .spirit.on .lum3{--lo:.16}
 .spirit .eyes circle{transform:scaleY(0)}
 .spirit.on .eyes circle{animation:open 220ms var(--spring) 1240ms both}
 .spirit.on .eyes circle:nth-child(2){animation-delay:1300ms}
@@ -537,15 +573,14 @@ body.dark .gz .hint{color:var(--ink-2)}
 .spirit.blink .eyes circle{transform:scaleY(.08)!important}
 /* 眼睛跟着你的手指走一点 */
 .spirit .eyes{transition:transform 320ms var(--ease)}
-/* 点她一下：压扁再弹起，光晕跟着亮一下 */
+/* 点她一下：压扁再弹起，地面光亮一下 */
 .spirit.poke svg{animation:poke 480ms var(--spring)}
 @keyframes poke{0%{transform:none}30%{transform:scale(1.1,.9) translateY(4px)}100%{transform:none}}
-.spirit.poke .halo{animation:halopulse 600ms var(--ease)}
-@keyframes halopulse{0%{transform:scale(1);opacity:1}40%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:.85}}
-/* 散：她反过来散回光里，和屏幕变冷同时发生 */
-.spirit.leaving .body,.spirit.leaving .after{animation:none;filter:blur(14px);opacity:0;transform:scale(.9);
-  transition:filter 380ms var(--ease),opacity 380ms var(--ease),transform 380ms var(--ease)}
-.spirit.leaving .halo{animation:none;opacity:0;transform:scale(.8);transition:opacity 380ms,transform 380ms}
+/* 散：她与三层光、地面光一起散掉，屏幕同时变冷。眼睛也在里头，不许留下 */
+.spirit.leaving .body,.spirit.leaving .after,.spirit.leaving .lum,.spirit.leaving .eyes{
+  animation:none!important;opacity:0;transform:scale(.92);filter:blur(16px);
+  transition:opacity 420ms var(--ease),transform 420ms var(--ease),filter 420ms var(--ease)}
+body.leaving .pool{opacity:0;animation:none;transition:opacity 420ms var(--ease)}
 
 /* 底部那一件事等中间的东西先站住，再自己浮上来。延迟里用 both 撑住起始态，
    否则它会先闪一下满不透明度再退回去。
@@ -698,6 +733,7 @@ body.dark{
   --glass-fill-quiet:rgba(40,34,29,.30);
   --glass-edge:rgba(255,255,255,.14);
   --glass-hilite:rgba(255,255,255,.12);
+  --lum:#F2CFA0;                /* 夜里她是唯一的光源，色温抬一点、量降下来 */
 }
 body.dark .cbtn.mic{background:rgba(255,255,255,.10)}
 body.dark .govl .gblur{background:rgba(70,58,48,.42)}
@@ -1005,15 +1041,18 @@ body.devmode .dev{display:block}
   </section>
 
   <section class="screen warm auth" data-s="6">
+    <div class="pool"></div>
     <div class="navrow"><button class="back" onclick="back()" aria-label="返回">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35"
              stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 4.6 L6.6 10 L12.4 15.4"/></svg>
       </button></div>
     <div class="mid">
       <div class="spirit" id="spirit" role="img" aria-label="她还没有形状">
-        <div class="halo"></div>
         <svg viewBox="-6 -8 192 216" aria-hidden="true">
           <defs><path id="ghost" d="M127.6,198.6 C134.0,195.5 144.8,183.4 152.9,170.3 C172.6,138.3 182.7,94.0 178.0,59.4 C167.8,-16.2 64.2,-21.1 45.9,53.1 C45.6,54.1 45.0,58.5 44.4,62.9 C38.9,103.8 26.1,129.5 7.5,136.8 C-1.5,140.4 -2.4,145.4 4.8,151.9 C9.6,156.3 14.1,157.5 27.3,158.0 C43.0,158.5 45.5,160.3 48.0,172.2 C51.2,188.0 59.8,190.8 80.3,182.6 C93.8,177.2 99.1,179.2 105.8,192.0 C110.5,200.9 118.1,203.2 127.6,198.6 Z"/></defs>
+          <use class="lum lum3" href="#ghost"/>
+          <use class="lum lum2" href="#ghost"/>
+          <use class="lum lum1" href="#ghost"/>
           <use class="after" href="#ghost"/>
           <use class="body" href="#ghost"/>
           <g class="eyes" id="spiritEyes"><circle cx="94.1" cy="63.6" r="8"/><circle cx="142.7" cy="63.6" r="8"/></g>
@@ -1649,22 +1688,29 @@ paintGlow();
 
 /* ---------- 她的形 ----------
    她不是出现，是从光里凝出来；离开这一页就散回光里。
-   分镜：260ms 凝（1240ms）→ 睁眼 → 1820ms 醒了开始眨眼跟手 →
-   1900ms 看一眼门（向下 3px，600ms）→ 2100ms 「继续」浮上来（在 CSS 的 foot 延迟里） */
+   分镜：120ms 屋子的光被抽走 → 260ms 她开始凝、地面光亮起 →
+   1500ms 屋子光回来、她已成形无眼 → 睁眼 → 1820ms 醒了 →
+   1900ms 看一眼门 → 2100ms 「继续」浮上来（在 CSS 的 foot 延迟里） */
 var spirit=document.getElementById('spirit'), spiritEyes=document.getElementById('spiritEyes');
 var spiritTimers=[], spiritBlinkT=0;
 function spiritEnter(){
   spiritReset();
-  spiritTimers.push(setTimeout(function(){ spirit.classList.add('on'); }, 260));
-  spiritTimers.push(setTimeout(function(){ spirit.classList.add('awake'); spiritScheduleBlink(); }, 1820));
+  spiritTimers.push(setTimeout(function(){ document.body.classList.add('gathering'); },120));
+  spiritTimers.push(setTimeout(function(){
+    spirit.classList.add('on'); document.body.classList.add('lit');
+  },260));
+  spiritTimers.push(setTimeout(function(){ document.body.classList.remove('gathering'); },1500));
+  spiritTimers.push(setTimeout(function(){ spirit.classList.add('awake'); spiritScheduleBlink(); },1820));
   /* 她先看了一眼门，门才出现 */
-  spiritTimers.push(setTimeout(function(){ spiritEyes.style.transform='translateY(3px)'; }, 1900));
-  spiritTimers.push(setTimeout(function(){ spiritEyes.style.transform=''; }, 2500));
+  spiritTimers.push(setTimeout(function(){ spiritEyes.style.transform='translateY(3px)'; },1900));
+  spiritTimers.push(setTimeout(function(){ spiritEyes.style.transform=''; },2500));
 }
 function spiritReset(){
+  if(spirit._leaving) return;   /* 正在散，别打断 */
   spiritTimers.forEach(clearTimeout); spiritTimers=[];
   clearTimeout(spiritBlinkT);
   spirit.classList.remove('on','awake','blink','poke','leaving');
+  document.body.classList.remove('lit','gathering','poked','leaving');
   spiritEyes.style.transform='';
 }
 function spiritBlink(twice){
@@ -1678,25 +1724,40 @@ function spiritScheduleBlink(){
 }
 function spiritLeave(){
   spirit.classList.add('leaving');
+  document.body.classList.add('leaving');
+  spirit._leaving=true;
+  spiritTimers.forEach(clearTimeout); spiritTimers=[]; clearTimeout(spiritBlinkT);
   go(0);
+  /* 散完了再真的复位，不然下次进来她带着上次的状态 */
+  setTimeout(function(){ spirit._leaving=false; spiritReset(); },460);
 }
-/* 眼睛跟手指：最多 3px，只在她醒着、且这一页还在台上时 */
+/* 眼睛跟手指：最多 3px，只在她醒着、且这一页还在台上时；手一松就归位 */
 addEventListener('pointermove',function(e){
   if(!spirit.classList.contains('awake') || go.now!==6) return;
   var r=spirit.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
   var dx=Math.max(-1,Math.min(1,(e.clientX-cx)/240)), dy=Math.max(-1,Math.min(1,(e.clientY-cy)/240));
   spiritEyes.style.transform='translate('+(dx*3)+'px,'+(dy*3)+'px)';
 });
-addEventListener('pointerleave',function(){ spiritEyes.style.transform=''; });
-/* 点一下：压扁弹起、眨一下、光晕脉冲、轻轻一震；按住 380ms 闭眼，松手睁开 */
+addEventListener('pointerup',function(){ spiritEyes.style.transform=''; });
+/* 点一下：压扁弹起、眨一下、地面光亮一下、轻轻一震；按住 380ms 闭眼，松手睁开。
+   滑出或取消也算松手——不然她会一直闭着眼 */
+function spiritPokeEnd(){
+  clearTimeout(spirit._hold);
+  if(spirit._held){ spirit._held=0; spirit.classList.remove('blink'); return; }
+  spirit.classList.remove('poke'); document.body.classList.remove('poked');
+  void spirit.offsetWidth;
+  spirit.classList.add('poke'); document.body.classList.add('poked');
+  spiritBlink(false); buzz(6);
+}
 spirit.addEventListener('pointerdown',function(){
   spirit._hold=setTimeout(function(){ spirit.classList.add('blink'); spirit._held=1; },380);
 });
-spirit.addEventListener('pointerup',function(){
-  clearTimeout(spirit._hold);
-  if(spirit._held){ spirit._held=0; spirit.classList.remove('blink'); return; }
-  spirit.classList.remove('poke'); void spirit.offsetWidth; spirit.classList.add('poke');
-  spiritBlink(false); buzz(6);
+spirit.addEventListener('pointerup',spiritPokeEnd);
+spirit.addEventListener('pointercancel',function(){
+  clearTimeout(spirit._hold); spirit._held=0; spirit.classList.remove('blink');
+});
+spirit.addEventListener('pointerleave',function(){
+  clearTimeout(spirit._hold); spirit._held=0; spirit.classList.remove('blink');
 });
 
 /* ---------- 屏 ----------
