@@ -45,6 +45,7 @@ def main() -> None:
         device = p.devices[args.device]
         browser = p.webkit.launch(headless=False)
         context = browser.new_context(**device)
+        context.grant_permissions(["camera"])
         page = context.new_page()
         page.goto(url)
         print(f"{args.device} -> {url}")

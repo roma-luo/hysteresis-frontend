@@ -19,7 +19,7 @@ DEFAULT_FRONTEND = PROJECT_ROOT / "frontend"
 
 ERUDA_SNIPPET = (
     b'<script src="https://cdn.jsdelivr.net/npm/eruda"></script>'
-    b"<script>eruda.init();</script>"
+    b"<script>eruda.init();eruda.position({x:8,y:280});</script>"
 )
 
 
