@@ -105,6 +105,19 @@ def test_dark_mode_screenshots(mobile_page, app_url):
     )
 
 
+def test_first_entry_guide_screenshot(mobile_page, app_url):
+    """首次进入 3s（引导中）：画布合一后，她从第 4 屏头像探出、正带你看空画布。"""
+    mobile_page.goto(app_url)
+    mobile_page.wait_for_selector("#app")
+    mobile_page.evaluate("go(4)")
+    mobile_page.wait_for_timeout(3000)
+    assert mobile_page.evaluate("guiding"), "首次进入 3s 时引导应在进行中"
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    mobile_page.screenshot(
+        path=ARTIFACTS / f"{mobile_page.device_id}-first-guide.png", full_page=True
+    )
+
+
 def test_script_scene7_screenshot(mobile_page, app_url):
     """剧本第 7 幕（结束）：?scene=7 直接起播，6 秒后截图（亮）。"""
     mobile_page.goto(app_url + "?scene=7")

@@ -1081,11 +1081,12 @@ body.dark .stagecard.show{background:rgba(70,58,48,.42)}
 .stamp.flash{animation:stampflash 1500ms var(--ease)}
 @keyframes stampflash{0%{opacity:0;filter:brightness(1)}30%{opacity:1;filter:brightness(1.6)}100%{opacity:1;filter:brightness(1)}}
 
-/* 空对话：话还没来的时候，一行淡字占着位子；她一开始打字，它就退掉 */
+/* 空画布：话还没来的时候，一行淡字占着布的中上部；东西一到它就退掉 */
 .ehint{margin:auto;font-size:var(--fs-2);letter-spacing:var(--ls-text);color:var(--ink-3);
   transition:opacity 400ms var(--ease)}
 .ehint.bye{opacity:0}
-.thread.live .ehint{display:none}
+.track .ehint{display:block;margin:34vh auto 0;text-align:center}
+.track.live .ehint{display:none}
 
 /* 疏远（warmth ≤ .25，由 setWarmth 挂 body.distant）：光的收敛由 poolGain 做掉，
    这里只剩她的头像去饱和 */
@@ -1195,7 +1196,7 @@ body.devmode .dev{display:block}
     <div class="welcome">欢迎加入 AFTER 社区</div>
     <div class="loadbar"><i></i></div>
     <div class="btns">
-      <button class="startbtn glass" onclick="go(2)">进入</button>
+      <button class="startbtn glass" onclick="go(4)">进入</button>
     </div>
   </section>
 
@@ -1327,48 +1328,6 @@ body.devmode .dev{display:block}
     </div>
   </section>
 
-  <section class="screen warm" data-s="2">
-    <div class="who">
-      <button class="hbtn menu" aria-label="设置" type="button">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M4.5 7h11M6.5 13h7"/></svg>
-      </button>
-      <div class="idpill" role="button" aria-label="她的档案">
-        <span class="ava">陈</span>
-        <div><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
-      </div>
-      <button class="hbtn achv" aria-label="成就" type="button">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.6" r="4"/><path d="M7.4 10.9L6 16.4l4-2.3 4 2.3-1.4-5.5"/></svg>
-      </button>
-    </div>
-    <div class="thread">
-      <div class="stamp">23:04</div>
-      <div class="ehint">这里还空着。她在想第一句话。</div>
-    </div>
-    <div class="composer">
-      <button class="cbtn pic" aria-label="发一张图" type="button">
-        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M11 5.5v11M5.5 11h11"/></svg>
-      </button>
-      <div class="cfield">
-        <div class="chips"></div>
-        <div class="recmeta"><i class="dot"></i><span class="rtime">0:00</span><span class="rnote">松手发送</span></div>
-        <div class="crow">
-          <textarea class="cin" rows="1" enterkeyhint="send" placeholder="说点什么"></textarea>
-          <button class="cbtn mic" aria-label="语音输入，有内容时是发送" type="button">
-            <svg class="ic-mic" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="8" y="3.4" width="6" height="10.4" rx="3"/>
-              <path d="M5.4 10.6a5.6 5.6 0 0 0 11.2 0"/>
-              <path d="M11 16.2v2.4"/>
-            </svg>
-            <svg class="ic-send" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4.5 11h11M10.5 6l5 5-5 5"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <input type="file" accept="image/*" class="cfile" hidden>
-    </div>
-  </section>
-
   <section class="screen warm" data-s="3" id="drawScreen">
     <div class="who">
       <button class="hbtn menu" aria-label="设置" type="button">
@@ -1441,148 +1400,8 @@ body.devmode .dev{display:block}
     </div>
     <div class="scroll">
       <div class="track" id="track">
-        <div class="stamp">23:26</div>
-        <div class="msg her">放个东西给你听</div>
-        <div class="slot" data-w="w1" style="height:130px"></div>
-        <div class="msg you">这什么啊</div>
-        <div class="msg her">你别说话，听完再说</div>
-        <div style="height:14px"></div>
-
-        <div class="stamp">23:41</div>
-        <div class="msg you">你那边下雨了吗</div>
-        <div class="msg her">下了一整天</div>
-        <div class="slot" data-w="w2" style="height:206px"></div>
-        <div class="msg her">你那儿天还亮着，真好</div>
-        <div style="height:14px"></div>
-
-        <div class="stamp">23:58</div>
-        <div class="msg her">二十四号那天你说要给我看照片</div>
-        <div class="msg her">我记下了，省得你忘</div>
-        <div class="slot" data-w="w3" style="height:250px"></div>
-        <div class="msg you">你怎么什么都记得</div>
-        <div style="height:14px"></div>
-
-        <div class="stamp">00:12</div>
-        <div class="msg her">这个我记一下</div>
-        <div class="slot" data-w="w4" style="height:150px"></div>
-        <div class="msg you">你记这个干嘛</div>
-        <div class="msg her">不干嘛</div>
-        <div style="height:14px"></div>
-
-        <div class="stamp">00:31</div>
-        <div class="msg her">你玩过这个吗</div>
-        <div class="slot" data-w="w5" style="height:286px"></div>
-        <div class="msg you">你哪来的</div>
-        <div class="msg her">一直有</div>
-        <div style="height:14px"></div>
-
-        <div class="stamp">00:49</div>
-        <div class="msg her">猜一个</div>
-        <div class="msg her">就是刚才放给你听的那张</div>
-        <div class="slot" data-w="w6" style="height:168px"></div>
-        <div class="msg you">太难了</div>
-        <div class="msg her">不难，你听了三遍</div>
-        <div style="height:14px"></div>
-
-        <div class="stamp">01:12</div>
-        <div class="msg you">明天早上十点叫我起来</div>
-        <div class="msg her">行</div>
-        <div class="slot" data-w="w7" style="height:196px"></div>
-        <div class="msg her">那我十点见你</div>
-        <div style="height:40px"></div>
-
-        <div class="wg" id="w7" style="left:38px">
-          <div class="alm">
-            <div class="tab">闹钟</div>
-            <div class="lcd nodrag"><svg id="almSet" viewBox="0 0 208 62"></svg></div>
-            <div class="almrow">
-              <div class="almnow">
-                <div class="lcd"><svg id="almNow" viewBox="0 0 104 34"></svg></div>
-                <div class="cap2">NOW</div>
-              </div>
-              <div class="leg">
-                <div><i></i>今天</div>
-                <div class="on"><i></i>明天</div>
-                <div><i></i>每天</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="wg" id="w5" style="left:66px" data-drag="edge">
-          <div class="gb">
-            <canvas class="nodrag" id="snk" width="156" height="176"></canvas>
-            <div class="stick nodrag"><div class="knob"></div></div>
-            <div class="cap">SHE WAS PLAYING</div>
-          </div>
-        </div>
-
-        <div class="wg" id="w6" style="left:34px">
-          <div class="gz">
-            <div class="tian" id="tian">
-              <i data-c="凌"></i><i data-c="晨"><b>晨</b></i><i data-c="的"></i><i data-c="车"></i><i data-c="站"><b>站</b></i>
-            </div>
-            <div class="hint">你今天听过它三遍</div>
-          </div>
-        </div>
-
-        <div class="wg" id="w4" style="left:78px">
-          <div class="stk p-lilac" style="transform:rotate(-2deg)">
-            <p>你说你不喜欢别人问你在忙什么</p>
-          </div>
-        </div>
-
-        <div class="wg" id="w1" style="left:20px">
-          <div class="vt">
-            <div class="platter">
-              <div class="disc">
-                <i style="width:56px;height:56px;border:0.5px solid var(--machine-2)"></i>
-                <i style="width:24px;height:24px;background:#9A86D6"></i>
-                <i style="width:5px;height:5px;background:var(--machine-3)"></i>
-              </div>
-              <div class="arm"></div><div class="pivot"></div>
-            </div>
-            <div class="meta">
-              <div class="kicker">SHE PUT THIS ON</div>
-              <div class="title">凌晨的车站</div>
-              <div class="sub">第三次听</div>
-              <div class="bar"><span></span></div>
-              <div class="clock"><b>04:38</b><em>05:29</em></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="wg" id="w2" style="left:46px">
-          <div class="wx" style="position:relative">
-            <div class="cloud" style="left:-10%;top:40%;width:78%;height:18%;background:rgba(160,165,190,.4)"></div>
-            <div class="cloud" style="right:-12%;top:70%;width:74%;height:18%;background:rgba(255,255,255,.55)"></div>
-            <div class="top">
-              <div class="lbl" style="color:rgba(255,255,255,.75)">她 · 上海 · 23:41</div>
-              <div class="val" style="color:#fff">雨 11°</div>
-            </div>
-            <div class="bot">
-              <div class="lbl" style="color:rgba(70,84,110,.85)">你 · 柏林 · 16:41</div>
-              <div class="val" style="color:#3C4A63">晴 19°</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="wg" id="w3" style="left:42px">
-          <div class="cal">
-            <div class="mo">八月</div>
-            <div class="grid">
-              <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i>
-              <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i>
-              <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="today"></i>
-              <i class="future"></i><i class="future"></i><i class="mark"></i><i class="future"></i><i class="future"></i><i class="future"></i><i class="future"></i>
-              <i class="future"></i><i class="future"></i><i class="future"></i>
-            </div>
-            <div class="note">
-              <div class="d">二十四日</div>
-              <div class="s">你说那天要给我看照片</div>
-            </div>
-          </div>
-        </div>
+        <div class="stamp"></div>
+        <div class="ehint">这里还空着。她在想第一句话。</div>
 
         <canvas class="cur" id="cur"></canvas>
       </div>
@@ -1768,6 +1587,7 @@ body.devmode .dev{display:block}
       <button data-act="restart">从头走一遍</button>
       <button data-act="draw">播放她画画</button>
       <button data-act="canvas">看 widget 画布</button>
+      <button data-act="demo">示例画布</button>
       <button data-act="shelf">零件匣（独件页）</button>
       <button data-act="netfail">模拟断网</button>
       <button data-w="1">warmth · 热</button>
@@ -1880,24 +1700,67 @@ body.devmode .dev{display:block}
       { "a": "wait", "ms": 2400 },
       { "a": "end" }
     ]}
-  ]
+  ],
+  "demo": { "name": "示例画布", "acts": [
+    { "a": "say", "text": "放个东西给你听" },
+    { "a": "place", "widget": "vt" },
+    { "a": "you", "text": "这什么啊" },
+    { "a": "say", "text": "你别说话，听完再说" },
+    { "a": "wait", "ms": 900 },
+
+    { "a": "you", "text": "你那边下雨了吗" },
+    { "a": "say", "text": "下了一整天" },
+    { "a": "place", "widget": "wx" },
+    { "a": "say", "text": "你那儿天还亮着，真好" },
+    { "a": "wait", "ms": 900 },
+
+    { "a": "say", "text": "二十四号那天你说要给我看照片" },
+    { "a": "say", "text": "我记下了，省得你忘" },
+    { "a": "place", "widget": "cal" },
+    { "a": "you", "text": "你怎么什么都记得" },
+    { "a": "wait", "ms": 900 },
+
+    { "a": "say", "text": "这个我记一下" },
+    { "a": "place", "widget": "stk", "data": { "color": "p-lilac", "text": "你说你不喜欢别人问你在忙什么" } },
+    { "a": "you", "text": "你记这个干嘛" },
+    { "a": "say", "text": "不干嘛" },
+    { "a": "wait", "ms": 900 },
+
+    { "a": "say", "text": "你玩过这个吗" },
+    { "a": "place", "widget": "gb" },
+    { "a": "you", "text": "你哪来的" },
+    { "a": "say", "text": "一直有" },
+    { "a": "wait", "ms": 900 },
+
+    { "a": "say", "text": "猜一个" },
+    { "a": "say", "text": "就是刚才放给你听的那张" },
+    { "a": "place", "widget": "gz", "data": { "keep": 1 } },
+    { "a": "you", "text": "太难了" },
+    { "a": "say", "text": "不难，你听了三遍" },
+    { "a": "wait", "ms": 900 },
+
+    { "a": "you", "text": "明天早上十点叫我起来" },
+    { "a": "say", "text": "行" },
+    { "a": "place", "widget": "alm" },
+    { "a": "say", "text": "那我十点见你" }
+  ]}
 }
 </script>
 
 <script>
 /* ---------- widget 登记表 ----------
-   每个 widget 一条登记：原件的 id、落在第几个占位（slot）、尺寸、怎么活（init）、
+   每个 widget 一条登记：模板（<template id="wtpl"> 里的 data-tpl）、尺寸、怎么活（init）、
    新副本怎么造（make）。零件匣与独件页也从这里读。
    以后新 widget 只加一条登记与一个 init——进画布的方式（谁带进来、怎么落下）
    不再各写一遍 */
 var WIDGETS={
-  vt:{el:'w1', sel:'.vt', slot:0, size:[250,118], init:initPlayer, name:'唱机',  desc:'她放了一张唱片',   hint:'点一下：唱针抬起；再点一下，落下',
+  vt:{tpl:'w1', sel:'.vt', size:[250,118], init:initPlayer, name:'唱机',  desc:'她放了一张唱片',   hint:'点一下：唱针抬起；再点一下，落下',
        make:function(){ return cloneWidget('w1','.vt'); }},
-  wx:{el:'w2', sel:'.wx', slot:1, size:[196,196], init:initWx,     name:'天气',  desc:'她在下雨，你这儿晴', hint:'点一下，在她和你之间换重点',
+  wx:{tpl:'w2', sel:'.wx', size:[196,196], init:initWx,     name:'天气',  desc:'她在下雨，你这儿晴', hint:'点一下，在她和你之间换重点',
        make:function(){ return cloneWidget('w2','.wx'); }},
-  cal:{el:'w3', sel:'.cal', slot:2, size:[206,0], init:initCal,    name:'日历',  desc:'二十四日有个记号', hint:'点其他的日子画个圈（只有一个）；她的记号动不了',
+  cal:{tpl:'w3', sel:'.cal', size:[206,0], init:initCal,    name:'日历',  desc:'二十四日有个记号', hint:'点其他的日子画个圈（只有一个）；她的记号动不了',
        make:function(){ return cloneWidget('w3','.cal'); }},
-  stk:{el:'w4', sel:'.stk', slot:3, size:[158,0], init:initStk,    name:'贴纸',  desc:'她贴的一句话',     hint:'点一下，换一张纸的颜色',
+  stk:{tpl:'w4', sel:'.stk', size:[158,0], init:initStk,    name:'贴纸',  desc:'她贴的一句话',     hint:'点一下，换一张纸的颜色',
        make:function(opts){
          var d=document.createElement('div');
          d.className='stk '+(opts.color||'p-peach');
@@ -1905,35 +1768,19 @@ var WIDGETS={
          var p=document.createElement('p'); p.textContent=opts.text||'云在天上写字';
          d.appendChild(p); return d;
        }},
-  gb:{el:'w5', sel:'.gb', slot:4, size:[180,0], init:null,        name:'游戏机', desc:'她的贪吃蛇',       hint:'摇杆一推，这局就归你了'},
-  gz:{el:'w6', sel:'.gz', slot:5, size:[250,0], init:initGuess,   name:'猜词',  desc:'凌晨的车站',       hint:'点空格，翻出那个字',
-       make:function(){
+  gb:{tpl:'w5', sel:'.gb', size:[180,0], init:initGb,      name:'游戏机', desc:'她的贪吃蛇',       hint:'摇杆一推，这局就归你了',
+       make:function(){ return cloneWidget('w5','.gb'); }},
+  gz:{tpl:'w6', sel:'.gz', size:[250,0], init:initGuess,   name:'猜词',  desc:'凌晨的车站',       hint:'点空格，翻出那个字',
+       make:function(opts){
          var c=cloneWidget('w6','.gz');
-         c.querySelectorAll('.tian b').forEach(function(b){ b.remove(); });   /* 新一局：翻过的字盖回去 */
+         if(!opts || !opts.keep) c.querySelectorAll('.tian b').forEach(function(b){ b.remove(); });   /* 新一局：翻过的字盖回去 */
          return c;
        }},
-  alm:{el:'w7', sel:'.alm', slot:6, size:[238,0], init:null,      name:'闹钟',  desc:'她设的十点',       hint:'上下搓段式屏调时间（向下是加）；右缘点 AM/PM；底下换日子'}
+  alm:{tpl:'w7', sel:'.alm', size:[238,0], init:initAlm,   name:'闹钟',  desc:'她设的十点',       hint:'上下搓段式屏调时间（向下是加）；右缘点 AM/PM；底下换日子',
+       make:function(){ return cloneWidget('w7','.alm'); }}
 };
 var WKEYS=Object.keys(WIDGETS);
 
-/* 大 widget 的位置跟着自己的 slot 走：slot 上写着谁（data-w），谁就对齐到它。
-   静态演示对话的 slot 是登记表的；剧本模式追加的 slot 写在追加时。
-   可以拖走；没拖过的在布局变化时重新对位 */
-function parkWidgets(){
-  var trackEl=document.getElementById('track');
-  var slots=trackEl.querySelectorAll('.slot');
-  slots.forEach(function(s){
-    var wid=s.dataset.w; if(!wid) return;
-    var v=document.getElementById(wid);
-    if(!v || v._moved) return;
-    v.style.top=(s.offsetTop+10)+'px';
-    v.style.left='16px';
-  });
-  /* 轨道的高度跟最后一个占位走：它到哪布就到哪，外加一屏多的留白，不写死 */
-  var last=slots[slots.length-1];
-  if(last) trackEl.style.minHeight=(last.offsetTop+last.offsetHeight+320)+'px';
-}
-parkWidgets();
 var glow=document.getElementById('glow');
 var ds=document.getElementById('drawScreen');
 var afterDraw=document.getElementById('afterDraw');
@@ -2033,18 +1880,19 @@ var _slow=location.search.match(/[?&]slow=([\d.]+)/);
 var SC=calm?0.06:(_slow?Math.max(.01,parseFloat(_slow[1])):1);   /* 减动效：同比例压缩她的时间点；?slow=3 慢放三倍复查过渡 */
 
 /* ---- 锚点：她在每一屏坐哪 ---- */
+var PERCH_S=36/104;   /* 她坐着的尺寸：冷屏进度条尽头、引导里从头像探出与回去，同一档 */
 function spiritAnchor(n){
   var ar=app.getBoundingClientRect(), W=ar.width, H=ar.height;
   if(n===6||n===10) return {x:W/2, y:H/2-30, s:1};
-  if(n===2){
+  if(n===4){
     /* 锚点不缩放：墨圆保持 30px 落进胶囊，大小不跳变 */
-    var av=document.querySelector('.screen[data-s="2"] .who .ava').getBoundingClientRect();
+    var av=document.querySelector('.screen[data-s="4"] .who .ava').getBoundingClientRect();
     return {x:av.left-ar.left+av.width/2, y:av.top-ar.top+av.height/2, s:1};
   }
   var p=document.querySelector('.screen[data-s="'+n+'"] .perch');
   if(!p) return {x:W/2, y:H/2-30, s:1};
   var r=p.getBoundingClientRect();
-  return {x:r.left-ar.left+r.width/2, y:r.top-ar.top+r.height/2+2, s:36/104};
+  return {x:r.left-ar.left+r.width/2, y:r.top-ar.top+r.height/2+2, s:PERCH_S};
 }
 function spiritPlace(n,snap){
   var a=spiritAnchor(n);
@@ -2196,7 +2044,7 @@ function spiritArrive(){
     /* 同一帧：她隐、头像现、胶囊被落进来的重量压一下 */
     document.body.classList.add('avain');
     spirit.classList.remove('on');
-    var pill=document.querySelector('.screen[data-s="2"] .idpill');
+    var pill=document.querySelector('.screen[data-s="4"] .idpill');
     pill.classList.add('press');
     setTimeout(function(){ pill.classList.remove('press'); },300);
     spiritReset();
@@ -2272,7 +2120,7 @@ termsdoc.querySelector('.docin').addEventListener('scroll',function(){
    注册表单的五步：年龄、协议、为什么来、从哪知道、关于你。进度条按它算，返回键按它退。
    暖屏是开始页、注册第一步、登录页和对话画布；冷屏只有平台要你办的那五件事。 */
 var FORM=[0,1,8,9,11];
-var WARM=[2,3,4,5,6,7,10,12,13,14];
+var WARM=[3,4,5,6,7,10,12,13,14];
 var BACK={0:6, 1:0, 8:1, 9:8, 11:9, 6:5, 7:5, 12:4, 13:12};
 
 function paintProgress(n){
@@ -2300,7 +2148,7 @@ function go(n){
   if(guiding && n!==4) spiritGuideSkip();   /* 引导中途离屏：她直接收工 */
   stopDraw();
   if(n!==4) handOff(false);
-  if(n===4){ trackSnake.start(); trackAlm.start(); } else { trackSnake.stop(); trackAlm.stop(); }
+  if(n===4){ machinesEach(function(m){ m.start(); }); } else { machinesEach(function(m){ m.stop(); }); }
   if(n!==13) wvLeave();
   document.querySelectorAll('.screen').forEach(function(s){
     var on = +s.dataset.s===n;
@@ -2323,7 +2171,7 @@ function go(n){
     }else spiritBirth();
   }
   else if(spiritJourney){
-    if(n===2){
+    if(n===4){
       /* 离开进入页时姿态归零，墨圆直直地落进头像 */
       spirit.style.setProperty('--tilt','0deg');
       spiritEyes.style.transform='';
@@ -2331,12 +2179,12 @@ function go(n){
     spiritPlace(n); spiritScreen(n);
   }
   if(n===10 && spiritJourney) spiritEnterPage();
-  if(n===2 && spiritJourney) spiritArrive();
+  if(n===4 && spiritJourney) spiritArrive();
   if((n===5||n===7) && spiritJourney){
     spiritJourney=false; spiritReset();
     document.body.classList.remove('spiritjourney');
   }
-  if(n===2) setTimeout(firstConvo, spiritJourney?1360:700);   /* 她落地（760ms）+600ms 起：第一次进对话她带你看一圈 */
+  if(n===4) setTimeout(firstConvo, spiritJourney?1360:700);   /* 她落地（760ms）+600ms 起：第一次进画布她带你看一圈 */
   if(n===10) openWith(enterScreen);
   if(n===4) requestAnimationFrame(dim);
   setTimeout(function(){document.body.classList.remove('going-back')},450);
@@ -2410,9 +2258,9 @@ function drawScene(cb){
 /* ---------- widget 消隐 ----------
    雾把 widget 从画布上托起来，气泡按到 widget 的距离变淡，远的不动。 */
 var track=document.getElementById('track');
-var widgets=['w1','w2','w3','w4','w5','w6','w7'].map(function(id){return document.getElementById(id)});
+/* 画布初始是空的：widget 与气泡都靠 placeWidget/herSay/youSay 一个个放进来 */
+var widgets=[];
 var bubbles=[].slice.call(track.querySelectorAll('.msg'));
-bubbles.forEach(function(m){ m.style.animation='none'; });
 var FALL=130, FLOOR=0.30, queued=false;
 
 function dim(){
@@ -2463,7 +2311,6 @@ function wireDrag(v){
   v.addEventListener('pointerup',end);
   v.addEventListener('pointercancel',end);
 }
-widgets.forEach(wireDrag);
 function clampX(v,x){ return Math.max(4,Math.min(track.offsetWidth-v.offsetWidth-4,x)); }
 function clampY(v,y){ return Math.max(4,Math.min(track.offsetHeight-v.offsetHeight-4,y)); }
 
@@ -2583,7 +2430,8 @@ function makeSnake(root){
 /* ---------- 猜词 ----------
    输入永远发生在输入框里，widget 只是那张纸。这里的按钮只是原型用来演示状态推进的。 */
 function guessOne(){
-  var slots=[].slice.call(document.querySelectorAll('#tian i'));
+  var tians=track.querySelectorAll('.tian'); if(!tians.length) return;
+  var slots=[].slice.call(tians[tians.length-1].querySelectorAll('i'));
   var blank=slots.filter(function(s){return !s.firstChild});
   if(!blank.length){ slots.forEach(function(s){ if(s.dataset.c!=='晨'&&s.dataset.c!=='站') s.innerHTML=''; }); return; }
   var s=blank[0], b=document.createElement('b');
@@ -2723,6 +2571,16 @@ function makeAlarm(root){
   };
 }
 
+/* 画布上的机器实例：一台机器一台，placeWidget 落下时建（initGb/initAlm）。
+   进第 4 屏 start、离屏 stop；清画布时实例随 DOM 一起退役（root 不在了就从名单里筛掉） */
+var trackMachines=[];
+function initGb(root){ var m=makeSnake(root); trackMachines.push({m:m,root:root}); m.start(); }
+function initAlm(root){ var m=makeAlarm(root); trackMachines.push({m:m,root:root}); m.start(); }
+function machinesEach(fn){
+  trackMachines=trackMachines.filter(function(x){ return x.root.isConnected; });
+  trackMachines.forEach(function(x){ fn(x.m); });
+}
+
 /* ---------- widget 交互 ----------
    画布上的原件和独件页里的副本吃同一套交互。
    画布里能拖着走，点与拖不打架：拖过的那一下不算点 */
@@ -2792,9 +2650,7 @@ function wvOpen(k){
   var w=WIDGETS[k];
   document.getElementById('wvName').textContent=w.name;
   document.getElementById('wvHint').textContent=w.hint;
-  var src=document.querySelector('#'+w.el+' '+w.sel);
-  var c=src.cloneNode(true);
-  c.querySelectorAll('[id]').forEach(function(el){ el.removeAttribute('id'); });
+  var c=cloneWidget(w.tpl, w.sel);
   wvStage.appendChild(c);
   if(k==='gb') wvInst=makeSnake(c);
   else if(k==='alm') wvInst=makeAlarm(c);
@@ -2806,15 +2662,6 @@ function wvLeave(){
   if(wvInst){ wvInst.stop(); wvInst=null; }
   wvStage.innerHTML='';
 }
-
-/* 画布上的原件：一台机器一台 */
-var trackSnake=makeSnake(document.getElementById('w5'));
-var trackAlm=makeAlarm(document.getElementById('w7'));
-initPlayer(document.querySelector('#w1 .vt'));
-initWx(document.querySelector('#w2 .wx'));
-initCal(document.querySelector('#w3 .cal'));
-initStk(document.querySelector('#w4 .stk'));
-initGuess(document.querySelector('#w6 .gz'));
 
 /* ---------- 生日与年龄门 ----------
    生日只在注册第一步（data-s=0）问一次，最后一步不再重复。
@@ -2973,6 +2820,7 @@ function herSay(sink,scroll,text,cb){
   if(scroll) scroll.scrollTop=scroll.scrollHeight;
   var hold=Math.min(2600, 700+text.length*140);
   if(warmthNow()<.45) hold*=2;   /* 疏远的时候她回得慢：typing 时长 ×2（剧本第九天起可感） */
+  hold=pace(hold);
   st.t=setTimeout(function(){
     t.remove(); st.typing=null; document.body.classList.remove('hertyping');
     var old=sink.querySelector('.seen'); if(old) old.remove();
@@ -3022,14 +2870,14 @@ function herCard(sink,scroll,text,opts,cb){
       b.addEventListener('click',function(){
         if(card.classList.contains('done')) return;
         card.classList.add('done'); b.classList.add('sel'); buzz(8);
-        setTimeout(function(){ herSay(sink,scroll,o.reply,function(){ if(cb) cb(o); }); },800);
+        setTimeout(function(){ herSay(sink,scroll,o.reply,function(){ if(cb) cb(o); }); },pace(800));
       });
       box.appendChild(b);
     });
     sink.appendChild(card);
     buzz(10);
     if(scroll) scroll.scrollTop=scroll.scrollHeight;
-  },Math.min(2600,700+text.length*140));
+  },pace(Math.min(2600,700+text.length*140)));
 }
 function herTurn(sink,scroll){
   var st=sink._her || (sink._her={t:0,typing:null});
@@ -3053,10 +2901,7 @@ var HELLO_CARD={
 var helloDone=false;
 function hello(sink,scroll){
   if(helloDone) return; helloDone=true;
-  if(!sink){
-    var s=document.querySelector('.screen[data-s="2"]');
-    sink=s.querySelector('.thread'); scroll=sink;
-  }
+  if(!sink){ sink=track; scroll=scroller; }
   setTimeout(function(){
     herSay(sink,scroll,HELLO,function(){
       setTimeout(function(){ herCard(sink,scroll,HELLO_CARD.text,HELLO_CARD.opts); },900);
@@ -3076,9 +2921,10 @@ function guidedBefore(){
 }
 function markGuided(){ try{ localStorage.setItem('after-guided','1'); }catch(e){} }
 function firstConvo(){
+  if(player.playing || player.branch) return;   /* 剧本在播：不带看也不抢话 */
+  if(document.body.classList.contains('ended')) return;
   if(guidedBefore()){ hello(); return; }
-  /* 第一次进对话：她带你看一圈。在画布上播——暖屏之间是溶解，没有模态层 */
-  if(go.now!==4) go(4);
+  /* 第一次进画布：她带你看一圈。在画布上播——暖屏之间是溶解，没有模态层 */
   spiritGuide();
 }
 /* 那行墨字：换字先淡出旧的 200ms，再打新的（逐字 40ms），不是弹出来的 */
@@ -3145,7 +2991,7 @@ function spiritGuide(){
   spiritReset();
   spirit.classList.add('on','formed','quick','litup','awake','gfade');
   document.body.classList.add('lit','guiding');
-  guideFly(av.x, av.y, 36/104);
+  guideFly(av.x, av.y, PERCH_S);
   spiritScheduleBlink();
   guideT.push(setTimeout(function(){ spiritLook(0,-.9,900); },350));
   /* 0.6s：飞到屏幕中央偏上（全尺寸）；布上打出第一行 */
@@ -3227,7 +3073,7 @@ function guideComposer(){
 function guideHome(){
   if(!guiding) return;
   var av=guideAvaPos();
-  guideFly(av.x,av.y,36/104);
+  guideFly(av.x,av.y,PERCH_S);
   guideT.push(setTimeout(function(){
     var pill=document.querySelector('.screen[data-s="4"] .idpill');
     var ava=document.querySelector('.screen[data-s="4"] .who .ava');
@@ -3249,7 +3095,7 @@ function spiritGuideSkip(){
   guideT.forEach(clearTimeout); guideT=[];
   if(calm){ guiding=false; markGuided(); hello(track,scroller); return; }
   var av=guideAvaPos();
-  guideFly(av.x,av.y,36/104);
+  guideFly(av.x,av.y,PERCH_S);
   glineOut();
   setTimeout(function(){
     var ava=document.querySelector('.screen[data-s="4"] .who .ava');
@@ -3412,6 +3258,27 @@ document.querySelectorAll('.composer').forEach(function(c){
    模拟的是物理不是手，必然发飘。 */
 var cvs=document.getElementById('cur'), ctx=cvs.getContext('2d');
 var scroller=track.parentNode;
+
+/* 画布的高度跟内容走：最后一个在流里的子元素底边 + 320 的留白，不写死。
+   追加后重算：placeWidget 直接调；消息类追加走 ResizeObserver（track 高度变了就重算） */
+function fitTrack(){
+  var kids=track.children, last=null;
+  for(var i=kids.length-1;i>=0;i--){
+    var k=kids[i];
+    if(k.id==='cur' || k.classList.contains('wg') || k.classList.contains('ehint')) continue;
+    last=k; break;
+  }
+  var bottom=last?last.offsetTop+last.offsetHeight:0;
+  track.style.minHeight=Math.max(bottom+320, scroller.clientHeight)+'px';
+}
+/* ResizeObserver 回调里直接写 minHeight 会同帧再触发自己（loop 警告）：rAF 推一帧，环就断了 */
+var fitQueued=false;
+function queueFit(){ if(fitQueued) return; fitQueued=true;
+  requestAnimationFrame(function(){ fitQueued=false; fitTrack(); }); }
+if(window.ResizeObserver) new ResizeObserver(queueFit).observe(track);
+/* 空画布的时间戳：时间由 JS 写 */
+track.querySelector('.stamp').textContent=nowTime();
+fitTrack();
 
 /* 笔尖是一个横宽纵窄的椭圆，半轴 3.2 与 1.33，比 2.4 比 1 */
 var NIB_A=3.2, NIB_B=3.2/2.4;
@@ -3632,7 +3499,7 @@ function paintHer(now){
 }
 
 window.addEventListener('resize',function(){
-  parkWidgets(); if(her.live) fitCanvas();
+  fitTrack(); if(her.live) fitCanvas();
   if(spiritJourney) spiritPlace(go.now,true);   /* 她的锚点跟着屏幕重算 */
 });
 
@@ -3677,41 +3544,30 @@ function herPoint(v){
     {go:[a.x,a.y],kind:'back'}
   ]);
 }
-/* 新 widget 进画布的唯一方式：建 DOM → 停靠到 slot（被占了落在眼前这一屏）→
-   笔尖 place → init → wig 小引导。warmth < .45 她不出手：什么也不放，只回话 */
+/* 新 widget 进画布的唯一方式：建 DOM → 追加 slot 落在对话流末尾（之后的消息排在它下面）→
+   笔尖 place → init → wig 小引导。warmth < .45 她不出手：什么也不放，只回话。
+   你拖过的东西留在你放的地方——slot 只在落下的那一刻给它定位 */
 var wgSeq=0;
 function placeWidget(id,opts){
   opts=opts||{};
   var reg=WIDGETS[id];
   if(!reg || !reg.make || handOut() || go.now!==4) return null;
+  /* 第一件东西落下之前，空态那行字先走 */
+  var eh=track.querySelector('.ehint');
+  if(eh && !track.classList.contains('live')){
+    track.classList.add('live'); eh.classList.add('bye');
+  }
   var wg=document.createElement('div');
   wg.className='wg'; wg.id='wg-'+id+'-'+(++wgSeq);
   wg.appendChild(reg.make(opts));
   wg.style.visibility='hidden';
-  track.appendChild(wg);
-  /* 落点：剧本模式在对话流末尾追加新 slot（之后的消息自然排在它下面）；
-     静态演示对话用登记表的 slot；被占了落在眼前这一屏的下缘 */
-  var x=16, y;
-  if(opts.at){ x=opts.at[0]; y=opts.at[1]; }
-  else if(player.playing){
-    var ns=document.createElement('div');
-    ns.className='slot'; ns.dataset.w=wg.id;
-    track.appendChild(ns);
-    ns.style.height=(wg.offsetHeight+20)+'px';
-    y=ns.offsetTop+10;
-  }
-  else{
-    var slots=track.querySelectorAll('.slot'), s=slots[reg.slot];
-    var occupied=s && widgets.some(function(v){
-      return Math.abs(v.offsetTop-(s.offsetTop+10))<48;
-    });
-    if(s && !occupied){ y=s.offsetTop+10; s.dataset.w=wg.id; }
-    else{ y=scroller.scrollTop+scroller.clientHeight-wg.offsetHeight-40; }
-  }
-  wg.style.left=x+'px'; wg.style.top=y+'px';
-  var need=y+wg.offsetHeight+140;
-  if(track.offsetHeight<need) track.style.minHeight=need+'px';
-  widgets.push(wg); wireDrag(wg);
+  track.appendChild(wg);                 /* 先进 DOM 才量得到高 */
+  var slot=document.createElement('div'); slot.className='slot'; slot.dataset.w=wg.id;
+  slot.style.height=(reg.size[1]||wg.offsetHeight||160)+20+'px';
+  track.appendChild(slot);               /* 落在对话流末尾，之后的消息排在它下面 */
+  wg.style.top=(slot.offsetTop+10)+'px'; wg.style.left=(opts.left||16)+'px';
+  fitTrack();
+  widgets.push(wg); wireDrag(wg); queueDim();
   function land(){
     dropIn(wg);
     if(reg.init) reg.init(wg.firstElementChild);
@@ -3728,10 +3584,13 @@ function placeWidget(id,opts){
    ?scene=N 直接从第 N 幕起播（拍素材用） */
 var SCRIPT=JSON.parse(document.getElementById('script').textContent);
 var player={i:0, playing:false, branch:null, makeup:false, marks:{}};
+/* 播放节奏：剧本/示例画布在播时吃 SC（?slow 慢放复查、示例画布快进铺完），日常对话不动 */
+function pace(ms){ return ms*(player.playing?SC:1); }
 
-/* 新副本的 DOM：克隆画布上的原件，剥掉 id（原件不动） */
-function cloneWidget(elId,sel){
-  var c=document.querySelector('#'+elId+' '+sel).cloneNode(true);
+/* 新副本的 DOM：从 <template id="wtpl"> 的模板克隆，剥掉 id（模板不动） */
+function cloneWidget(tplId,sel){
+  var tpl=document.getElementById('wtpl').content.querySelector('[data-tpl="'+tplId+'"]');
+  var c=(sel?tpl.querySelector(sel):tpl).cloneNode(true);
   c.querySelectorAll('[id]').forEach(function(el){ el.removeAttribute('id'); });
   return c;
 }
@@ -3761,19 +3620,22 @@ function smoothTo(el,to,ms,done){
    3.5s 自己收起，点了去对话屏。不震动、不红点、不催 */
 var abar=document.getElementById('abar'), abarT=0;
 abar.addEventListener('click',function(){
-  abar.classList.remove('show'); clearTimeout(abarT); go(2);
+  abar.classList.remove('show'); clearTimeout(abarT); go(4);
 });
 function arriveAct(text){
   if(herMuted) return;   /* 「停止她的主动联系」开着：她不主动发消息 */
   if(guiding) return;    /* 引导期间挂起：她正带着你看，不插话 */
-  var screen2=document.querySelector('.screen[data-s="2"]');
-  var sink=screen2.querySelector('.thread');
+  var sink=track;
+  var eh=sink.querySelector('.ehint'); if(eh) eh.classList.add('bye');
   sink.classList.add('live'); maybeStamp(sink);
   var m=document.createElement('div'); m.className='msg her';
   m._time=nowTime();
   m.appendChild(document.createTextNode(text));
   sink.appendChild(m);
-  if(go.now===2){ sink.scrollTop=sink.scrollHeight; return; }
+  setTimeout(function(){
+    m.style.animation='none'; bubbles.push(m); queueDim();
+  },500);
+  if(go.now===4){ scroller.scrollTop=scroller.scrollHeight; return; }
   /* 注册中（冷屏）不弹到达条；话照常落在对话里，进来就能看到 */
   if(WARM.indexOf(go.now)<0) return;
   abar.querySelector('.t').textContent=text;
@@ -3869,15 +3731,15 @@ function saveStagePng(kind){
 function recallAct(a,next){
   herSay(track,scroller,a.text,function(){
     var el=a.ref && player.marks[a.ref];
-    if(!el || !el.isConnected){ setTimeout(next,400); return; }
+    if(!el || !el.isConnected){ setTimeout(next,pace(400)); return; }
     var st=document.createElement('div'); st.className='stamp flash';
     st.textContent='她翻了出来';
     el.insertAdjacentElement('afterend',st);
     var back=scroller.scrollTop;
-    smoothTo(scroller, Math.max(0,el.offsetTop-180), 400, function(){
+    smoothTo(scroller, Math.max(0,el.offsetTop-180), pace(400), function(){
       setTimeout(function(){
-        smoothTo(scroller, back, 400, function(){ setTimeout(next,300); });
-      },700);
+        smoothTo(scroller, back, pace(400), function(){ setTimeout(next,pace(300)); });
+      },pace(700));
     });
   });
 }
@@ -3886,17 +3748,17 @@ function execAct(a,next){
     case 'say':
       herSay(track,scroller,a.text,function(){
         if(a.ref){ var v=document.getElementById(a.ref); if(v) herPoint(v); }
-        setTimeout(next, a.ref?1500:320);
+        setTimeout(next, pace(a.ref?1500:320));
       });
       break;
-    case 'you': youSay(track,scroller,a.text); setTimeout(next,760); break;
+    case 'you': youSay(track,scroller,a.text); setTimeout(next,pace(760)); break;
     case 'place':
       /* 手带她放：等落下再走；warmth < .45 她不出手，动作直接跳过 */
-      setTimeout(next, placeWidget(a.widget, a.data||{}) ? 2600 : 500);
+      setTimeout(next, placeWidget(a.widget, a.data||{}) ? pace(2600) : pace(500));
       break;
     case 'ink':
       /* 写字/画画：扁头笔那套原样（画完回画布）；warmth < .25 时她连笔也不拿 */
-      drawScene(function(){ setTimeout(function(){ go(4); next(); },600); });
+      drawScene(function(){ setTimeout(function(){ go(4); next(); },pace(600)); });
       break;
     case 'card':
       if(a.kind==='decide'){
@@ -3909,22 +3771,22 @@ function execAct(a,next){
             player.marks[a.mark]=st;
             scroller.scrollTop=scroller.scrollHeight;
           }
-          setTimeout(next,900);
+          setTimeout(next,pace(900));
         });
       }else if(a.kind==='coop' && a.game==='guess'){
         herSay(track,scroller,'猜一个',function(){
           placeWidget('gz',{});
           setTimeout(function(){
-            herSay(track,scroller,'就是前几天放给你听的那张',function(){ setTimeout(next,300); });
-          },2600);
+            herSay(track,scroller,'就是前几天放给你听的那张',function(){ setTimeout(next,pace(300)); });
+          },pace(2600));
         });
       }else next();
       break;
     case 'recall': recallAct(a,next); break;
-    case 'warmth': setWarmth(a.to, a.ms||4000); setTimeout(next,700); break;
-    case 'presence': setPresence(a.text); setTimeout(next,320); break;
-    case 'wait': setTimeout(next, a.ms||1000); break;
-    case 'arrive': arriveAct(a.text); setTimeout(next,1400); break;
+    case 'warmth': setWarmth(a.to, a.ms||4000); setTimeout(next,pace(700)); break;
+    case 'presence': setPresence(a.text); setTimeout(next,pace(320)); break;
+    case 'wait': setTimeout(next, pace(a.ms||1000)); break;
+    case 'arrive': arriveAct(a.text); setTimeout(next,pace(1400)); break;
     case 'stage': stageAct(a,next); break;
     case 'branch':
       /* 分岔：播放器停在这儿，演示菜单里由演示者选「回 / 不回」 */
@@ -3970,6 +3832,42 @@ function chooseBranch(k){
     menuNote();
   });
 }
+/* 清空画布：示例画布回放前用。机器停掉、实例随 DOM 一起退役；
+   空 stamp（时间重写）与空态那行字留下，其余全部移除 */
+function clearTrack(){
+  var st=track._her;
+  if(st){ clearTimeout(st.t); if(st.typing){ st.typing.remove(); st.typing=null; } }
+  document.body.classList.remove('hertyping');
+  trackMachines.forEach(function(x){ x.m.stop(); });
+  trackMachines=[];
+  var keep=track.firstElementChild;   /* 空 stamp */
+  [].slice.call(track.children).forEach(function(k){
+    if(k===keep || k.id==='cur' || k.classList.contains('ehint')) return;
+    k.remove();
+  });
+  keep.textContent=nowTime();
+  var eh=track.querySelector('.ehint');
+  if(eh) eh.classList.remove('bye');
+  track.classList.remove('live');
+  track._lastTs=0;
+  track.style.minHeight='';
+  bubbles.length=0; widgets.length=0;
+  scroller.scrollTop=0;
+  fitTrack(); queueDim();
+}
+/* 示例画布：原型里那张写满的画布变成一幕剧本（SCRIPT.demo），
+   清场后回放。SC 临时压到 0.15，typing 与动作间隔都快进，铺完恢复 */
+function demoCanvas(){
+  if(player.playing || player.branch || guiding) return;
+  if(document.body.classList.contains('ended') || !SCRIPT.demo) return;
+  if(go.now!==4) go(4);
+  clearTrack();
+  var sc0=SC; SC=0.15;
+  player.playing=true; menuNote();
+  runActs(SCRIPT.demo.acts, function(){
+    player.playing=false; SC=sc0; menuNote();
+  });
+}
 /* 菜单顶部小字：当前幕号（与分岔口） */
 function menuNote(){
   var note=document.getElementById('devnote');
@@ -4002,6 +3900,7 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
     else if(a==='restart') boot();
     else if(a==='draw') drawScene();
     else if(a==='canvas') go(4);
+    else if(a==='demo') demoCanvas();
     else if(a==='shelf') go(12);
     else if(a==='netfail') document.body.classList.toggle('netfail');
     else if(a==='unlock') achvToast('成就达成 · 第一次让她记下一件事');
@@ -4482,11 +4381,108 @@ function boot(){
 
 stopDraw();
 boot();
-/* ?scene=N：直接从第 N 幕起播（拍素材用），跳过一次进画布的点拨 */
+/* ?scene=N：直接从第 N 幕起播（拍素材用）。标记已引导，从空画布起播，跳过第一次进画布的点拨 */
 (function(){
   var m=location.search.match(/[?&]scene=(\d+)/);
-  if(m){ go(4); scene(Math.min(+m[1],SCRIPT.scenes.length)); }
+  if(m){ markGuided(); go(4); scene(Math.min(+m[1],SCRIPT.scenes.length)); }
 })();
 </script>
+
+<!-- widget 模板：画布初始是空的，原件不再写死在 HTML 里。
+     placeWidget 从这里克隆（cloneWidget 按 data-tpl 取，剥掉内部 id） -->
+<template id="wtpl">
+  <div class="wg" data-tpl="w1">
+    <div class="vt">
+      <div class="platter">
+        <div class="disc">
+          <i style="width:56px;height:56px;border:0.5px solid var(--machine-2)"></i>
+          <i style="width:24px;height:24px;background:#9A86D6"></i>
+          <i style="width:5px;height:5px;background:var(--machine-3)"></i>
+        </div>
+        <div class="arm"></div><div class="pivot"></div>
+      </div>
+      <div class="meta">
+        <div class="kicker">SHE PUT THIS ON</div>
+        <div class="title">凌晨的车站</div>
+        <div class="sub">第三次听</div>
+        <div class="bar"><span></span></div>
+        <div class="clock"><b>04:38</b><em>05:29</em></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wg" data-tpl="w2">
+    <div class="wx" style="position:relative">
+      <div class="cloud" style="left:-10%;top:40%;width:78%;height:18%;background:rgba(160,165,190,.4)"></div>
+      <div class="cloud" style="right:-12%;top:70%;width:74%;height:18%;background:rgba(255,255,255,.55)"></div>
+      <div class="top">
+        <div class="lbl" style="color:rgba(255,255,255,.75)">她 · 上海 · 23:41</div>
+        <div class="val" style="color:#fff">雨 11°</div>
+      </div>
+      <div class="bot">
+        <div class="lbl" style="color:rgba(70,84,110,.85)">你 · 柏林 · 16:41</div>
+        <div class="val" style="color:#3C4A63">晴 19°</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wg" data-tpl="w3">
+    <div class="cal">
+      <div class="mo">八月</div>
+      <div class="grid">
+        <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i>
+        <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i>
+        <i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="past"></i><i class="today"></i>
+        <i class="future"></i><i class="future"></i><i class="mark"></i><i class="future"></i><i class="future"></i><i class="future"></i><i class="future"></i>
+        <i class="future"></i><i class="future"></i><i class="future"></i>
+      </div>
+      <div class="note">
+        <div class="d">二十四日</div>
+        <div class="s">你说那天要给我看照片</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wg" data-tpl="w4">
+    <div class="stk p-lilac" style="transform:rotate(-2deg)">
+      <p>你说你不喜欢别人问你在忙什么</p>
+    </div>
+  </div>
+
+  <div class="wg" data-tpl="w5" data-drag="edge">
+    <div class="gb">
+      <canvas class="nodrag" id="snk" width="156" height="176"></canvas>
+      <div class="stick nodrag"><div class="knob"></div></div>
+      <div class="cap">SHE WAS PLAYING</div>
+    </div>
+  </div>
+
+  <div class="wg" data-tpl="w6">
+    <div class="gz">
+      <div class="tian" id="tian">
+        <i data-c="凌"></i><i data-c="晨"><b>晨</b></i><i data-c="的"></i><i data-c="车"></i><i data-c="站"><b>站</b></i>
+      </div>
+      <div class="hint">你今天听过它三遍</div>
+    </div>
+  </div>
+
+  <div class="wg" data-tpl="w7">
+    <div class="alm">
+      <div class="tab">闹钟</div>
+      <div class="lcd nodrag"><svg id="almSet" viewBox="0 0 208 62"></svg></div>
+      <div class="almrow">
+        <div class="almnow">
+          <div class="lcd"><svg id="almNow" viewBox="0 0 104 34"></svg></div>
+          <div class="cap2">NOW</div>
+        </div>
+        <div class="leg">
+          <div><i></i>今天</div>
+          <div class="on"><i></i>明天</div>
+          <div><i></i>每天</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 </body>
 </html>
