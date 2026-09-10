@@ -117,6 +117,9 @@ body.hertyping .glayer i:nth-child(1){filter:brightness(1.06) saturate(1.1)}
   transition:opacity .4s var(--ease),visibility 0s linear .4s,filter 380ms ease-out}
 .screen.on{opacity:1;visibility:visible;pointer-events:auto;
   transition:opacity .4s var(--ease),visibility 0s,filter 380ms ease-out}
+/* 进入页 → 对话：她还在飞，进入页慢一档淡出（600ms），她不会飞在一张已经消失的页上 */
+#enterScreen{transition:opacity .6s var(--ease),visibility 0s linear .6s,filter 380ms ease-out}
+#enterScreen.on{transition:opacity .4s var(--ease),visibility 0s,filter 380ms ease-out}
 /* 冷屏进出有方向：前进从右边来，返回回到左边去。暖屏之间保持溶解，不加位移。
    .on 那两条要带上自己的 transition：进来时 visibility 不等那 .4s，否则会先隐形再硬跳 */
 .screen.cold{transform:translateX(18px);
@@ -153,10 +156,10 @@ body.glassed .glow{filter:blur(18px)}
 .terms li::before{content:"";position:absolute;left:0;top:.74em;
   width:4px;height:4px;border-radius:50%;background:var(--cold-2nd)}
 .terms li.in{opacity:1;transform:none}
-/* 一条一条地给：第一条自己出来，之后每按一次「继续」出一条，
-   三条都在了再按才走。这一页不该是一屏铺开、一眼划过去的东西 */
-.terms-screen .coldbtn{opacity:0;transition:opacity 620ms var(--ease)}
-.terms-screen.on .coldbtn{opacity:1;transition-delay:700ms}
+/* 三条告知按时间自己出，齐了按钮才浮上来：它没浮上来之前不在，
+   浮上来就是「我明白」，按一次就走 */
+.terms-screen .coldbtn{opacity:0;pointer-events:none;transition:opacity 420ms var(--ease)}
+.terms-screen .coldbtn.ready{opacity:1;pointer-events:auto}
 .coldbtn{background:var(--cold-ink);color:var(--cold-bg);border:none;border-radius:var(--r-paper);padding:12px;font-size:var(--fs-3);
   width:100%;font-family:inherit;cursor:pointer;letter-spacing:var(--ls-text)}
 .coldbtn:hover{background:var(--cold-ink-hover)}
@@ -487,6 +490,9 @@ body.dark .gz .hint{color:var(--ink-2)}
 .start.welcomed .loadbar{opacity:1}
 .loadbar i{display:block;height:100%;width:0;background:var(--ink);border-radius:1px}
 .start.loaded .loadbar i{width:100%;transition:width 3400ms cubic-bezier(.45,.05,.35,1)}
+/* 登录路径（没有她）：欢迎语与加载条作为一组垂直居中，不让上半屏空着 */
+body:not(.spiritjourney) #enterScreen .welcome{margin-top:-18px}
+body:not(.spiritjourney) #enterScreen .loadbar{margin-top:14px}
 .startbtn{border:0;border-radius:var(--r-glass);padding:13px;font-size:var(--fs-3);letter-spacing:var(--ls-text);
   font-family:inherit;cursor:pointer;
   transition:background 140ms var(--ease)}
@@ -593,15 +599,16 @@ body.spiritjourney:not(.avain) .who .ava{opacity:0}
 #enterScreen .brand{display:none}
 
 /* 她站的那片地方亮起来：压扁的椭圆，远大于她，边界落在屏幕外。
-   她在凝形的时候，屋子里的光被抽走一点：她是用这屋子的光做的 */
-.pool{position:absolute;left:50%;top:50%;width:132vw;max-width:520px;height:74%;transform:translate(-50%,-52%);
+   她在凝形的时候，屋子里的光被抽走一点：她是用这屋子的光做的。
+   盒子四边都伸出屏外，渐变的半径不超过盒子到对应边缘的距离——布上看不到边 */
+.pool{position:absolute;inset:-20% 0;left:-16%;right:-16%;width:auto;height:auto;transform:none;
   pointer-events:none;z-index:0;opacity:0;transition:opacity 1400ms var(--ease);
   background:
-    radial-gradient(52% 42% at 50% 46%,rgba(216,165,78,.20),rgba(216,165,78,0) 100%),
-    radial-gradient(76% 60% at 46% 52%,rgba(247,178,145,.13),rgba(247,178,145,0) 100%)}
+    radial-gradient(38% 30% at 50% 46%,rgba(216,165,78,.20),rgba(216,165,78,0) 100%),
+    radial-gradient(56% 44% at 46% 52%,rgba(247,178,145,.13),rgba(247,178,145,0) 100%)}
 body.dark .pool{background:
-    radial-gradient(52% 42% at 50% 46%,rgba(216,165,78,.13),rgba(216,165,78,0) 100%),
-    radial-gradient(80% 62% at 46% 52%,rgba(247,178,145,.07),rgba(247,178,145,0) 100%)}
+    radial-gradient(38% 30% at 50% 46%,rgba(216,165,78,.13),rgba(216,165,78,0) 100%),
+    radial-gradient(56% 44% at 46% 52%,rgba(247,178,145,.07),rgba(247,178,145,0) 100%)}
 body.lit .pool{opacity:1;animation:poolbreath 3600ms ease-in-out 1200ms infinite}
 @keyframes poolbreath{0%,100%{opacity:.82}50%{opacity:1}}
 body.gathering .glow{filter:brightness(.90) saturate(.95);transform:scale(1.02);
@@ -1000,7 +1007,7 @@ body.dark .loadbar i{background:var(--ink)}
 
 /* 主动消息到达条：你不在对话屏时，顶栏位置滑下一条极薄的玻璃（她的头像+一行字），
    3.5s 自己收起，点了去对话屏。不震动、不红点、不催 */
-.abar{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:14px;right:14px;z-index:72;
+.abar{position:fixed;top:calc(env(safe-area-inset-top) + 14px);left:14px;right:14px;height:44px;z-index:72;
   display:flex;align-items:center;gap:9px;padding:7px 14px 7px 7px;border-radius:999px;
   transform:translateY(-150%);transition:transform 480ms var(--ease);cursor:pointer}
 .abar.show{transform:none}
@@ -1013,8 +1020,11 @@ body.dark .loadbar i{background:var(--ink)}
    下面日期区间与「第 N 天」，底部极小的 AFTER 字标。
    三种 kind 只差顶部小字与配色权重。夜间用暗纸（token 自己翻） */
 .stagecard{position:fixed;inset:0;z-index:72;display:flex;align-items:center;justify-content:center;
-  opacity:0;visibility:hidden;transition:opacity 420ms var(--ease),visibility 0s linear .42s}
-.stagecard.show{opacity:1;visibility:visible;transition:opacity 420ms var(--ease),visibility 0s}
+  opacity:0;visibility:hidden;background:rgba(255,255,255,0);
+  transition:opacity 420ms var(--ease),visibility 0s linear .42s,background 420ms var(--ease)}
+.stagecard.show{opacity:1;visibility:visible;background:rgba(255,255,255,.26);
+  transition:opacity 420ms var(--ease),visibility 0s,background 420ms var(--ease)}
+body.dark .stagecard.show{background:rgba(70,58,48,.42)}
 .scwrap{display:flex;flex-direction:column;align-items:center;gap:14px}
 .scard{width:min(74vw,284px);aspect-ratio:3/4;background:var(--paper);color:var(--paper-ink);
   border-radius:var(--r-paper);border:0.5px solid rgba(var(--line-rgb),.18);box-shadow:none;
@@ -1037,9 +1047,10 @@ body.dark .loadbar i{background:var(--ink)}
 .stamp.flash{animation:stampflash 1500ms var(--ease)}
 @keyframes stampflash{0%{opacity:0;filter:brightness(1)}30%{opacity:1;filter:brightness(1.6)}100%{opacity:1;filter:brightness(1)}}
 
-/* 空对话：话还没来的时候，一行淡字占着位子 */
+/* 空对话：话还没来的时候，一行淡字占着位子；她一开始打字，它就退掉 */
 .ehint{margin:auto;font-size:var(--fs-2);letter-spacing:var(--ls-text);color:var(--ink-3);
   transition:opacity 400ms var(--ease)}
+.ehint.bye{opacity:0}
 .thread.live .ehint{display:none}
 
 /* 疏远（warmth ≤ .25，由 setWarmth 挂 body.distant）：光的收敛由 poolGain 做掉，
@@ -1113,17 +1124,17 @@ body.devmode .dev{display:block}
       <div class="finfo">
         <div>
           <div class="flabel">用户名</div>
-          <input class="fin" type="text" autocomplete="username"
+          <input class="fin" type="text" autocomplete="username" data-req
                  autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
         <div class="frow">
           <div>
             <div class="flabel">姓</div>
-            <input class="fin" type="text" autocomplete="family-name">
+            <input class="fin" type="text" autocomplete="family-name" data-req>
           </div>
           <div>
             <div class="flabel">名</div>
-            <input class="fin" type="text" autocomplete="given-name">
+            <input class="fin" type="text" autocomplete="given-name" data-req>
           </div>
         </div>
         <div>
@@ -1139,7 +1150,7 @@ body.devmode .dev{display:block}
           </div>
         </div>
       </div>
-      <button class="coldbtn" onclick="hopGo(10)">继续</button>
+      <button class="coldbtn" id="aboutNext" onclick="hopGo(10)" disabled>继续</button>
     </div>
   </section>
 
@@ -1396,7 +1407,7 @@ body.devmode .dev{display:block}
       <div class="track" id="track">
         <div class="stamp">23:26</div>
         <div class="msg her">放个东西给你听</div>
-        <div class="slot" data-for="w1" style="height:130px"></div>
+        <div class="slot" data-w="w1" style="height:130px"></div>
         <div class="msg you">这什么啊</div>
         <div class="msg her">你别说话，听完再说</div>
         <div style="height:14px"></div>
@@ -1404,27 +1415,27 @@ body.devmode .dev{display:block}
         <div class="stamp">23:41</div>
         <div class="msg you">你那边下雨了吗</div>
         <div class="msg her">下了一整天</div>
-        <div class="slot" data-for="w2" style="height:206px"></div>
+        <div class="slot" data-w="w2" style="height:206px"></div>
         <div class="msg her">你那儿天还亮着，真好</div>
         <div style="height:14px"></div>
 
         <div class="stamp">23:58</div>
         <div class="msg her">二十四号那天你说要给我看照片</div>
         <div class="msg her">我记下了，省得你忘</div>
-        <div class="slot" data-for="w3" style="height:250px"></div>
+        <div class="slot" data-w="w3" style="height:250px"></div>
         <div class="msg you">你怎么什么都记得</div>
         <div style="height:14px"></div>
 
         <div class="stamp">00:12</div>
         <div class="msg her">这个我记一下</div>
-        <div class="slot" data-for="w4" style="height:150px"></div>
+        <div class="slot" data-w="w4" style="height:150px"></div>
         <div class="msg you">你记这个干嘛</div>
         <div class="msg her">不干嘛</div>
         <div style="height:14px"></div>
 
         <div class="stamp">00:31</div>
         <div class="msg her">你玩过这个吗</div>
-        <div class="slot" data-for="w5" style="height:286px"></div>
+        <div class="slot" data-w="w5" style="height:286px"></div>
         <div class="msg you">你哪来的</div>
         <div class="msg her">一直有</div>
         <div style="height:14px"></div>
@@ -1432,7 +1443,7 @@ body.devmode .dev{display:block}
         <div class="stamp">00:49</div>
         <div class="msg her">猜一个</div>
         <div class="msg her">就是刚才放给你听的那张</div>
-        <div class="slot" data-for="w6" style="height:168px"></div>
+        <div class="slot" data-w="w6" style="height:168px"></div>
         <div class="msg you">太难了</div>
         <div class="msg her">不难，你听了三遍</div>
         <div style="height:14px"></div>
@@ -1440,7 +1451,7 @@ body.devmode .dev{display:block}
         <div class="stamp">01:12</div>
         <div class="msg you">明天早上十点叫我起来</div>
         <div class="msg her">行</div>
-        <div class="slot" data-for="w7" style="height:196px"></div>
+        <div class="slot" data-w="w7" style="height:196px"></div>
         <div class="msg her">那我十点见你</div>
         <div style="height:40px"></div>
 
@@ -1880,16 +1891,16 @@ var WIDGETS={
 };
 var WKEYS=Object.keys(WIDGETS);
 
-/* 大 widget 的初始位置跟着消息流走：哪句话引出的它，它就落在哪句话下面的
-   占位（.slot）处，横向对齐消息列的左边。slot 的归属读登记表。
+/* 大 widget 的位置跟着自己的 slot 走：slot 上写着谁（data-w），谁就对齐到它。
+   静态演示对话的 slot 是登记表的；剧本模式追加的 slot 写在追加时。
    可以拖走；没拖过的在布局变化时重新对位 */
 function parkWidgets(){
   var trackEl=document.getElementById('track');
   var slots=trackEl.querySelectorAll('.slot');
-  WKEYS.forEach(function(k){
-    var reg=WIDGETS[k], v=document.getElementById(reg.el);
+  slots.forEach(function(s){
+    var wid=s.dataset.w; if(!wid) return;
+    var v=document.getElementById(wid);
     if(!v || v._moved) return;
-    var s=slots[reg.slot]; if(!s) return;
     v.style.top=(s.offsetTop+10)+'px';
     v.style.left='16px';
   });
@@ -1993,7 +2004,8 @@ var spirit=document.getElementById('spirit'), spiritEyes=document.getElementById
 var spiritTimers=[], spiritBlinkT=0, spiritWanderT=0, spiritIdleT=0;
 var spiritJourney=false;
 var gaze={hold:0,busy:false};
-var SC=calm?0.06:1;   /* 减动效：同比例压缩她的时间点 */
+var _slow=location.search.match(/[?&]slow=([\d.]+)/);
+var SC=calm?0.06:(_slow?Math.max(.01,parseFloat(_slow[1])):1);   /* 减动效：同比例压缩她的时间点；?slow=3 慢放三倍复查过渡 */
 
 /* ---- 锚点：她在每一屏坐哪 ---- */
 function spiritAnchor(n){
@@ -2202,6 +2214,14 @@ document.querySelectorAll('.screen[data-s="11"] .fin').forEach(function(f){
   });
   f.addEventListener('change',function(){ spiritLookEl(f,900); spiritIdleReset(); });
 });
+/* 关于你：用户名与姓名是必填——三个 data-req 都非空，「继续」才解锁（与其它屏一致） */
+var aboutReq=[].slice.call(document.querySelectorAll('.screen[data-s="11"] [data-req]'));
+var aboutNext=document.getElementById('aboutNext');
+function aboutCheck(){
+  aboutNext.disabled=!aboutReq.every(function(i){ return i.value.trim()!==''; });
+}
+aboutReq.forEach(function(i){ i.addEventListener('input',aboutCheck); });
+aboutCheck();
 /* 条款：点开一张纸，滚动时她的眼睛跟着扫 */
 var termslink=document.getElementById('termslink'), termsdoc=document.getElementById('termsdoc');
 termslink.addEventListener('click',function(){
@@ -2246,6 +2266,7 @@ function back(){
 
 function go(n){
   go.now=n;
+  abar.classList.remove('show'); clearTimeout(abarT);   /* 到达条不跨屏 */
   stopDraw();
   if(n!==4) handOff(false);
   if(n===4){ trackSnake.start(); trackAlm.start(); } else { trackSnake.stop(); trackAlm.stop(); }
@@ -2805,44 +2826,43 @@ birthSels.forEach(function(s){
 });
 
 /* ---------- 协议 ----------
-   一条一条地给。第一条自己出来，之后每按一次「继续」出一条；
-   三条都在了，再按才走。三条告知不是一屏读完的东西，
-   分三次给，每次只让你读一句。
-   按钮先进来是「我明白」：第一次按只是把按钮换成「继续」（这是确认，不是告知），
-   之后的每一次按才前进。她在第二条出现时抬眼看你一次 */
+   三条按时间自己出（间隔 1100ms，calm 时 0）；全部出完，「我明白」才浮上来，
+   按一次就走。她在每条出现时看那一行，第二条出现后抬眼看你一次 */
 var termsScreen=document.querySelector('.terms-screen');
 var termItems=[].slice.call(termsScreen.querySelectorAll('.terms li'));
 var termsBtn=document.getElementById('termsBtn');
-var termShown=0, termTimer=0, termAcked=false;
+var termShown=0, termTimer=0;
 
 function termsReset(){
   clearTimeout(termTimer);
-  termShown=0; termAcked=false;
+  termShown=0;
   termItems.forEach(function(li){ li.classList.remove('in'); });
-  termsBtn.textContent='我明白';
+  termsBtn.classList.remove('ready');
   /* 条款链接跟着三条一起重来 */
   termslink.classList.remove('ready'); termslink.textContent='查看使用条款';
   termsdoc.classList.remove('open');
   termTimer=setTimeout(termsNext, calm?0:260);
 }
 function termsConfirm(){
-  /* 两段式：先「我明白」，再「继续」才前进 */
-  if(!termAcked){ termAcked=true; termsBtn.textContent='继续'; return; }
-  termsNext();
+  /* 按钮浮出来就已经是确认：按一次就走 */
+  hopGo(8);
 }
 function termsNext(){
-  if(termShown<termItems.length){
-    var li=termItems[termShown];
-    li.classList.add('in');
-    termShown++;
-    /* 她陪你读：出来一条看一条；第二条出现时，她抬眼看你一次 */
-    spiritLookEl(li,900);
-    if(termShown===2) setTimeout(function(){ spiritLook(0,-.9,900); },1000);
-    if(termShown===termItems.length)
-      document.getElementById('termslink').classList.add('ready');
-  }else{
-    hopGo(8);
+  if(termShown>=termItems.length) return;
+  var li=termItems[termShown];
+  li.classList.add('in');
+  termShown++;
+  /* 她陪你读：出来一条看一条；第二条出现时，她抬眼看你一次 */
+  spiritLookEl(li,900);
+  if(termShown===2) setTimeout(function(){ spiritLook(0,-.9,900); },1000);
+  if(termShown===termItems.length){
+    /* 第三条出现 400ms 后，条款链接与按钮同时淡入 */
+    setTimeout(function(){
+      termslink.classList.add('ready'); termsBtn.classList.add('ready');
+    }, calm?0:400);
+    return;
   }
+  termTimer=setTimeout(termsNext, calm?0:1100);
 }
 
 /* ---------- 选项 ----------
@@ -2913,7 +2933,16 @@ function herSay(sink,scroll,text,cb){
   setPresence('正在输入…');
   var t=document.createElement('div'); t.className='msg her typing';
   t.innerHTML='<i></i><i></i><i></i>';
-  sink.appendChild(t); st.typing=t;
+  /* 空对话：typing 插在对话流顶部（第一条消息将来落的位置），
+     空态文字 400ms 淡出——两者在同一个地方 */
+  var eh=sink.querySelector?sink.querySelector('.ehint'):null;
+  if(eh && !sink.classList.contains('live')){
+    sink.insertBefore(t,eh);
+    eh.classList.add('bye');
+  }else{
+    sink.appendChild(t);
+  }
+  st.typing=t;
   document.body.classList.add('hertyping');
   if(scroll) scroll.scrollTop=scroll.scrollHeight;
   var hold=Math.min(2600, 700+text.length*140);
@@ -2941,7 +2970,16 @@ function herCard(sink,scroll,text,opts,cb){
   setPresence('正在输入…');
   var t=document.createElement('div'); t.className='msg her typing';
   t.innerHTML='<i></i><i></i><i></i>';
-  sink.appendChild(t); st.typing=t;
+  /* 空对话：typing 插在对话流顶部（第一条消息将来落的位置），
+     空态文字 400ms 淡出——两者在同一个地方 */
+  var eh=sink.querySelector?sink.querySelector('.ehint'):null;
+  if(eh && !sink.classList.contains('live')){
+    sink.insertBefore(t,eh);
+    eh.classList.add('bye');
+  }else{
+    sink.appendChild(t);
+  }
+  st.typing=t;
   document.body.classList.add('hertyping');
   if(scroll) scroll.scrollTop=scroll.scrollHeight;
   st.t=setTimeout(function(){
@@ -3429,15 +3467,25 @@ function placeWidget(id,opts){
   wg.appendChild(reg.make(opts));
   wg.style.visibility='hidden';
   track.appendChild(wg);
-  /* 落点：登记表的 slot 空着就用；被占了落在眼前这一屏的下缘 */
-  var slots=track.querySelectorAll('.slot'), s=slots[reg.slot];
+  /* 落点：剧本模式在对话流末尾追加新 slot（之后的消息自然排在它下面）；
+     静态演示对话用登记表的 slot；被占了落在眼前这一屏的下缘 */
   var x=16, y;
-  var occupied=s && widgets.some(function(v){
-    return Math.abs(v.offsetTop-(s.offsetTop+10))<48;
-  });
   if(opts.at){ x=opts.at[0]; y=opts.at[1]; }
-  else if(s && !occupied){ y=s.offsetTop+10; }
-  else{ y=scroller.scrollTop+scroller.clientHeight-wg.offsetHeight-40; }
+  else if(player.playing){
+    var ns=document.createElement('div');
+    ns.className='slot'; ns.dataset.w=wg.id;
+    track.appendChild(ns);
+    ns.style.height=(wg.offsetHeight+20)+'px';
+    y=ns.offsetTop+10;
+  }
+  else{
+    var slots=track.querySelectorAll('.slot'), s=slots[reg.slot];
+    var occupied=s && widgets.some(function(v){
+      return Math.abs(v.offsetTop-(s.offsetTop+10))<48;
+    });
+    if(s && !occupied){ y=s.offsetTop+10; s.dataset.w=wg.id; }
+    else{ y=scroller.scrollTop+scroller.clientHeight-wg.offsetHeight-40; }
+  }
   wg.style.left=x+'px'; wg.style.top=y+'px';
   var need=y+wg.offsetHeight+140;
   if(track.offsetHeight<need) track.style.minHeight=need+'px';
@@ -3504,6 +3552,8 @@ function arriveAct(text){
   m.appendChild(document.createTextNode(text));
   sink.appendChild(m);
   if(go.now===2){ sink.scrollTop=sink.scrollHeight; return; }
+  /* 注册中（冷屏）不弹到达条；话照常落在对话里，进来就能看到 */
+  if(WARM.indexOf(go.now)<0) return;
   abar.querySelector('.t').textContent=text;
   abar.classList.add('show');
   clearTimeout(abarT);
@@ -3526,9 +3576,11 @@ function stageAct(a,next){
   document.getElementById('scDays').textContent=(a.days?a.days+' · ':'')+(a.title||'');
   stagecardEl.classList.add('show');
   stagecardEl.setAttribute('aria-hidden','false');
+  document.body.classList.add('glassed');   /* 与 .govl 同一套：整页模糊+浅雾，卡在雾上 */
   document.getElementById('scClose').onclick=function(){
     stagecardEl.classList.remove('show');
     stagecardEl.setAttribute('aria-hidden','true');
+    document.body.classList.remove('glassed');   /* 收起时雾一起退 */
     setTimeout(next,460);
   };
   document.getElementById('scSave').onclick=function(){ saveStagePng(kind); };
