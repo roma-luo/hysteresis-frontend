@@ -1000,16 +1000,30 @@ body.dark .loadbar i{background:var(--ink)}
   display:flex;align-items:center;justify-content:center;font-size:var(--fs-1);flex:none}
 .abar .t{font-size:var(--fs-3);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* 阶段卡（轻量占位，正式的在 Step 4）：一张居中小纸，出一下就走 */
-.stagetmp{position:fixed;left:50%;top:50%;z-index:72;width:min(64%,220px);
-  transform:translate(-50%,-48%) scale(.96);opacity:0;pointer-events:none;
-  background:var(--paper);border-radius:var(--r-paper);border:0.5px solid var(--paper-line);
-  padding:26px 20px 18px;text-align:center;color:var(--paper-ink);
-  transition:opacity 500ms var(--ease),transform 500ms var(--ease)}
-.stagetmp.show{opacity:1;transform:translate(-50%,-50%)}
-.stagetmp .t{font-family:var(--serif);font-size:var(--fs-4)}
-.stagetmp .l{font-size:var(--fs-3);line-height:1.9;margin-top:10px}
-.stagetmp .k{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:var(--ink-3);margin-top:16px}
+/* 阶段卡：关系结束或跨阶段时出现的一张竖卡（3:4），全屏居中，纸材质。
+   顶部她的剪影（墨，无光——她回到没有形状），中间一句结束语（宋体），
+   下面日期区间与「第 N 天」，底部极小的 AFTER 字标。
+   三种 kind 只差顶部小字与配色权重。夜间用暗纸（token 自己翻） */
+.stagecard{position:fixed;inset:0;z-index:72;display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:opacity 420ms var(--ease),visibility 0s linear .42s}
+.stagecard.show{opacity:1;visibility:visible;transition:opacity 420ms var(--ease),visibility 0s}
+.scwrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.scard{width:min(74vw,284px);aspect-ratio:3/4;background:var(--paper);color:var(--paper-ink);
+  border-radius:var(--r-paper);border:0.5px solid rgba(var(--line-rgb),.18);box-shadow:none;
+  display:flex;flex-direction:column;align-items:center;padding:22px 18px 14px;
+  transform:translateY(10px) scale(.98);transition:transform 500ms var(--spring)}
+.stagecard.show .scard{transform:none}
+.scard .skind{font-size:var(--fs-1);letter-spacing:var(--ls-caps);margin-bottom:12px}
+.scard.m-end .skind{color:var(--paper-ink)}
+.scard.m-stage .skind{color:var(--ink-3)}
+.scard.m-missed .skind{color:var(--red)}
+.scard .cghost{width:44%;margin:2px 0 8px}
+.scard .cghost use{fill:var(--ink)}
+.scard .sline{font-family:var(--serif);font-size:var(--fs-4);line-height:1.9;text-align:center}
+.scard .sdays{font-size:var(--fs-2);letter-spacing:var(--ls-text);color:var(--ink-3);margin-top:12px}
+.scard .sbrand{margin-top:auto;font-size:var(--fs-1);letter-spacing:.32em;text-indent:.32em;color:var(--ink-3)}
+.scbtns{display:flex;gap:10px;width:min(74vw,284px)}
+.scbtns .startbtn{flex:1}
 
 /* 翻旧账：被引用的那条旧消息旁边的 stamp，轻轻亮一下 */
 .stamp.flash{animation:stampflash 1500ms var(--ease)}
@@ -1023,6 +1037,12 @@ body.dark .loadbar i{background:var(--ink)}
 /* 疏远（warmth ≤ .25，由 setWarmth 挂 body.distant）：光的收敛由 poolGain 做掉，
    这里只剩她的头像去饱和 */
 body.distant .who .ava{filter:saturate(.4)}
+
+/* 结束后（body.ended）：她的头像退回墨色空心圆，名字下小字为空，
+   输入区收起，画布可看不可动——她放过的东西留着，但不再动 */
+body.ended .who .ava{background:none;border:1px solid var(--ink-3);color:transparent}
+body.ended .composer{display:none}
+body.ended .wg{pointer-events:none}
 
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉。
    默认藏掉，URL 带 ?dev=1 才出现（body.devmode） */
@@ -1646,9 +1666,21 @@ body.devmode .dev{display:block}
     <span class="ava">陈</span><span class="t"></span>
   </div>
 
-  <!-- 阶段卡（轻量占位，正式的 Step 4 做） -->
-  <div class="stagetmp" id="stagetmp" aria-hidden="true">
-    <div class="t"></div><div class="l"></div><div class="k">AFTER</div>
+  <!-- 阶段卡：结束或跨阶段时的一张竖卡（3:4），全屏居中，纸材质 -->
+  <div class="stagecard" id="stagecard" aria-hidden="true">
+    <div class="scwrap">
+      <div class="scard m-end" id="scard">
+        <div class="skind" id="scKind">THIS ENDS HERE</div>
+        <svg class="cghost" viewBox="-6 -8 192 216" aria-hidden="true"><use href="#ghost"/></svg>
+        <div class="sline" id="scLine"></div>
+        <div class="sdays" id="scDays"></div>
+        <div class="sbrand">AFTER</div>
+      </div>
+      <div class="scbtns">
+        <button class="startbtn glass" id="scSave" type="button">保存图片</button>
+        <button class="startbtn quiet" id="scClose" type="button">收起</button>
+      </div>
+    </div>
   </div>
 
   <!-- 成就达成 toast -->
@@ -1797,7 +1829,7 @@ body.devmode .dev{display:block}
     { "name": "第十二天 · 结束", "acts": [
       { "a": "warmth", "to": 0, "ms": 1600 },
       { "a": "wait", "ms": 1800 },
-      { "a": "stage", "kind": "end", "title": "第十二天", "line": "就到这儿吧" },
+      { "a": "stage", "kind": "end", "title": "第十二天", "line": "就到这儿吧", "days": "8.24 — 9.4" },
       { "a": "wait", "ms": 2400 },
       { "a": "end" }
     ]}
@@ -3465,13 +3497,86 @@ function arriveAct(text){
   clearTimeout(abarT);
   abarT=setTimeout(function(){ abar.classList.remove('show'); },3500);
 }
-/* 阶段卡（轻量占位，正式的 Step 4 做）：一张居中小纸，出一下就走 */
+/* 阶段卡：竖卡（3:4）全屏居中，纸材质。三种 kind：end / stage / missed，
+   只差顶部小字与配色权重。「保存图片」用 canvas 把卡片画成 PNG，
+   navigator.share 可用走分享面板，否则触发下载 */
+var stagecardEl=document.getElementById('stagecard'), scardEl=document.getElementById('scard');
+var STAGE_KINDS={
+  end:  {label:'THIS ENDS HERE'},
+  stage:{label:'A NEW CHAPTER'},
+  missed:{label:'IT SLIPPED AWAY'}
+};
 function stageAct(a,next){
-  var el=document.getElementById('stagetmp');
-  el.querySelector('.t').textContent=a.title||'';
-  el.querySelector('.l').textContent=a.line||'';
-  el.classList.add('show');
-  setTimeout(function(){ el.classList.remove('show'); setTimeout(next,520); },2200);
+  var kind=STAGE_KINDS[a.kind]?a.kind:'end';
+  scardEl.className='scard m-'+kind;
+  document.getElementById('scKind').textContent=STAGE_KINDS[kind].label;
+  document.getElementById('scLine').textContent=a.line||'';
+  document.getElementById('scDays').textContent=(a.days?a.days+' · ':'')+(a.title||'');
+  stagecardEl.classList.add('show');
+  stagecardEl.setAttribute('aria-hidden','false');
+  document.getElementById('scClose').onclick=function(){
+    stagecardEl.classList.remove('show');
+    stagecardEl.setAttribute('aria-hidden','true');
+    setTimeout(next,460);
+  };
+  document.getElementById('scSave').onclick=function(){ saveStagePng(kind); };
+}
+/* 自己画 PNG：纸底、剪影 path、文字，排版与卡片一致。html2canvas 不可用 */
+function saveStagePng(kind){
+  var W=900, H=1200, c=document.createElement('canvas');
+  c.width=W; c.height=H;
+  var x=c.getContext('2d');
+  var csCard=getComputedStyle(scardEl);
+  var csKind=getComputedStyle(document.getElementById('scKind'));
+  var csLine=getComputedStyle(document.getElementById('scLine'));
+  var csDays=getComputedStyle(document.getElementById('scDays'));
+  var ink=getComputedStyle(scardEl.querySelector('.cghost use')).fill;
+  /* 纸底与描边 */
+  x.fillStyle=csCard.backgroundColor; x.fillRect(0,0,W,H);
+  x.strokeStyle=csCard.borderColor; x.lineWidth=2; x.strokeRect(1,1,W-2,H-2);
+  x.textAlign='center'; x.textBaseline='middle';
+  if('letterSpacing' in x) x.letterSpacing='5px';
+  /* 顶部小字 */
+  x.fillStyle=csKind.color;
+  x.font='33px '+csKind.fontFamily;
+  x.fillText(csKind.textContent||document.getElementById('scKind').textContent, W/2, 104);
+  if('letterSpacing' in x) x.letterSpacing='0px';
+  /* 她的剪影（墨，无光）：复用 #ghost 的 path */
+  var d=document.getElementById('ghost').getAttribute('d');
+  var gw=380, s=gw/192;
+  x.save(); x.translate(W/2-gw/2+(-6)*s, 150+(-8)*s); x.scale(s,s);
+  x.fillStyle=ink; x.fill(new Path2D(d)); x.restore();
+  /* 一句结束语（宋体，窄了换行） */
+  x.fillStyle=csLine.color;
+  x.font='60px '+csLine.fontFamily;
+  var line=document.getElementById('scLine').textContent, ly=760, lines=[''], li=0;
+  for(var i=0;i<line.length;i++){
+    var probe=lines[li]+line[i];
+    if(x.measureText(probe).width>W-160 && lines[li]){ lines.push(line[i]); li++; }
+    else lines[li]=probe;
+  }
+  lines.forEach(function(l,k){ x.fillText(l, W/2, ly+k*96); });
+  /* 日期区间与「第 N 天」 */
+  x.fillStyle=csDays.color;
+  x.font='33px '+csDays.fontFamily;
+  x.fillText(document.getElementById('scDays').textContent, W/2, ly+lines.length*96+34);
+  /* 底部 AFTER 字标 */
+  if('letterSpacing' in x) x.letterSpacing='10px';
+  x.fillStyle=csDays.color;
+  x.font='30px '+csDays.fontFamily;
+  x.fillText('AFTER', W/2, H-72);
+  c.toBlob(function(blob){
+    if(!blob) return;
+    var file=new File([blob],'after-'+kind+'.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'AFTER'}).catch(function(){});
+    }else{
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download=file.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+    }
+  },'image/png');
 }
 /* 翻旧账：她的话到达后，被引用的那条旧消息旁边出现一枚 stamp 并轻轻亮一下，
    对话线滚到那条 400ms 再滚回 */
@@ -3539,7 +3644,13 @@ function execAct(a,next){
       /* 分岔：播放器停在这儿，演示菜单里由演示者选「回 / 不回」 */
       player.branch=a.options; player.playing=false; menuNote();
       break;
-    case 'end': player.playing=false; menuNote(); go(14); break;   /* 剧终：没有下一个动作 */
+    case 'end':
+      /* 剧终：头像退回墨色空心圆、小字空、输入区收起、画布只读，她的东西留着 */
+      player.playing=false; menuNote();
+      document.body.classList.add('ended');
+      setPresence('');
+      go(14);
+      break;
     default: next();
   }
 }
@@ -4036,6 +4147,8 @@ function openWith(el){
   }
 }
 function boot(){
+  document.body.classList.remove('ended');
+  setPresence();
   go(5);
   openWith(startScreen);
 }
