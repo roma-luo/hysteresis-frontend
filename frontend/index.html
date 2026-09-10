@@ -30,6 +30,8 @@
 :root{
   /* 纸与墨（已有） */
   --base:#FCFBFA;
+  /* 布色的两端：关系热时偏暖、冷时偏灰，#app 的底在两者之间混（--w 由 JS 写在 body 上） */
+  --base-warm:#FCFBFA; --base-cold:#F3F2F1;
   --ink:#3E3A36; --ink-2:#7A716A; --ink-3:#C0B2A5; --ink-4:#A0917F; --ink-5:#C4BCB4;
   --cold-bg:#F1F1F3; --cold-surface:#FFFFFF; --cold-ink:#24242A; --cold-2nd:#7E7E88; --cold-line:#DCDCE1;
   --cold-ink-hover:#3A3A42; --cold-ph:#A9A9B2;
@@ -82,22 +84,34 @@ body{background:var(--cold-bg);color:var(--cold-ink);
   touch-action:manipulation;
   transition:background-color 900ms var(--ease)}
 body.warmlit{background-color:var(--base)}
-#app{position:fixed;top:0;left:0;width:100%;height:100dvh;overflow:hidden}
+/* 布色随关系走：暖端与冷端之间按 --w 混色（--w 由 JS 写在 body 上，默认 .7）。
+   --base 本身不动——墨、玻璃、纸都依赖它，只有这块布走混色 */
+#app{position:fixed;top:0;left:0;width:100%;height:100dvh;overflow:hidden;
+  background:color-mix(in srgb, var(--base-warm) calc(var(--w,.7)*100%), var(--base-cold))}
 /* 光单独一层，才能有起落 */
 .glow{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;transform:scale(1.05);
   transition:opacity 1200ms var(--ease),transform 1600ms var(--ease),filter 380ms ease-out}
 body.warmlit .glow{opacity:1;transform:none}
-/* 光是三层，各自慢慢漂移，速度不一样，光才是活的。inset 留出漂移的余量 */
-.glow i{position:absolute;inset:-8%;will-change:transform;
+/* 光的 background 不能过渡：关系变的时候，新的一组光写进闲置的 .glayer，
+   淡入它、淡出旧的，交叉淡化由 setWarmth 驱动，时长默认 4s（结束 1.6s） */
+.glayer{position:absolute;inset:0;opacity:0;transition:opacity 4000ms var(--ease)}
+.glayer.on{opacity:1}
+/* 光是三层，各自慢慢漂移，速度不一样，光才是活的。inset 留出漂移的余量。
+   漂移时长乘 (2 - --w)：关系冷下来光几乎不动，热的时候才漂起来 */
+.glayer i{position:absolute;inset:-8%;will-change:transform;
   transition:filter 600ms var(--ease)}
-.glow i:nth-child(1){animation:drift1 96s ease-in-out infinite alternate}
-.glow i:nth-child(2){animation:drift2 128s ease-in-out infinite alternate}
-.glow i:nth-child(3){animation:drift3 160s ease-in-out infinite alternate}
+.glayer i:nth-child(1){animation:drift1 calc(96s*(2 - var(--w,.7))) ease-in-out infinite alternate}
+.glayer i:nth-child(2){animation:drift2 calc(128s*(2 - var(--w,.7))) ease-in-out infinite alternate}
+.glayer i:nth-child(3){animation:drift3 calc(160s*(2 - var(--w,.7))) ease-in-out infinite alternate}
+/* 热到顶（w ≥ .9）多出来的一层：一团极大极淡的琥珀，只进不出 */
+.glow .hotlayer{position:absolute;inset:-8%;opacity:0;transition:opacity 4s var(--ease);
+  background:radial-gradient(180% 100% at 50% 60%, rgba(216,165,78,.10), transparent 70%)}
+body.hot .glow .hotlayer{opacity:1}
 @keyframes drift1{to{transform:translate(2.5%,-1.5%) scale(1.05)}}
 @keyframes drift2{to{transform:translate(-2%,2%) scale(1.04)}}
 @keyframes drift3{to{transform:translate(1.5%,2.5%) scale(1.06)}}
 /* 她在打字的时候，她那侧的光抬一点。用 filter 不用 opacity，opacity 已经用来做距离感 */
-body.hertyping .glow i:nth-child(1){filter:brightness(1.06) saturate(1.1)}
+body.hertyping .glayer i:nth-child(1){filter:brightness(1.06) saturate(1.1)}
 .screen{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;opacity:0;
   visibility:hidden;pointer-events:none;
   transition:opacity .4s var(--ease),visibility 0s linear .4s,filter 380ms ease-out}
@@ -751,6 +765,7 @@ select.fin:invalid{color:var(--cold-ph)}   /* 还停在「请选择」上的时�
    切换走 body.dark，亮暗过渡吃 body 自带的 900ms */
 body.dark{
   --base:#17130F;
+  --base-warm:#17130F; --base-cold:#121213;
   --ink:#EDE3D6; --ink-2:#B3A597; --ink-3:#7E7266; --ink-4:#95877A; --ink-5:#574F47;
   --cold-bg:#121215; --cold-surface:#1F1F26; --cold-ink:#E9E9EE; --cold-2nd:#9B9BA5; --cold-line:#383840;
   --cold-ink-hover:#FFFFFF; --cold-ph:#6E6E78;
@@ -980,8 +995,8 @@ body.dark .loadbar i{background:var(--ink)}
   transition:opacity 400ms var(--ease)}
 .thread.live .ehint{display:none}
 
-/* 她冷下来的时候：光收一半，画布跟着沉。不动形，只动光 */
-body.distant.warmlit .glow{opacity:.45}
+/* 疏远（warmth ≤ .25，由 setWarmth 挂 body.distant）：光的收敛由 poolGain 做掉，
+   这里只剩她的头像去饱和 */
 body.distant .who .ava{filter:saturate(.4)}
 
 /* 演示菜单。测试期的脚手架，不属于设计——上线前整块删掉。
@@ -1006,7 +1021,7 @@ body.devmode .dev{display:block}
 </head>
 <body>
 <div id="app">
-  <div class="glow" id="glow"><i></i><i></i><i></i></div>
+  <div class="glow" id="glow"><div class="glayer a on"><i></i><i></i><i></i></div><div class="glayer b"><i></i><i></i><i></i></div><i class="hotlayer"></i></div>
   <!-- 她站的那片地方，和她自己。都不属于任何一屏，和光一样单独一层，
        用 transform 在锚点之间飘。她不重置，她跟着走 -->
   <div class="pool"></div>
@@ -1625,7 +1640,11 @@ body.devmode .dev{display:block}
       <button data-act="canvas">看 widget 画布</button>
       <button data-act="shelf">零件匣（独件页）</button>
       <button data-act="netfail">模拟断网</button>
-      <button data-act="distant">她冷下来</button>
+      <button data-w="1">warmth · 热</button>
+      <button data-w="0.7">warmth · 好</button>
+      <button data-w="0.45">warmth · 边界</button>
+      <button data-w="0.25">warmth · 疏远</button>
+      <button data-w="0">warmth · 结束</button>
       <button data-act="unlock">演示：成就达成</button>
       <button data-act="endit">演示：被结束</button>
       <button data-act="her" id="herBtn">让她来一趟</button>
@@ -1704,7 +1723,11 @@ var ds=document.getElementById('drawScreen');
 var afterDraw=document.getElementById('afterDraw');
 var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---------- 光 ---------- */
+/* ---------- 光 ----------
+   关系的全部长期状态压成一个 0–1 的标量 warmth（body.dataset.warmth，未设取 .7）。
+   五团光分两组：暖团（桃 0、琥珀 2、玫瑰 4）随关系一起亮暗；
+   冷团（丁香 1、天青 3）几乎不动——所以关系冷下来时不是光消失，
+   是暖色先走，屋子剩下的是蓝紫色的余光 */
 var pools=[
  ["160% 92%","-8% 6%","247,219,203",.42],
  ["150% 88%","108% 20%","230,219,242",.38],
@@ -1723,17 +1746,62 @@ var poolsDark=[
  ["90% 55%","-6% 96%","213,229,241",.11],
  ["110% 70%","46% 52%","246,221,219",.09]
 ];
-function paintGlow(){
+function warmthNow(){
+  var w=parseFloat(document.body.dataset.warmth);
+  return isNaN(w)?0.7:w;
+}
+function poolGain(k,w){
+  var warmSet=(k===0||k===2||k===4);
+  if(warmSet) return 0.15 + 1.35*Math.pow(w,1.4);   /* w=1 →1.5, .7→.97, .25→.34, 0→.15 */
+  return 0.75 + 0.35*w;                              /* w=1 →1.1, .7→1.0, 0→.75 */
+}
+/* A/B 两套 <i> 组：一组可见一组闲置。光的 background 不能过渡，
+   关系变的时候新值写进闲置组、淡入、淡出旧组（setWarmth） */
+var glowA=glow.querySelector('.a'), glowB=glow.querySelector('.b');
+var glowActive=glowA, wTween=0;
+function paintGroup(g,w){
   var dark=document.body.classList.contains('dark');
-  var src=dark?poolsDark:pools, stop=dark?56:74;
+  var src=dark?poolsDark:pools, stop=(dark?56:74)-16*w;  /* stop 随 w 收：光变小，暗区变多 */
+  var glob=0.35+0.65*w;
   /* 光分三层各自漂移：0+2 一层、1+3 一层、4 一层 */
-  var layers=[[0,2],[1,3],[4]], is=glow.children;
+  var layers=[[0,2],[1,3],[4]], is=g.children;
   for(var i=0;i<3;i++){
     is[i].style.background=layers[i].map(function(k){
-      var p=src[k];
-      return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+p[3]+") 0%,rgba("+p[2]+",0) "+stop+"%)";
+      var p=src[k], a=p[3]*poolGain(k,w)*glob;
+      return "radial-gradient("+p[0]+" at "+p[1]+",rgba("+p[2]+","+a.toFixed(3)+") 0%,rgba("+p[2]+",0) "+stop.toFixed(1)+"%)";
     }).join(",");
   }
+}
+function paintGlow(w){
+  if(w===undefined) w=warmthNow();
+  paintGroup(glowActive,w);
+  document.body.classList.toggle('hot', w>=0.9);
+  document.body.classList.toggle('distant', w<=0.25);
+}
+/* 关系变化的唯一入口。默认 4s 交叉淡化；关系结束时 1.6s。
+   布色与漂移速度吃 --w，--w 不能过渡，用 rAF 推过去 */
+function setWarmth(w,ms){
+  if(ms===undefined) ms=4000;
+  document.body.dataset.warmth=w;
+  var idle=glowActive===glowA?glowB:glowA;
+  paintGroup(idle,w);
+  idle.style.transitionDuration=ms+'ms';
+  glowActive.style.transitionDuration=ms+'ms';
+  void glow.offsetWidth;
+  idle.classList.add('on'); glowActive.classList.remove('on');
+  glowActive=idle;
+  document.body.classList.toggle('hot', w>=0.9);
+  document.body.classList.toggle('distant', w<=0.25);
+  setPresence();
+  cancelAnimationFrame(wTween);
+  var cur=parseFloat(document.body.style.getPropertyValue('--w'));
+  if(isNaN(cur)) cur=warmthNow();
+  var t0=performance.now();
+  (function step(t){
+    var q=Math.min(1,(t-t0)/ms);
+    document.body.style.setProperty('--w',(cur+(w-cur)*q).toFixed(4));
+    if(q<1) wTween=requestAnimationFrame(step);
+  })(t0);
 }
 paintGlow();
 
@@ -2634,11 +2702,21 @@ function markSeen(sink){
   var s=document.createElement('div'); s.className='seen'; s.textContent='已读';
   last.insertAdjacentElement('afterend',s);
 }
-/* 她在不在、正在做什么，写在顶栏那一行小字里（身份注记不撤，状态跟在后面） */
+/* 她在不在、正在做什么，写在顶栏那一行小字里（身份注记不撤，状态跟在后面）。
+   默认文字由 warmth 段位决定；剧本可用 setPresence('…') 覆盖 */
 var presenceT=0;
+function presenceDefault(){
+  var w=warmthNow();
+  if(w<=0) return '';            /* 结束后这一行为空 */
+  if(w<.25) return '离线';
+  if(w<.45) return '三小时前在线';
+  if(w<.7) return '刚刚在线';
+  return '在线';
+}
 function setPresence(t){
+  if(t===undefined) t=presenceDefault();
   document.querySelectorAll('.who .tag').forEach(function(el){
-    el.textContent='AI 角色 · '+t;
+    el.textContent=t?('AI 角色 · '+t):'';
   });
   clearTimeout(presenceT);
   if(t==='在线') presenceT=setTimeout(function(){ setPresence('离开'); },60000);
@@ -2671,7 +2749,7 @@ function herSay(sink,scroll,text,cb){
     m._time=nowTime();
     m.appendChild(document.createTextNode(text));
     sink.appendChild(m);
-    buzz(10); setPresence('在线');
+    buzz(10); setPresence();
     setTimeout(function(){
       m.style.animation='none';
       if(onTrack){ bubbles.push(m); queueDim(); }
@@ -2692,7 +2770,7 @@ function herCard(sink,scroll,text,opts){
   st.t=setTimeout(function(){
     t.remove(); st.typing=null; document.body.classList.remove('hertyping');
     sink.classList.add('live'); maybeStamp(sink);
-    setPresence('在线');
+    setPresence();
     var card=document.createElement('div'); card.className='ecard';
     var p=document.createElement('div'); p.className='et'; p.textContent=text;
     var box=document.createElement('div'); box.className='eopts';
@@ -3242,13 +3320,14 @@ var dev=document.getElementById('dev');
 dev.querySelector('.devbtn').addEventListener('click',function(){ dev.classList.toggle('open'); });
 dev.querySelectorAll('.devmenu button').forEach(function(b){
   b.addEventListener('click',function(){
+    /* warmth 五档直设：热/好/边界/疏远/结束；结束用 1.6s，其余默认 4s */
+    if(b.dataset.w!==undefined){ setWarmth(+b.dataset.w, +b.dataset.w===0?1600:4000); dev.classList.remove('open'); return; }
     var a=b.dataset.act;
     if(a==='restart') boot();
     else if(a==='draw') drawScene();
     else if(a==='canvas') go(4);
     else if(a==='shelf') go(12);
     else if(a==='netfail') document.body.classList.toggle('netfail');
-    else if(a==='distant') document.body.classList.toggle('distant');
     else if(a==='unlock') achvToast('成就达成 · 第一次让她记下一件事');
     else if(a==='endit') go(14);
     else if(a==='her') toggleHer();
