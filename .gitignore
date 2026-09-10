@@ -10,3 +10,4 @@ wheels/
 .venv
 artifacts/
 .pytest_cache/
+_stage/
