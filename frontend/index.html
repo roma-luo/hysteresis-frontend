@@ -125,6 +125,10 @@ body.glassed .glow{filter:blur(18px)}
 .field{background:var(--cold-surface);border:0.5px solid var(--cold-line);border-radius:var(--r-paper);
   padding:12px 13px;font-size:var(--fs-3);color:var(--cold-ph)}
 .legal{font-size:var(--fs-2);line-height:1.8;color:var(--cold-2nd);margin-top:14px}
+/* 年龄门的提示行：选完日期未满 18 才出现，平时不在 */
+.field-hint{display:none;font-size:var(--fs-2);line-height:1.8;color:var(--cold-2nd);margin-top:10px}
+.field-hint.on{display:block}
+.coldbtn:disabled{opacity:.38}
 /* 三条告知。圆点而不是方框：方框看起来像等着你去勾的复选框，
    但这三条不是你可以不同意的东西——它是平台在告诉你，不是在问你 */
 .terms{list-style:none;margin-bottom:auto}
@@ -1123,9 +1127,14 @@ body.devmode .dev{display:block}
         <div class="perch"></div>
       </div>
       <div class="ask">你的出生日期</div>
-      <div class="field">YYYY / MM / DD</div>
+      <div class="frow" id="birthRow">
+        <div class="selwrap"><select class="fin" id="birthY" required><option value="" selected disabled>年</option></select></div>
+        <div class="selwrap"><select class="fin" id="birthM" required><option value="" selected disabled>月</option></select></div>
+        <div class="selwrap"><select class="fin" id="birthD" required><option value="" selected disabled>日</option></select></div>
+      </div>
+      <div class="field-hint" id="ageHint">AFTER 仅向 18 岁以上用户开放</div>
       <div class="legal">本服务不向未成年人提供。</div>
-      <div style="margin-top:auto"><button class="coldbtn" onclick="hopGo(1)">继续</button></div>
+      <div style="margin-top:auto"><button class="coldbtn" id="birthNext" onclick="hopGo(1)" disabled>继续</button></div>
     </div>
   </section>
 
@@ -1140,9 +1149,9 @@ body.devmode .dev{display:block}
         <div class="perch"></div>
       </div>
       <ul class="terms">
-        <li>在 AFTER 里，与你对话的是 AI，而非真实的人类。</li>
-        <li>在 AFTER 里，它会和你保持长久的友谊，也会记得一切关于你的事情。</li>
-        <li>在 AFTER 里，你的数据拥有完全的隐私。</li>
+        <li>在 AFTER 里，与你对话的是 AI，不是人。</li>
+        <li>她会记得你说过的一切，也会因此改变对你的态度。关系可能结束，没有读档。</li>
+        <li>你的数据属于你，随时可以导出或删除。</li>
       </ul>
       <button class="termslink" id="termslink" type="button">查看使用条款</button>
       <div class="termsdoc" id="termsdoc">
@@ -1155,7 +1164,7 @@ body.devmode .dev{display:block}
           <p>以上是平台要说的话。她要说的话，在后面。</p>
         </div>
       </div>
-      <button class="coldbtn" onclick="termsNext()">继续</button>
+      <button class="coldbtn" id="termsBtn" onclick="termsConfirm()">我明白</button>
     </div>
   </section>
 
@@ -1935,11 +1944,6 @@ function spiritReset(){
 }
 
 /* ---- 冷屏里她做什么 ---- */
-/* 出生日期：点那个框她看一眼 */
-var birthField=document.querySelector('.screen[data-s="0"] .field');
-if(birthField) birthField.addEventListener('click',function(){
-  spiritLookEl(birthField,1100); spiritIdleReset();
-});
 /* 关于你：聚焦哪个框看哪个框；打字时眼睛随光标右移；选了下拉也看一眼 */
 document.querySelectorAll('.screen[data-s="11"] .fin').forEach(function(f){
   f.addEventListener('focus',function(){ spiritLookEl(f,1400); spiritIdleReset(); });
@@ -2521,38 +2525,77 @@ initCal(document.querySelector('#w3 .cal'));
 initStk(document.querySelector('#w4 .stk'));
 initGuess(document.querySelector('#w6 .gz'));
 
-/* ---------- 生日 ----------
-   生日只在注册第一步（data-s=0）问一次，最后一步不再重复——
-   这里原来给「关于你」页填日/月/年下拉的代码随那次去重一并删掉了 */
+/* ---------- 生日与年龄门 ----------
+   生日只在注册第一步（data-s=0）问一次，最后一步不再重复。
+   年月日三个下拉确定后即时算年龄：未满 18，提示行出现、
+   「继续」保持 disabled，不给任何绕过；她看一眼那行字，再看你，不做别的 */
+var birthSels=['birthY','birthM','birthD'].map(function(id){ return document.getElementById(id); });
+var ageHint=document.getElementById('ageHint'), birthNext=document.getElementById('birthNext');
+(function fillBirth(){
+  var y=new Date().getFullYear(), i;
+  function add(sel,v){
+    var o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);
+  }
+  for(i=y;i>=y-100;i--) add(birthSels[0],i);
+  for(i=1;i<=12;i++) add(birthSels[1],i);
+  for(i=1;i<=31;i++) add(birthSels[2],i);
+})();
+function ageGate(){
+  var y=+birthSels[0].value, m=+birthSels[1].value, d=+birthSels[2].value;
+  if(!y||!m||!d){ birthNext.disabled=true; ageHint.classList.remove('on'); return; }
+  /* 不存在的日期（如 2 月 31 日）当没选完 */
+  if(new Date(y,m-1,d).getMonth()!==m-1){ birthNext.disabled=true; ageHint.classList.remove('on'); return; }
+  var now=new Date(), age=now.getFullYear()-y;
+  if(m-1>now.getMonth() || (m-1===now.getMonth() && d>now.getDate())) age--;
+  var under=age<18;
+  birthNext.disabled=under;
+  ageHint.classList.toggle('on',under);
+  if(under){
+    spiritLookEl(ageHint,900);
+    setTimeout(function(){ spiritLook(0,-.9,900); },1000);
+  }
+}
+birthSels.forEach(function(s){
+  s.addEventListener('focus',function(){ spiritLookEl(s,1200); spiritIdleReset(); });
+  s.addEventListener('change',function(){ spiritLookEl(s,900); ageGate(); spiritIdleReset(); });
+});
 
 /* ---------- 协议 ----------
    一条一条地给。第一条自己出来，之后每按一次「继续」出一条；
    三条都在了，再按才走。三条告知不是一屏读完的东西，
-   分三次给，每次只让你读一句 */
+   分三次给，每次只让你读一句。
+   按钮先进来是「我明白」：第一次按只是把按钮换成「继续」（这是确认，不是告知），
+   之后的每一次按才前进。她在第二条出现时抬眼看你一次 */
 var termsScreen=document.querySelector('.terms-screen');
 var termItems=[].slice.call(termsScreen.querySelectorAll('.terms li'));
-var termShown=0, termTimer=0;
+var termsBtn=document.getElementById('termsBtn');
+var termShown=0, termTimer=0, termAcked=false;
 
 function termsReset(){
   clearTimeout(termTimer);
-  termShown=0;
+  termShown=0; termAcked=false;
   termItems.forEach(function(li){ li.classList.remove('in'); });
+  termsBtn.textContent='我明白';
   /* 条款链接跟着三条一起重来 */
   termslink.classList.remove('ready'); termslink.textContent='查看使用条款';
   termsdoc.classList.remove('open');
   termTimer=setTimeout(termsNext, calm?0:260);
+}
+function termsConfirm(){
+  /* 两段式：先「我明白」，再「继续」才前进 */
+  if(!termAcked){ termAcked=true; termsBtn.textContent='继续'; return; }
+  termsNext();
 }
 function termsNext(){
   if(termShown<termItems.length){
     var li=termItems[termShown];
     li.classList.add('in');
     termShown++;
-    /* 她陪你读：出来一条看一条；三条都读完，她抬眼看你一次 */
+    /* 她陪你读：出来一条看一条；第二条出现时，她抬眼看你一次 */
     spiritLookEl(li,900);
-    if(termShown===termItems.length){
+    if(termShown===2) setTimeout(function(){ spiritLook(0,-.9,900); },1000);
+    if(termShown===termItems.length)
       document.getElementById('termslink').classList.add('ready');
-      setTimeout(function(){ spiritLook(0,-.9,900); },1000);
-    }
   }else{
     hopGo(8);
   }
