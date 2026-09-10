@@ -598,6 +598,36 @@ body.spiritjourney:not(.avain) .who .ava{opacity:0}
 /* 进入页不再摆字标：欢迎语已经把名字说了 */
 #enterScreen .brand{display:none}
 
+/* ---------- 她的引导 ----------
+   不用文字讲规则，她做一遍：从头像里探出来，带你看布、物件、气泡、输入，再回去。
+   布上那行墨字是她说的话，不是弹窗 */
+.gline{position:absolute;left:0;right:0;top:34%;z-index:5;text-align:center;pointer-events:none;
+  font-family:var(--serif);font-weight:400;font-size:var(--fs-3);letter-spacing:var(--ls-text);
+  color:var(--ink-2);transition:opacity 200ms var(--ease)}
+.gline.out{opacity:0}
+.gline span{opacity:0;transition:opacity 60ms var(--ease)}
+.gline span.in{opacity:1}
+/* 引导里她直接淡入（300ms），不走凝形 */
+.spirit.gfade{transition:opacity 300ms var(--ease),transform 720ms var(--ease)}
+.spirit.formed.quick .body{animation:float 3600ms ease-in-out infinite;opacity:1;filter:none;transform:none}
+.spirit.formed.quick .after{animation:float 3600ms ease-in-out 180ms infinite;opacity:.14;filter:none;transform:none}
+.spirit.formed.quick .eyes circle{animation:none;transform:scaleY(1);transition:transform 110ms var(--ease)}
+.spirit.formed.quick.litup .lum1{animation:float 3600ms ease-in-out infinite;opacity:var(--lo);transform:var(--ls)}
+.spirit.formed.quick.litup .lum2{animation:float 3600ms ease-in-out infinite;opacity:var(--lo);transform:var(--ls)}
+.spirit.formed.quick.litup .lum3{animation:float 3600ms ease-in-out infinite;opacity:var(--lo);transform:var(--ls)}
+/* 探出与回去：头像里的墨圆先放大淡出，落地那帧再正向回来 */
+.who .ava.gout{opacity:0;transform:scale(2.2);transition:opacity 500ms var(--ease),transform 500ms var(--ease)}
+.who .ava.gback{transition:opacity 500ms var(--ease),transform 500ms var(--ease)}
+/* 气泡上泛一次轻按的涟漪：1.5px 边、扩散 30px、500ms */
+.msg .ripple{position:absolute;inset:0;border:1.5px solid var(--ink-3);border-radius:var(--r-glass);
+  pointer-events:none;animation:rip 500ms var(--ease) forwards}
+@keyframes rip{from{inset:0;opacity:.8}to{inset:-15px;opacity:0}}
+/* 胶囊顶光呼吸两次 */
+.cfield.breath{animation:cbr 1200ms var(--ease) 2}
+@keyframes cbr{0%,100%{filter:none}50%{filter:brightness(1.12)}}
+/* 她把唱机推一下：translateX(14px) 再回（吃 .wg 自己的 spring 过渡） */
+.wg.nudge{transform:translateX(14px)}
+
 /* 她站的那片地方亮起来：压扁的椭圆，远大于她，边界落在屏幕外。
    她在凝形的时候，屋子里的光被抽走一点：她是用这屋子的光做的。
    盒子四边都伸出屏外，渐变的半径不超过盒子到对应边缘的距离——布上看不到边 */
@@ -1101,6 +1131,8 @@ body.devmode .dev{display:block}
     </svg>
     <div class="seed">陈</div>
   </div>
+  <!-- 引导时布上那行墨字：她说的话，逐字打出来 -->
+  <div class="gline out" id="gline"></div>
 
   <section class="screen warm start on" data-s="5" id="startScreen">
     <div class="brand"><span>After</span></div>
@@ -1742,6 +1774,7 @@ body.devmode .dev{display:block}
       <button data-act="unlock">演示：成就达成</button>
       <button data-act="endit">演示：被结束</button>
       <button data-act="place">放一个新东西</button>
+      <button data-act="reguide">重放引导</button>
       <button data-act="guess">猜对一个字</button>
     </div>
   </div>
@@ -1761,18 +1794,6 @@ body.devmode .dev{display:block}
         <section class="pg"><div class="medal"></div></section>
       </div>
       <div class="dots" id="achvDots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
-    </div>
-  </div>
-
-  <!-- 第一次进聊天的小引导：她先不说话，等你读完这一张 -->
-  <div class="govl" id="guide" aria-hidden="true">
-    <div class="gblur"></div>
-    <div class="gpage">
-      <div class="gcard">
-        <div class="gt">这是你和她的画布</div>
-        <div class="gs">她说的话、她放给你的东西，都会落在这块布上。东西可以拿起来挪动，气泡可以长按。</div>
-        <button class="startbtn glass" id="guideOk" type="button">知道了</button>
-      </div>
     </div>
   </div>
 
@@ -2085,8 +2106,13 @@ function spiritScheduleBlink(){
   spiritBlinkT=setTimeout(function(){ spiritBlink(Math.random()<.18); spiritScheduleBlink(); },
     2800+Math.random()*3200);
 }
-/* 点哪儿看哪儿。点她自己是 poke，不算看 */
+/* 点哪儿看哪儿。点她自己是 poke，不算看。
+   引导期间，点屏幕任意处是跳过（她直接飞回头像）；拖唱机的那次例外 */
 document.getElementById('app').addEventListener('pointerdown',function(e){
+  if(guiding){
+    if(!e.target.closest('.wg')) spiritGuideSkip();
+    return;
+  }
   if(!spirit.classList.contains('awake') || spirit.classList.contains('seeding')) return;
   if(spirit.contains(e.target)) return;
   spiritLookAt(e.clientX,e.clientY, 900+Math.random()*300);
@@ -2267,6 +2293,7 @@ function back(){
 function go(n){
   go.now=n;
   abar.classList.remove('show'); clearTimeout(abarT);   /* 到达条不跨屏 */
+  if(guiding && n!==4) spiritGuideSkip();   /* 引导中途离屏：她直接收工 */
   stopDraw();
   if(n!==4) handOff(false);
   if(n===4){ trackSnake.start(); trackAlm.start(); } else { trackSnake.stop(); trackAlm.stop(); }
@@ -2305,13 +2332,8 @@ function go(n){
     spiritJourney=false; spiritReset();
     document.body.classList.remove('spiritjourney');
   }
-  if(n===2) setTimeout(maybeGuide, spiritJourney?1600:700);   /* 她还在飞：引导层等她落地之后才出现 */
+  if(n===2) setTimeout(firstConvo, spiritJourney?1360:700);   /* 她落地（760ms）+600ms 起：第一次进对话她带你看一圈 */
   if(n===10) openWith(enterScreen);
-  if(n===4 && !tapDone){
-    /* 第一次到画布：她的笔尖从头像里伸出来点一下唱机，让你知道这些东西是活的 */
-    tapDone=true;
-    setTimeout(function(){ herPoint(document.getElementById('w1')); }, 1100);
-  }
   if(n===4) requestAnimationFrame(dim);
   setTimeout(function(){document.body.classList.remove('going-back')},450);
 }
@@ -3024,24 +3046,217 @@ var HELLO_CARD={
   opts:[{label:'现在下去',reply:'好。那我下去一趟，很快回来。'},
         {label:'明天再说',reply:'也行。明天再说。'}]
 };
-var helloDone=false, guideDone=false;
-var guideEl=document.getElementById('guide');
-function maybeGuide(){
-  if(guideDone){ hello(); return; }
-  openG(guideEl);
-}
-document.getElementById('guideOk').addEventListener('click',function(){
-  guideDone=true; closeG(guideEl); hello();
-});
-function hello(){
+var helloDone=false;
+function hello(sink,scroll){
   if(helloDone) return; helloDone=true;
-  var screen=document.querySelector('.screen[data-s="2"]');
-  var sink=screen.querySelector('.thread'), scroll=sink;
+  if(!sink){
+    var s=document.querySelector('.screen[data-s="2"]');
+    sink=s.querySelector('.thread'); scroll=sink;
+  }
   setTimeout(function(){
     herSay(sink,scroll,HELLO,function(){
       setTimeout(function(){ herCard(sink,scroll,HELLO_CARD.text,HELLO_CARD.opts); },900);
     });
   },1100);
+}
+
+/* ---------- 她的引导 ----------
+   不用文字讲规则，她做一遍：从头像里探出来，带你看布、物件、气泡、输入，再回去。
+   只在第一次进对话时播（localStorage.after-guided），约 11 秒；
+   点屏幕任意处跳过（她直接飞回头像）；calm 时她不出来，四行字打完即结束。
+   引导期间 abar、剧本播放器、arrive 全部挂起（guiding） */
+var guiding=false, guideT=[], guideWg=null, guidePh=false;
+var GLINES=['这块布是我们两个人的','东西可以拿起来挪','长按可以收起来','剩下的，你来说'];
+function guidedBefore(){
+  try{ return localStorage.getItem('after-guided')==='1'; }catch(e){ return false; }
+}
+function markGuided(){ try{ localStorage.setItem('after-guided','1'); }catch(e){} }
+function firstConvo(){
+  if(guidedBefore()){ hello(); return; }
+  /* 第一次进对话：她带你看一圈。在画布上播——暖屏之间是溶解，没有模态层 */
+  if(go.now!==4) go(4);
+  spiritGuide();
+}
+/* 那行墨字：换字先淡出旧的 200ms，再打新的（逐字 40ms），不是弹出来的 */
+function glineType(text){
+  var el=document.getElementById('gline');
+  function type(){
+    el.innerHTML='';
+    for(var i=0;i<text.length;i++){
+      var s=document.createElement('span'); s.textContent=text[i];
+      el.appendChild(s);
+      (function(s,i){ setTimeout(function(){ s.classList.add('in'); }, i*40); })(s,i);
+    }
+    el.classList.remove('out');
+  }
+  if(el.textContent){ el.classList.add('out'); setTimeout(type,200); }
+  else type();
+}
+function glineOut(){ document.getElementById('gline').classList.add('out'); }
+/* 引导用的锚点（页面坐标，#app 内） */
+function guideAvaPos(){
+  var ar=app.getBoundingClientRect();
+  var r=document.querySelector('.screen[data-s="4"] .who .ava').getBoundingClientRect();
+  return {x:r.left-ar.left+r.width/2, y:r.top-ar.top+r.height/2};
+}
+function guideAtWidget(el){
+  var ar=app.getBoundingClientRect(), r=el.getBoundingClientRect();
+  /* 元素右上角外 12px（她的盒子中心再让出半个身位） */
+  return {x:Math.min(ar.width-64, r.right-ar.left+12+56), y:r.top-ar.top-12+56};
+}
+function guideAtComposer(){
+  var ar=app.getBoundingClientRect();
+  var c=document.querySelector('.screen[data-s="4"] .cfield').getBoundingClientRect();
+  /* 胶囊上方 34px */
+  return {x:c.left-ar.left+c.width/2, y:c.top-ar.top-34-56};
+}
+function guideAtThread(){
+  var ar=app.getBoundingClientRect();
+  /* 对话流末尾的右侧：她的话落在她左手边 */
+  return {x:ar.width*0.68, y:ar.height-230};
+}
+function guideFly(x,y,s){
+  spirit.style.setProperty('--x',(x-80)+'px');
+  spirit.style.setProperty('--y',(y-80)+'px');
+  spirit.style.setProperty('--s',s);
+}
+function spiritGuide(){
+  if(guiding) return;
+  guiding=true;
+  guideT.forEach(clearTimeout); guideT=[];
+  /* calm：无飞行，她不出来；四行字依次各停 700ms 直接打在布上，打完即结束 */
+  if(calm){
+    GLINES.forEach(function(t,i){ guideT.push(setTimeout(function(){ glineType(t); }, i*700)); });
+    guideT.push(setTimeout(function(){
+      glineOut(); guiding=false; markGuided(); hello(track,scroller);
+    }, GLINES.length*700+400));
+    return;
+  }
+  var pill=document.querySelector('.screen[data-s="4"] .idpill');
+  var ava=document.querySelector('.screen[data-s="4"] .who .ava');
+  var ar=app.getBoundingClientRect(), av=guideAvaPos();
+  /* 0：头像弹一下，墨圆反向（scale 1→2.2、淡出），她从头像位置直接淡入（36px），抬眼看你 */
+  pill.classList.add('press'); setTimeout(function(){ pill.classList.remove('press'); },300);
+  ava.classList.add('gout');
+  spiritReset();
+  spirit.classList.add('on','formed','quick','litup','awake','gfade');
+  document.body.classList.add('lit','guiding');
+  guideFly(av.x, av.y, 36/104);
+  spiritScheduleBlink();
+  guideT.push(setTimeout(function(){ spiritLook(0,-.9,900); },350));
+  /* 0.6s：飞到屏幕中央偏上（全尺寸）；布上打出第一行 */
+  guideT.push(setTimeout(function(){
+    guideFly(ar.width/2, ar.height*0.40, 1);
+    glineType(GLINES[0]);
+  },600));
+  /* 2.4s：滚到布尾，笔尖从她身上伸出，把第一个 widget（唱机）带进来 */
+  guideT.push(setTimeout(function(){
+    smoothTo(scroller, scroller.scrollHeight, 600, function(){
+      var sr=spirit.getBoundingClientRect(), tr=track.getBoundingClientRect();
+      guideWg=placeWidget('vt',{from:{x:sr.left+sr.width/2-tr.left, y:sr.top+sr.height/2-tr.top}});
+      guideAfterPlace();
+    });
+  },2400));
+}
+/* 唱机落下之后：她飘过去看它、推一下，然后等你挪它 */
+function guideAfterPlace(){
+  (function poll(){
+    if(!guiding) return;
+    if(guideWg && getComputedStyle(guideWg).visibility==='visible'){
+      setTimeout(guideNudge,1300); return;
+    }
+    setTimeout(poll,200);
+  })();
+}
+function guideNudge(){
+  if(!guiding) return;
+  /* 3.8s 她飘到唱机右上角，低头看它，把它往前推一下；那行字换掉 */
+  var p=guideAtWidget(guideWg);
+  guideFly(p.x,p.y,1);
+  spiritLookEl(guideWg,1400);
+  guideT.push(setTimeout(function(){
+    guideWg.classList.add('nudge');
+    setTimeout(function(){ guideWg.classList.remove('nudge'); },420);
+    glineType(GLINES[1]);
+  },760));
+  /* 4.6s 等待点：你拖动唱机就继续（她眨两下）；6s 没动她自己继续 */
+  var waited=false;
+  function proceed(){
+    if(waited || !guiding) return; waited=true;
+    guideWg.removeEventListener('pointerup',onUp);
+    guideBubble();
+  }
+  function onUp(){ if(guideWg._dragged){ spiritBlink(true); proceed(); } }
+  guideWg.addEventListener('pointerup',onUp);
+  guideT.push(setTimeout(proceed,6000+760));
+}
+function guideBubble(){
+  if(!guiding) return;
+  /* 飞到对话流位置，她说一句（玻璃气泡）；到达后 600ms 气泡上泛一次轻按的涟漪，字换 */
+  var p=guideAtThread();
+  guideFly(p.x,p.y,1);
+  herSay(track,scroller,'话会落在这儿',function(){
+    var msgs=track.querySelectorAll('.msg.her'), m=msgs[msgs.length-1];
+    setTimeout(function(){
+      var rp=document.createElement('i'); rp.className='ripple';
+      m.appendChild(rp); setTimeout(function(){ rp.remove(); },560);
+      glineType(GLINES[2]);
+    },600);
+  });
+  /* +2.2s 飞到输入胶囊上方，看向胶囊；顶光呼吸两次，字换 */
+  guideT.push(setTimeout(guideComposer,2200));
+}
+function guideComposer(){
+  if(!guiding) return;
+  var cf=document.querySelector('.screen[data-s="4"] .cfield');
+  var p=guideAtComposer();
+  guideFly(p.x,p.y,1);
+  spiritLookEl(cf,1400);
+  cf.classList.add('breath');
+  setTimeout(function(){ cf.classList.remove('breath'); },2500);
+  var cin=cf.querySelector('.cin');
+  guidePh=true; cin.placeholder='跟她说点什么';
+  glineType(GLINES[3]);
+  /* +4.4s 飞回头像；落地那帧墨圆正向回来、她淡出、胶囊 press；那行墨字淡出 */
+  guideT.push(setTimeout(guideHome,4400-2200));
+}
+function guideHome(){
+  if(!guiding) return;
+  var av=guideAvaPos();
+  guideFly(av.x,av.y,36/104);
+  guideT.push(setTimeout(function(){
+    var pill=document.querySelector('.screen[data-s="4"] .idpill');
+    var ava=document.querySelector('.screen[data-s="4"] .who .ava');
+    ava.classList.add('gback'); ava.classList.remove('gout');
+    setTimeout(function(){ ava.classList.remove('gback'); },560);
+    spirit.classList.remove('on');
+    pill.classList.add('press'); setTimeout(function(){ pill.classList.remove('press'); },300);
+    glineOut();
+  },720));
+  /* +5.2s hello()：她的第一句话与第一张事件卡按现有节奏进 */
+  guideT.push(setTimeout(function(){
+    spiritReset(); document.body.classList.remove('lit','guiding');
+    guiding=false; guideWg=null; markGuided(); hello(track,scroller);
+  },1450));
+}
+/* 跳过：她 720ms 飞回头像，墨字淡出，然后 hello() 照常 */
+function spiritGuideSkip(){
+  if(!guiding) return;
+  guideT.forEach(clearTimeout); guideT=[];
+  if(calm){ guiding=false; markGuided(); hello(track,scroller); return; }
+  var av=guideAvaPos();
+  guideFly(av.x,av.y,36/104);
+  glineOut();
+  setTimeout(function(){
+    var ava=document.querySelector('.screen[data-s="4"] .who .ava');
+    ava.classList.add('gback'); ava.classList.remove('gout');
+    setTimeout(function(){ ava.classList.remove('gback'); },560);
+    spirit.classList.remove('on');
+    setTimeout(function(){
+      spiritReset(); document.body.classList.remove('lit','guiding');
+      guiding=false; guideWg=null; markGuided(); hello(track,scroller);
+    },350);
+  },720);
 }
 
 /* ---------- 输入区 ----------
@@ -3108,6 +3323,8 @@ document.querySelectorAll('.composer').forEach(function(c){
   function send(){
     var txt=input.value.trim();
     if(!txt && !img) return;
+    /* 引导把 placeholder 换成过「跟她说点什么」：首条发出后恢复 */
+    if(guidePh){ guidePh=false; input.placeholder='说点什么'; }
     sink.classList.add('live');
     maybeStamp(sink);
     var m=document.createElement('div'); m.className='msg you';
@@ -3288,7 +3505,7 @@ function handOut(){ return warmthNow()<.45; }
 /* ---- 一趟动作：一串预先排好的步骤，播完收尾淡出 ----
    步骤：{go:[x,y],kind} 走到某点；{hold:ms} 停；{do:fn} 当场做一件事。
    决定只发生在步骤之间，不发生在每一帧 */
-function handRun(seq,done,cfg){
+function handRun(seq,done,cfg,start){
   if(her.live) return false;                 /* 手只有一双：做完这件才做下一件 */
   if(calm){                                  /* 减动效：事照做，手不出 */
     seq.forEach(function(s){ if(s.do) s.do(); });
@@ -3296,7 +3513,7 @@ function handRun(seq,done,cfg){
     return true;
   }
   fitCanvas();
-  var a=avatarPoint();
+  var a=start||avatarPoint();                /* 默认从头像出发；引导里从她身上出发 */
   her.live=true; her.trail.length=0; her.dirty=null;
   her.x=a.x; her.y=a.y; her.hx=0; her.hy=1;
   her.queue=seq.slice(); her.done=done||null; her.closingAt=0;
@@ -3432,16 +3649,17 @@ function dropIn(el){
   el.style.transform='none';
   setTimeout(function(){ el.style.transition=''; el.style.transform=''; },260);
 }
-/* 放东西：笔尖从头像出发走到目标位置，物件在笔尖下落下，停 300ms，退回头像 */
-function herPlace(wg,onDrop){
+/* 放东西：笔尖从头像出发走到目标位置，物件在笔尖下落下，停 300ms，退回头像。
+   from 可改出发点（引导里从她当前位置出发，退回也退回她） */
+function herPlace(wg,onDrop,from){
   var tx=wg.offsetLeft+wg.offsetWidth*0.3, ty=wg.offsetTop+14;
-  var a=avatarPoint();
+  var a=from||avatarPoint();
   return handRun([
     {go:[tx,ty]},
     {do:function(){ if(onDrop) onDrop(); }},
     {hold:300},
     {go:[a.x,a.y],kind:'back'}
-  ]);
+  ],null,null,from);
 }
 /* 指一下：她的话里提到画布上的某件东西时，笔尖去点一下那件东西，然后退回 */
 function herPoint(v){
@@ -3495,10 +3713,9 @@ function placeWidget(id,opts){
     if(reg.init) reg.init(wg.firstElementChild);
     setTimeout(function(){ wig(wg); },220);
   }
-  if(!herPlace(wg,land)) land();   /* 手正忙：东西照样落下，只是没人带路 */
+  if(!herPlace(wg,land,opts.from)) land();   /* 手正忙：东西照样落下，只是没人带路 */
   return wg;
 }
-var tapDone=false;
 
 /* ---------- 剧本播放器 ----------
    一段完整关系写成一份剧本（<script type="application/json" id="script">，字段见 SCRIPT.md），
@@ -3544,6 +3761,7 @@ abar.addEventListener('click',function(){
 });
 function arriveAct(text){
   if(herMuted) return;   /* 「停止她的主动联系」开着：她不主动发消息 */
+  if(guiding) return;    /* 引导期间挂起：她正带着你看，不插话 */
   var screen2=document.querySelector('.screen[data-s="2"]');
   var sink=screen2.querySelector('.thread');
   sink.classList.add('live'); maybeStamp(sink);
@@ -3726,7 +3944,7 @@ function runActs(acts,done){
   })();
 }
 function scene(n){
-  if(player.playing || player.branch) return;
+  if(player.playing || player.branch || guiding) return;   /* 引导期间剧本挂起 */
   var sc=SCRIPT.scenes[n-1];
   if(!sc) return;
   if(player.makeup && n>=SCRIPT.scenes.length){ menuNote(); return; }   /* 和好了：第十二天没有来 */
@@ -3792,6 +4010,12 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
       });
     }
     else if(a==='guess') guessOne();
+    /* 重放引导：清掉「播过」记号，回画布再来一圈 */
+    else if(a==='reguide'){
+      try{ localStorage.removeItem('after-guided'); }catch(e){}
+      if(go.now!==4) go(4);
+      spiritGuide();
+    }
     dev.classList.remove('open');
   });
 });
@@ -4257,7 +4481,7 @@ boot();
 /* ?scene=N：直接从第 N 幕起播（拍素材用），跳过一次进画布的点拨 */
 (function(){
   var m=location.search.match(/[?&]scene=(\d+)/);
-  if(m){ tapDone=true; go(4); scene(Math.min(+m[1],SCRIPT.scenes.length)); }
+  if(m){ go(4); scene(Math.min(+m[1],SCRIPT.scenes.length)); }
 })();
 </script>
 </body>
