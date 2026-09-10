@@ -1647,7 +1647,7 @@ body.devmode .dev{display:block}
       <button data-w="0">warmth · 结束</button>
       <button data-act="unlock">演示：成就达成</button>
       <button data-act="endit">演示：被结束</button>
-      <button data-act="her" id="herBtn">让她来一趟</button>
+      <button data-act="place">放一个新东西</button>
       <button data-act="guess">猜对一个字</button>
     </div>
   </div>
@@ -1704,18 +1704,45 @@ body.devmode .dev{display:block}
 </div>
 
 <script>
+/* ---------- widget 登记表 ----------
+   每个 widget 一条登记：原件的 id、落在第几个占位（slot）、尺寸、怎么活（init）、
+   新副本怎么造（make）。零件匣与独件页也从这里读。
+   以后新 widget 只加一条登记与一个 init——进画布的方式（谁带进来、怎么落下）
+   不再各写一遍 */
+var WIDGETS={
+  vt:{el:'w1', sel:'.vt', slot:0, size:[250,118], init:initPlayer, name:'唱机',  desc:'她放了一张唱片',   hint:'点一下：唱针抬起；再点一下，落下'},
+  wx:{el:'w2', sel:'.wx', slot:1, size:[196,196], init:initWx,     name:'天气',  desc:'她在下雨，你这儿晴', hint:'点一下，在她和你之间换重点'},
+  cal:{el:'w3', sel:'.cal', slot:2, size:[206,0], init:initCal,    name:'日历',  desc:'二十四日有个记号', hint:'点其他的日子画个圈（只有一个）；她的记号动不了'},
+  stk:{el:'w4', sel:'.stk', slot:3, size:[158,0], init:initStk,    name:'贴纸',  desc:'她贴的一句话',     hint:'点一下，换一张纸的颜色',
+       make:function(opts){
+         var d=document.createElement('div');
+         d.className='stk '+(opts.color||'p-peach');
+         d.style.transform='rotate(-2deg)';
+         var p=document.createElement('p'); p.textContent=opts.text||'云在天上写字';
+         d.appendChild(p); return d;
+       }},
+  gb:{el:'w5', sel:'.gb', slot:4, size:[180,0], init:null,        name:'游戏机', desc:'她的贪吃蛇',       hint:'摇杆一推，这局就归你了'},
+  gz:{el:'w6', sel:'.gz', slot:5, size:[250,0], init:initGuess,   name:'猜词',  desc:'凌晨的车站',       hint:'点空格，翻出那个字'},
+  alm:{el:'w7', sel:'.alm', slot:6, size:[238,0], init:null,      name:'闹钟',  desc:'她设的十点',       hint:'上下搓段式屏调时间（向下是加）；右缘点 AM/PM；底下换日子'}
+};
+var WKEYS=Object.keys(WIDGETS);
+
 /* 大 widget 的初始位置跟着消息流走：哪句话引出的它，它就落在哪句话下面的
-   占位（.slot）处，横向对齐消息列的左边。可以拖走；没拖过的在布局变化时重新对位 */
+   占位（.slot）处，横向对齐消息列的左边。slot 的归属读登记表。
+   可以拖走；没拖过的在布局变化时重新对位 */
 function parkWidgets(){
-  document.querySelectorAll('.slot[data-for]').forEach(function(s){
-    var v=document.getElementById(s.dataset.for);
+  var trackEl=document.getElementById('track');
+  var slots=trackEl.querySelectorAll('.slot');
+  WKEYS.forEach(function(k){
+    var reg=WIDGETS[k], v=document.getElementById(reg.el);
     if(!v || v._moved) return;
+    var s=slots[reg.slot]; if(!s) return;
     v.style.top=(s.offsetTop+10)+'px';
     v.style.left='16px';
   });
   /* 轨道的高度跟最后一个占位走：它到哪布就到哪，外加一屏多的留白，不写死 */
-  var slots=document.querySelectorAll('.slot[data-for]'), last=slots[slots.length-1];
-  if(last) document.getElementById('track').style.minHeight=(last.offsetTop+last.offsetHeight+320)+'px';
+  var last=slots[slots.length-1];
+  if(last) trackEl.style.minHeight=(last.offsetTop+last.offsetHeight+320)+'px';
 }
 parkWidgets();
 var glow=document.getElementById('glow');
@@ -2067,7 +2094,7 @@ function back(){
 function go(n){
   go.now=n;
   stopDraw();
-  if(n!==4) herStop();
+  if(n!==4) handOff(false);
   if(n===4){ trackSnake.start(); trackAlm.start(); } else { trackSnake.stop(); trackAlm.stop(); }
   if(n!==13) wvLeave();
   document.querySelectorAll('.screen').forEach(function(s){
@@ -2107,9 +2134,9 @@ function go(n){
   if(n===2) setTimeout(maybeGuide, spiritJourney?1600:700);   /* 她还在飞：引导层等她落地之后才出现 */
   if(n===10) openWith(enterScreen);
   if(n===4 && !tapDone){
-    /* 第一次到画布：她的笔尖点一下唱机，让你知道这些东西是活的 */
+    /* 第一次到画布：她的笔尖从头像里伸出来点一下唱机，让你知道这些东西是活的 */
     tapDone=true;
-    setTimeout(function(){ herTap(document.getElementById('w1')); }, 1100);
+    setTimeout(function(){ herPoint(document.getElementById('w1')); }, 1100);
   }
   if(n===4) requestAnimationFrame(dim);
   setTimeout(function(){document.body.classList.remove('going-back')},450);
@@ -2156,6 +2183,7 @@ function stopDraw(){
 }
 
 function drawScene(){
+  if(warmthNow()<.25) return;   /* 冷透了，她连笔也不拿（warmth < .25 没有 ink） */
   go(3);
   var t=calm?200:FIRST_PAUSE;
   strokes.forEach(function(el){
@@ -2204,16 +2232,15 @@ function dim(){
 }
 function queueDim(){ if(!queued){ queued=true; requestAnimationFrame(dim); } }
 
-/* ---------- 拖动 ---------- */
-var lastRelease=0;
-widgets.forEach(function(v,i){
+/* ---------- 拖动 ----------
+   你挪过的东西留在你放的地方——没有任何东西会把它搬回去 */
+function wireDrag(v){
   var dx=0, dy=0, on=false;
   v.addEventListener('pointerdown',function(e){
     /* 可玩的部分不是抓手。抓取退到边框，否则一按方向键 widget 就被拖走了 */
-    if(e.target.closest('.nodrag')){ v._busy=performance.now(); lastRelease=v._busy; return; }
+    if(e.target.closest('.nodrag')) return;
     on=true; v._held=true; v.classList.add('drag'); v.style.zIndex=5;
     v.style.transition=''; v.setPointerCapture(e.pointerId);
-    herLetGo(i);
     var r=v.getBoundingClientRect(); dx=e.clientX-r.left; dy=e.clientY-r.top;
     e.preventDefault(); e.stopPropagation();
   });
@@ -2227,14 +2254,15 @@ widgets.forEach(function(v,i){
   });
   function end(){
     if(!on) return;
-    on=false; v._held=false; lastRelease=performance.now(); v._moved=true;
+    on=false; v._held=false; v._moved=true;
     v.classList.remove('drag'); v.style.zIndex='';
     /* 拖过的那一下不算点：click 会紧跟在 pointerup 后面来，看一眼就撤 */
     setTimeout(function(){ v._dragged=false; },350);
   }
   v.addEventListener('pointerup',end);
   v.addEventListener('pointercancel',end);
-});
+}
+widgets.forEach(wireDrag);
 function clampX(v,x){ return Math.max(4,Math.min(track.offsetWidth-v.offsetWidth-4,x)); }
 function clampY(v,y){ return Math.max(4,Math.min(track.offsetHeight-v.offsetHeight-4,y)); }
 
@@ -2545,36 +2573,30 @@ function initGuess(root){
   });
 }
 
-/* ---------- 零件匣与独件页 ---------- */
-var WIDGETS=[
- {id:'w1', sel:'.vt',  name:'唱机',  desc:'她放了一张唱片',   hint:'点一下：唱针抬起；再点一下，落下', init:initPlayer},
- {id:'w2', sel:'.wx',  name:'天气',  desc:'她在下雨，你这儿晴', hint:'点一下，在她和你之间换重点', init:initWx},
- {id:'w3', sel:'.cal', name:'日历',  desc:'二十四日有个记号',  hint:'点其他的日子画个圈（只有一个）；她的记号动不了', init:initCal},
- {id:'w4', sel:'.stk', name:'贴纸',  desc:'她贴的一句话',     hint:'点一下，换一张纸的颜色', init:initStk},
- {id:'w5', sel:'.gb',  name:'游戏机', desc:'她的贪吃蛇',       hint:'摇杆一推，这局就归你了', init:null},
- {id:'w6', sel:'.gz',  name:'猜词',  desc:'凌晨的车站',       hint:'点空格，翻出那个字', init:initGuess},
- {id:'w7', sel:'.alm', name:'闹钟',  desc:'她设的十点',       hint:'上下搓段式屏调时间（向下是加）；右缘点 AM/PM；底下换日子', init:null}
-];
+/* ---------- 零件匣与独件页 ----------
+   列表与独件页都读 widget 登记表（文件顶部的 WIDGETS），
+   加 widget 只加一条登记，这里不用动 */
 var shelf=document.getElementById('shelf');
-WIDGETS.forEach(function(w,i){
+WKEYS.forEach(function(k){
+  var w=WIDGETS[k];
   var b=document.createElement('button'); b.type='button'; b.className='shelfrow';
   b.innerHTML='<div><div class="wn">'+w.name+'</div><div class="wd">'+w.desc+'</div></div>'+
     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M7.6 4.6L13 10l-5.4 5.4"/></svg>';
-  b.addEventListener('click',function(){ buzz(6); wvOpen(i); });
+  b.addEventListener('click',function(){ buzz(6); wvOpen(k); });
   shelf.appendChild(b);
 });
 var wvStage=document.getElementById('wvStage'), wvInst=null;
-function wvOpen(i){
+function wvOpen(k){
   wvLeave();
-  var w=WIDGETS[i];
+  var w=WIDGETS[k];
   document.getElementById('wvName').textContent=w.name;
   document.getElementById('wvHint').textContent=w.hint;
-  var src=document.querySelector('#'+w.id+' '+w.sel);
+  var src=document.querySelector('#'+w.el+' '+w.sel);
   var c=src.cloneNode(true);
   c.querySelectorAll('[id]').forEach(function(el){ el.removeAttribute('id'); });
   wvStage.appendChild(c);
-  if(w.id==='w5') wvInst=makeSnake(c);
-  else if(w.id==='w7') wvInst=makeAlarm(c);
+  if(k==='gb') wvInst=makeSnake(c);
+  else if(k==='alm') wvInst=makeAlarm(c);
   else if(w.init) w.init(c);
   if(wvInst) wvInst.start();
   go(13);
@@ -2965,18 +2987,22 @@ document.querySelectorAll('.composer').forEach(function(c){
 });
 
 /* ---------- 她的光标 ----------
+   笔尖是她的手，手只在做事的时候出现：放东西（place）、写字（ink）、指一下（point）。
+   没有第四件事——随机漂移与「搬回原位」都删了，你挪过的东西留在你放的地方。
+   所有动作的起点与终点都是她的头像圆心（页面坐标换算到画布坐标），
+   她出手那一刻头像轻轻 press 一下。她的三个化身由此连起来：
+   幽灵是她没成形时的样子，头像是她，笔尖是她的手从头像里伸出来。
    同一支扁头笔的笔尖。画在纸上的留下，走过的地方不留，所以拖尾是一层每帧重画的布。
-   她不常驻：来一趟，待几秒，走掉。
    运动模型见规范「她的光标 · 怎么动」一节。要点是：一次动作是一条预先规划好的轨迹，
    规划完就按时间播完，中途不重新决定。每帧算方向的做法（lerp、弹簧、steering）
    模拟的是物理不是手，必然发飘。 */
 var cvs=document.getElementById('cur'), ctx=cvs.getContext('2d');
 var scroller=track.parentNode;
-var homes=widgets.map(function(v){return {x:v.offsetLeft,y:v.offsetTop}});
 
 /* 笔尖是一个横宽纵窄的椭圆，半轴 3.2 与 1.33，比 2.4 比 1 */
 var NIB_A=3.2, NIB_B=3.2/2.4;
-var TRAIL_MS=1600, TRAIL_LEN=210, TRAIL_A=0.52;
+/* 拖尾两套参数：移动时只留刚走过的一小段；写字时保持原样（长拖尾是笔画的一部分） */
+var TRAIL_MOVE={ms:420,len:60}, TRAIL_WRITE={ms:1600,len:210}, TRAIL_A=0.52;
 /* 墨色两支：亮底上深墨 multiply 叠进布里；夜间的布是暗的，screen 混合下深墨等于没画，
    所以夜间换更亮的一档（201,174,152）。canvas 不认 CSS 变量，画之前读一次 body.dark */
 var INK='138,114,99', INK_DARK='201,174,152';
@@ -2984,16 +3010,12 @@ function inkNow(){ return document.body.classList.contains('dark')?INK_DARK:INK;
 
 /* 时长：Fitts。距离越远越久，但是对数不是线性 */
 var T_BASE=380, T_SCALE=260, T_UNIT=55;
-var SLOWER={drift:3.6, reach:1.4, haul:2.2, enter:1.1, leave:0.95};
+var SLOWER={reach:1.4, back:1.05};
 /* 三分之二次幂：曲率越大速度越低。EPS 定的是直线段的上限速度 */
 var CURVE_EPS=1/320;
-/* 一趟的长度与间隔。原型是秒，真实产品该是分钟到小时 */
-var STAY_MIN=7000, STAY_VAR=6000, GAP_MIN=9000, GAP_VAR=9000, FIRST_IN=1100;
-var POUNCE_WAIT=1500, HOLD_MS=300, SETTLE_MS=460, STRAY=8, GRAB_R=14;
 
-var her={live:false,x:0,y:0,hx:1,hy:0,trail:[],dirty:null,
-         hold:-1,ox:0,oy:0,aim:-1,tries:0,until:0,raf:0,act:null};
-var visit={on:false,timer:0};
+var her={live:false,x:0,y:0,hx:1,hy:0,trail:[],dirty:null,raf:0,act:null,
+         queue:[],done:null,closingAt:0,trailCfg:TRAIL_MOVE};
 
 /* ---- 轨迹 ---- */
 function minJerk(t){ return t*t*t*(10+t*(-15+6*t)); }
@@ -3042,7 +3064,7 @@ function unwarp(W,s){
 function plan(kind,tx,ty,now){
   var p0={x:her.x,y:her.y}, p1={x:tx,y:ty};
   var D=Math.hypot(tx-her.x,ty-her.y)||1;
-  var bow=(kind==='drift'?0.26:0.15)*D*(Math.random()<.5?-1:1)*(0.6+Math.random()*0.8);
+  var bow=0.15*D*(Math.random()<.5?-1:1)*(0.6+Math.random()*0.8);
   var ux=(tx-her.x)/D, uy=(ty-her.y)/D, nx=-uy, ny=ux;
   var P=[p0,
     {x:her.x+her.hx*D*0.34+nx*bow*0.5, y:her.y+her.hy*D*0.34+ny*bow*0.5},
@@ -3061,161 +3083,87 @@ function fitCanvas(){
   cvs.style.width=w+'px'; cvs.style.height=h+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-function band(){
-  var t=scroller.scrollTop;
-  return {top:t+52, bot:t+scroller.clientHeight-52, l:30, r:track.offsetWidth-30};
+/* 头像圆心：所有笔尖动作的起点与终点（页面坐标换算到画布坐标） */
+function avatarPoint(){
+  var av=document.querySelector('.screen[data-s="4"] .who .ava');
+  var r=av.getBoundingClientRect(), t=track.getBoundingClientRect();
+  return {x:r.left+r.width/2-t.left, y:r.top+r.height/2-t.top};
 }
-function strayed(){
-  var b=band(), pick=-1, far=STRAY, now=performance.now();
-  widgets.forEach(function(v,i){
-    if(v._held) return;
-    if(v._busy && now-v._busy<2600) return;   /* 你正在用的东西她不动 */
-    var d=Math.hypot(v.offsetLeft-homes[i].x, v.offsetTop-homes[i].y);
-    var cy=v.offsetTop+v.offsetHeight/2;
-    if(d>far && cy>b.top && cy<b.bot){ far=d; pick=i; }
-  });
-  return pick;
-}
-function grabPoint(i){
-  var v=widgets[i];
-  return {x:v.offsetLeft+v.offsetWidth*0.28, y:v.offsetTop+16};
-}
-function herLetGo(i){
-  if(her.hold!==i) return;
-  /* 你一碰她就撒手，往回缩一小步。缩也是一次规划好的动作，不是瞬移 */
-  widgets[her.hold].style.transition='';
-  her.hold=-1; her.aim=-1;
-  plan('reach', her.x-her.hx*46, her.y-her.hy*46, performance.now());
-}
+/* 冷时不出手：warmth < .45 她不再放东西也不指东西，只回话 */
+function handOut(){ return warmthNow()<.45; }
 
-/* ---- 一趟 ---- */
-function toggleHer(){
-  if(go.now!==4) go(4);
-  visit.on ? sessionOff() : sessionOn();
-}
-function sessionOn(){
-  if(calm){ tidyNow(); return; }
-  visit.on=true; label('她在的时候会来');
-  clearTimeout(visit.timer);
-  visit.timer=setTimeout(function(){ if(visit.on) herIn(); }, FIRST_IN);
-}
-function sessionOff(){
-  visit.on=false; clearTimeout(visit.timer);
-  if(her.live) herOut(); else label('让她来一趟');
-}
-function label(s){ var b=document.getElementById('herBtn'); if(b) b.textContent=s; }
-function tidyNow(){
-  widgets.forEach(function(v,i){
-    v.style.transition='left 1ms,top 1ms';
-    v.style.left=homes[i].x+'px'; v.style.top=homes[i].y+'px';
-  });
-  queueDim();
-}
-function herIn(){
-  if(her.live) return;
-  fitCanvas();
-  var b=band(), now=performance.now();
-  her.live=true; her.trail.length=0; her.dirty=null;
-  her.hold=-1; her.aim=-1; her.tries=0;
-  her.x=b.l+Math.random()*(b.r-b.l); her.y=b.top-80;
-  her.hx=0; her.hy=1;                       /* 进来的时候已经在动了 */
-  her.until=now+STAY_MIN+Math.random()*STAY_VAR;
-  plan('enter', her.x+(Math.random()-.5)*90, b.top+80, now);
-  cvs.classList.add('here');
-  her.raf=requestAnimationFrame(tick);
-}
-function herOut(){
-  if(!her.live || (her.act&&her.act.kind==='leave')) return;
-  her.hold=-1; her.aim=-1;
-  var b=band();
-  plan('leave', her.x+(Math.random()-.5)*130, b.top-110, performance.now());
-}
-function herOff(reschedule){
-  her.live=false; her.act=null; her.hold=-1; her.aim=-1;
-  her.trail.length=0; her.dirty=null;
-  cancelAnimationFrame(her.raf); cvs.classList.remove('here');
-  ctx.clearRect(0,0,track.offsetWidth,track.offsetHeight);
-  if(reschedule && visit.on){
-    clearTimeout(visit.timer);
-    visit.timer=setTimeout(function(){ if(visit.on) herIn(); },
-      GAP_MIN+Math.random()*GAP_VAR);
-  }
-}
-function herStop(){ visit.on=false; clearTimeout(visit.timer); herOff(false); label('让她来一趟'); }
-
-/* 一个动作播完了，决定下一个。决定只发生在这里，不发生在每一帧 */
-function next(now){
-  var k=her.act?her.act.kind:'';
-  if(k==='leave'){ herOff(true); return false; }
-
-  if(k==='reach'){
-    if(her.aim>=0){
-      var g=grabPoint(her.aim), v=widgets[her.aim];
-      if(v._held){ her.aim=-1; }
-      else if(Math.hypot(g.x-her.x,g.y-her.y)<GRAB_R){
-        her.hold=her.aim; her.ox=her.x-v.offsetLeft; her.oy=her.y-v.offsetTop;
-        still(HOLD_MS,now); return true;      /* 按住的那一下，手是停的 */
-      }else if(her.tries++<2){
-        plan('reach',g.x,g.y,now); return true;  /* 它挪了。再够一次，不是每帧追 */
-      }else her.aim=-1;
-    }
-  }
-  if(k==='hold' && her.hold>=0){
-    plan('haul', homes[her.hold].x+her.ox, homes[her.hold].y+her.oy, now);
+/* ---- 一趟动作：一串预先排好的步骤，播完收尾淡出 ----
+   步骤：{go:[x,y],kind} 走到某点；{hold:ms} 停；{do:fn} 当场做一件事。
+   决定只发生在步骤之间，不发生在每一帧 */
+function handRun(seq,done,cfg){
+  if(her.live) return false;                 /* 手只有一双：做完这件才做下一件 */
+  if(calm){                                  /* 减动效：事照做，手不出 */
+    seq.forEach(function(s){ if(s.do) s.do(); });
+    if(done) done();
     return true;
   }
-  if(k==='haul' && her.hold>=0){
-    var w=widgets[her.hold];
-    w.style.transition='left 200ms cubic-bezier(.22,.61,.36,1),top 200ms cubic-bezier(.22,.61,.36,1)';
-    w.style.left=homes[her.hold].x+'px'; w.style.top=homes[her.hold].y+'px';
-    her.hold=-1; her.aim=-1; her.tries=0; queueDim();
-    still(SETTLE_MS,now); return true;         /* 放下之后看它一眼 */
-  }
-
-  if(now>her.until && her.hold<0){ herOut(); return true; }
-
-  if(now-lastRelease>POUNCE_WAIT){
-    var i=strayed();
-    if(i>=0){ her.aim=i; her.tries=0; var p=grabPoint(i); plan('reach',p.x,p.y,now); return true; }
-  }
-  var b=band();
-  plan('drift', b.l+Math.random()*(b.r-b.l),
-                b.top+Math.random()*Math.max(50,b.bot-b.top), now);
+  fitCanvas();
+  var a=avatarPoint();
+  her.live=true; her.trail.length=0; her.dirty=null;
+  her.x=a.x; her.y=a.y; her.hx=0; her.hy=1;
+  her.queue=seq.slice(); her.done=done||null; her.closingAt=0;
+  her.trailCfg=cfg||TRAIL_MOVE;
+  her.act=null;
+  /* 她出手那一刻，头像轻轻压一下 */
+  var pill=document.querySelector('.screen[data-s="4"] .idpill');
+  if(pill){ pill.classList.add('press'); setTimeout(function(){ pill.classList.remove('press'); },300); }
+  cvs.classList.add('here');
+  her.raf=requestAnimationFrame(tick);
   return true;
+}
+function stepNext(now){
+  var s=her.queue.shift();
+  if(!s){
+    /* 收尾：笔尖停在头像里（画布之外），等拖尾自己淡完再收布 */
+    if(!her.closingAt){ her.closingAt=now; return true; }
+    if(now-her.closingAt>her.trailCfg.ms+80){ handOff(true); return false; }
+    return true;
+  }
+  if(s.go){ plan(s.kind||'reach', s.go[0], s.go[1], now); return true; }
+  if(s.hold){ still(s.hold, now); return true; }
+  if(s.do){ s.do(); return stepNext(now); }
+  return stepNext(now);
+}
+function handOff(done){
+  her.live=false; her.act=null; her.queue=[];
+  her.trail.length=0; her.dirty=null; her.closingAt=0;
+  cancelAnimationFrame(her.raf);
+  cvs.classList.remove('here');
+  ctx.clearRect(0,0,track.offsetWidth,track.offsetHeight);
+  var d=her.done; her.done=null;
+  if(done && d) d();
 }
 
 /* ---- 每帧 ---- */
 function tick(now){
   if(!her.live) return;
   var a=her.act;
-  if(!a){ if(!next(now)) return; a=her.act; }
-
-  var tau=Math.min(1,(now-a.t0)/a.T);
-  if(a.P){
-    var u=unwarp(a.W, minJerk(tau));
-    var p=bez(a.P,u), d=bezD(a.P,u), m=Math.hypot(d.x,d.y);
-    her.x=p.x; her.y=p.y;
-    if(m>1e-4){ her.hx=d.x/m; her.hy=d.y/m; }
+  if(a){
+    var tau=Math.min(1,(now-a.t0)/a.T);
+    if(a.P){
+      var u=unwarp(a.W, minJerk(tau));
+      var p=bez(a.P,u), d=bezD(a.P,u), m=Math.hypot(d.x,d.y);
+      her.x=p.x; her.y=p.y;
+      if(m>1e-4){ her.hx=d.x/m; her.hy=d.y/m; }
+    }
+    if(tau>=1) her.act=null;                 /* 一个动作播完了，下一步在步骤队列里取 */
   }
-  if(tau>=1){ if(!next(now)) return; }
-
-  if(her.hold>=0){
-    var h=widgets[her.hold];
-    h.style.left=clampX(h,her.x-her.ox)+'px';
-    h.style.top=clampY(h,her.y-her.oy)+'px';
-    queueDim();
-  }
-
+  if(!her.act){ if(!stepNext(now)) return; }
   her.trail.push({x:her.x,y:her.y,t:now});
   trim(now);
   paintHer(now);
   her.raf=requestAnimationFrame(tick);
 }
 function trim(now){
-  var p=her.trail, run=0, cut=0;
+  var p=her.trail, run=0, cut=0, cfg=her.trailCfg;
   for(var i=p.length-1;i>0;i--){
     run+=Math.hypot(p[i].x-p[i-1].x, p[i].y-p[i-1].y);
-    if(run>TRAIL_LEN || now-p[i].t>TRAIL_MS){ cut=i; break; }
+    if(run>cfg.len || now-p[i].t>cfg.ms){ cut=i; break; }
   }
   if(cut>0) p.splice(0,cut);
 }
@@ -3250,7 +3198,7 @@ function paintHer(now){
       var a=s[i], b=s[i+1], ex=b.x-a.x, ey=b.y-a.y;
       var len=Math.hypot(ex,ey); if(len<1e-4) continue;
       var o=offset(ex,ey), gx=ex/len*0.4, gy=ey/len*0.4;   /* 微微加长，消掉接缝 */
-      var k=1-(now-b.t)/TRAIL_MS; if(k<=0) continue;
+      var k=1-(now-b.t)/her.trailCfg.ms; if(k<=0) continue;
       var head=i/(s.length-1);
       ctx.fillStyle='rgba('+inkNow()+','+(TRAIL_A*k*k*(0.3+0.7*head)).toFixed(3)+')';
       ctx.beginPath();
@@ -3274,41 +3222,78 @@ window.addEventListener('resize',function(){
   if(spiritJourney) spiritPlace(go.now,true);   /* 她的锚点跟着屏幕重算 */
 });
 
-/* ---------- 新 widget 的小引导 ----------
-   她发出一个 widget 时，她的笔尖会先过去点它一下——widget 轻轻晃一晃，
-   你由此知道它是活的、可以碰。她在布上的时候由她自己碰，这里只负责晃 */
+/* ---------- 她做的三件事 ----------
+   放东西（place）、写字（ink，扁头笔那套保持原样）、指一下（point）。
+   手只在做事时出现，起止都是头像；做完退回去，布上不留常驻的笔尖 */
+/* 新 widget 的小引导：widget 轻轻晃一晃，你由此知道它是活的、可以碰 */
 function wig(v){
   v.classList.remove('wig'); v.getBoundingClientRect(); v.classList.add('wig');
   buzz(8);
 }
-function herTap(v){
-  if(!v) return;
-  if(her.live || calm){ wig(v); return; }
-  fitCanvas();
+/* 物件在笔尖下落下：scale .96 → 1，200ms，--spring */
+function dropIn(el){
+  el.style.visibility='';
+  el.style.transform='scale(.96)';
+  void el.offsetWidth;
+  el.style.transition='transform 200ms var(--spring)';
+  el.style.transform='none';
+  setTimeout(function(){ el.style.transition=''; el.style.transform=''; },260);
+}
+/* 放东西：笔尖从头像出发走到目标位置，物件在笔尖下落下，停 300ms，退回头像 */
+function herPlace(wg,onDrop){
+  var tx=wg.offsetLeft+wg.offsetWidth*0.3, ty=wg.offsetTop+14;
+  var a=avatarPoint();
+  return handRun([
+    {go:[tx,ty]},
+    {do:function(){ if(onDrop) onDrop(); }},
+    {hold:300},
+    {go:[a.x,a.y],kind:'back'}
+  ]);
+}
+/* 指一下：她的话里提到画布上的某件东西时，笔尖去点一下那件东西，然后退回 */
+function herPoint(v){
+  if(!v || handOut() || go.now!==4) return false;
   var tx=v.offsetLeft+v.offsetWidth*0.3, ty=v.offsetTop+14;
-  var sy=ty-90, t0=performance.now(), T=560;
-  cvs.classList.add('here');
-  (function fr(now){
-    var k=Math.min(1,(now-t0)/T), e=1-Math.pow(1-k,3);
-    var x=tx, y=sy+(ty-sy)*e;
-    ctx.clearRect(0,0,track.offsetWidth,track.offsetHeight);
-    ctx.fillStyle='rgba('+inkNow()+',0.9)';
-    ctx.beginPath(); ctx.ellipse(x,y,5.4,3.2,0,0,Math.PI*2); ctx.fill();
-    if(k<1){ requestAnimationFrame(fr); return; }
-    setTimeout(function(){
-      wig(v);
-      var f0=performance.now();
-      (function fade(nw){
-        var q=Math.min(1,(nw-f0)/420);
-        ctx.clearRect(0,0,track.offsetWidth,track.offsetHeight);
-        if(q<1){
-          ctx.fillStyle='rgba('+inkNow()+','+(0.9*(1-q)).toFixed(3)+')';
-          ctx.beginPath(); ctx.ellipse(tx,ty,5.4,3.2,0,0,Math.PI*2); ctx.fill();
-          requestAnimationFrame(fade);
-        }else cvs.classList.remove('here');
-      })(f0);
-    },170);
-  })(t0);
+  var a=avatarPoint();
+  return handRun([
+    {go:[tx,ty]},
+    {do:function(){ wig(v); }},
+    {hold:170},
+    {go:[a.x,a.y],kind:'back'}
+  ]);
+}
+/* 新 widget 进画布的唯一方式：建 DOM → 停靠到 slot（被占了落在眼前这一屏）→
+   笔尖 place → init → wig 小引导。warmth < .45 她不出手：什么也不放，只回话 */
+var wgSeq=0;
+function placeWidget(id,opts){
+  opts=opts||{};
+  var reg=WIDGETS[id];
+  if(!reg || !reg.make || handOut() || go.now!==4) return null;
+  var wg=document.createElement('div');
+  wg.className='wg'; wg.id='wg-'+id+'-'+(++wgSeq);
+  wg.appendChild(reg.make(opts));
+  wg.style.visibility='hidden';
+  track.appendChild(wg);
+  /* 落点：登记表的 slot 空着就用；被占了落在眼前这一屏的下缘 */
+  var slots=track.querySelectorAll('.slot'), s=slots[reg.slot];
+  var x=16, y;
+  var occupied=s && widgets.some(function(v){
+    return Math.abs(v.offsetTop-(s.offsetTop+10))<48;
+  });
+  if(opts.at){ x=opts.at[0]; y=opts.at[1]; }
+  else if(s && !occupied){ y=s.offsetTop+10; }
+  else{ y=scroller.scrollTop+scroller.clientHeight-wg.offsetHeight-40; }
+  wg.style.left=x+'px'; wg.style.top=y+'px';
+  var need=y+wg.offsetHeight+140;
+  if(track.offsetHeight<need) track.style.minHeight=need+'px';
+  widgets.push(wg); wireDrag(wg);
+  function land(){
+    dropIn(wg);
+    if(reg.init) reg.init(wg.firstElementChild);
+    setTimeout(function(){ wig(wg); },220);
+  }
+  if(!herPlace(wg,land)) land();   /* 手正忙：东西照样落下，只是没人带路 */
+  return wg;
 }
 var tapDone=false;
 
@@ -3330,7 +3315,13 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
     else if(a==='netfail') document.body.classList.toggle('netfail');
     else if(a==='unlock') achvToast('成就达成 · 第一次让她记下一件事');
     else if(a==='endit') go(14);
-    else if(a==='her') toggleHer();
+    /* 她说一句，然后笔尖把一个新东西带进来（warmth < .45 时只剩这句话） */
+    else if(a==='place'){
+      if(go.now!==4) go(4);
+      herSay(track, scroller, '这个给你', function(){
+        placeWidget('stk',{text:'路边看到的，给你'});
+      });
+    }
     else if(a==='guess') guessOne();
     dev.classList.remove('open');
   });
