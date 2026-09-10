@@ -675,7 +675,7 @@ body.poked .pool{animation:poolpulse 700ms var(--ease)}
 /* 玻璃共享配方：凡是浮在布上、不是物件的东西都吃这一份。
    禁止 box-shadow——玻璃靠边缘的光浮起来，不靠影子 */
 .hbtn,.who .idpill,.cfield,.cbtn,.msg.you,.glass,.gcard,.medal,.mact,
-.atsheet .panel,.atoast,.shelfrow,.ecard,.tin,.grow2,.startbtn.quiet{
+.atsheet .panel,.atoast,.shelfrow,.ecard,.tin,.grow2,.startbtn.quiet,.abar{
   background:var(--glass-fill);
   -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
   border:0.5px solid var(--glass-edge);
@@ -989,6 +989,31 @@ body.dark .loadbar i{background:var(--ink)}
 .atoast .m svg{width:13px;height:13px}
 .atoast .t{font-size:var(--fs-3);color:var(--ink);white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;max-width:64vw}
+
+/* 主动消息到达条：你不在对话屏时，顶栏位置滑下一条极薄的玻璃（她的头像+一行字），
+   3.5s 自己收起，点了去对话屏。不震动、不红点、不催 */
+.abar{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:14px;right:14px;z-index:72;
+  display:flex;align-items:center;gap:9px;padding:7px 14px 7px 7px;border-radius:999px;
+  transform:translateY(-150%);transition:transform 480ms var(--ease);cursor:pointer}
+.abar.show{transform:none}
+.abar .ava{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--base);
+  display:flex;align-items:center;justify-content:center;font-size:var(--fs-1);flex:none}
+.abar .t{font-size:var(--fs-3);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 阶段卡（轻量占位，正式的在 Step 4）：一张居中小纸，出一下就走 */
+.stagetmp{position:fixed;left:50%;top:50%;z-index:72;width:min(64%,220px);
+  transform:translate(-50%,-48%) scale(.96);opacity:0;pointer-events:none;
+  background:var(--paper);border-radius:var(--r-paper);border:0.5px solid var(--paper-line);
+  padding:26px 20px 18px;text-align:center;color:var(--paper-ink);
+  transition:opacity 500ms var(--ease),transform 500ms var(--ease)}
+.stagetmp.show{opacity:1;transform:translate(-50%,-50%)}
+.stagetmp .t{font-family:var(--serif);font-size:var(--fs-4)}
+.stagetmp .l{font-size:var(--fs-3);line-height:1.9;margin-top:10px}
+.stagetmp .k{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:var(--ink-3);margin-top:16px}
+
+/* 翻旧账：被引用的那条旧消息旁边的 stamp，轻轻亮一下 */
+.stamp.flash{animation:stampflash 1500ms var(--ease)}
+@keyframes stampflash{0%{opacity:0;filter:brightness(1)}30%{opacity:1;filter:brightness(1.6)}100%{opacity:1;filter:brightness(1)}}
 
 /* 空对话：话还没来的时候，一行淡字占着位子 */
 .ehint{margin:auto;font-size:var(--fs-2);letter-spacing:var(--ls-text);color:var(--ink-3);
@@ -1616,6 +1641,16 @@ body.devmode .dev{display:block}
     </div>
   </div>
 
+  <!-- 主动消息到达条：你不在对话屏时从顶栏滑下的一条极薄玻璃 -->
+  <div class="abar" id="abar" role="button" aria-label="她发来的新消息">
+    <span class="ava">陈</span><span class="t"></span>
+  </div>
+
+  <!-- 阶段卡（轻量占位，正式的 Step 4 做） -->
+  <div class="stagetmp" id="stagetmp" aria-hidden="true">
+    <div class="t"></div><div class="l"></div><div class="k">AFTER</div>
+  </div>
+
   <!-- 成就达成 toast -->
   <div class="atoast" id="atoast">
     <span class="m"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.6" r="4"/><path d="M7.4 10.9L6 16.4l4-2.3 4 2.3-1.4-5.5"/></svg></span>
@@ -1634,7 +1669,12 @@ body.devmode .dev{display:block}
   <div class="dev" id="dev">
     <button class="devbtn" aria-label="演示菜单">···</button>
     <div class="devmenu">
-      <span class="devnote">DEMO</span>
+      <span class="devnote" id="devnote">DEMO</span>
+      <button data-act="prev">上一幕</button>
+      <button data-act="next">下一幕</button>
+      <button data-act="replay">重头</button>
+      <button data-branch="0" style="display:none">回</button>
+      <button data-branch="1" style="display:none">不回</button>
       <button data-act="restart">从头走一遍</button>
       <button data-act="draw">播放她画画</button>
       <button data-act="canvas">看 widget 画布</button>
@@ -1703,6 +1743,68 @@ body.devmode .dev{display:block}
 
 </div>
 
+<!-- 默认剧本《十二天》：七幕，占位文案（人设定稿后替换）。字段说明见 SCRIPT.md -->
+<script type="application/json" id="script">
+{
+  "title": "十二天",
+  "scenes": [
+    { "name": "第一天 · 糖", "acts": [
+      { "a": "warmth", "to": 0.85, "ms": 4000 },
+      { "a": "say", "text": "放个东西给你听" },
+      { "a": "place", "widget": "vt" },
+      { "a": "say", "text": "凌晨的车站。我最近在听这张" },
+      { "a": "say", "text": "你别说话，听完再说" },
+      { "a": "ink", "scene": "cat" }
+    ]},
+    { "name": "第三天 · 你说", "acts": [
+      { "a": "card", "kind": "decide", "text": "周末那个聚会，你觉得我该去吗",
+        "options": [
+          { "label": "去",   "reply": "好。那我就去。你说的，我记下了" },
+          { "label": "不去", "reply": "也行，不去了。你说的，我记下了" }
+        ],
+        "mark": "decide" }
+    ]},
+    { "name": "第五天 · 一起", "acts": [
+      { "a": "warmth", "to": 0.9, "ms": 4000 },
+      { "a": "card", "kind": "coop", "game": "guess" },
+      { "a": "place", "widget": "cal" },
+      { "a": "say", "text": "二十四号我圈了。你说过那天要给我看照片，我记下了，省得你忘" }
+    ]},
+    { "name": "第七天 · 边界", "acts": [
+      { "a": "you", "text": "你能不能只对我一个人这样好" },
+      { "a": "say", "text": "这种话，不要再问第二次" },
+      { "a": "warmth", "to": 0.45, "ms": 4000 },
+      { "a": "presence", "text": "刚刚在线" }
+    ]},
+    { "name": "第九天 · 疏远", "acts": [
+      { "a": "warmth", "to": 0.25, "ms": 4000 },
+      { "a": "say", "text": "嗯" },
+      { "a": "you", "text": "你最近怎么了" },
+      { "a": "say", "text": "没什么" },
+      { "a": "recall", "text": "去聚会那天，是你让我去的", "ref": "decide" }
+    ]},
+    { "name": "第十一天 · 主动", "acts": [
+      { "a": "arrive", "text": "那天的事，我想了想" },
+      { "a": "branch", "options": [
+        { "label": "回", "makeup": true, "acts": [
+          { "a": "you", "text": "嗯，我也想过了" },
+          { "a": "warmth", "to": 0.6, "ms": 4000 },
+          { "a": "say", "text": "那……周末的聚会，你还陪我去吗" }
+        ]},
+        { "label": "不回", "acts": [] }
+      ]}
+    ]},
+    { "name": "第十二天 · 结束", "acts": [
+      { "a": "warmth", "to": 0, "ms": 1600 },
+      { "a": "wait", "ms": 1800 },
+      { "a": "stage", "kind": "end", "title": "第十二天", "line": "就到这儿吧" },
+      { "a": "wait", "ms": 2400 },
+      { "a": "end" }
+    ]}
+  ]
+}
+</script>
+
 <script>
 /* ---------- widget 登记表 ----------
    每个 widget 一条登记：原件的 id、落在第几个占位（slot）、尺寸、怎么活（init）、
@@ -1710,9 +1812,12 @@ body.devmode .dev{display:block}
    以后新 widget 只加一条登记与一个 init——进画布的方式（谁带进来、怎么落下）
    不再各写一遍 */
 var WIDGETS={
-  vt:{el:'w1', sel:'.vt', slot:0, size:[250,118], init:initPlayer, name:'唱机',  desc:'她放了一张唱片',   hint:'点一下：唱针抬起；再点一下，落下'},
-  wx:{el:'w2', sel:'.wx', slot:1, size:[196,196], init:initWx,     name:'天气',  desc:'她在下雨，你这儿晴', hint:'点一下，在她和你之间换重点'},
-  cal:{el:'w3', sel:'.cal', slot:2, size:[206,0], init:initCal,    name:'日历',  desc:'二十四日有个记号', hint:'点其他的日子画个圈（只有一个）；她的记号动不了'},
+  vt:{el:'w1', sel:'.vt', slot:0, size:[250,118], init:initPlayer, name:'唱机',  desc:'她放了一张唱片',   hint:'点一下：唱针抬起；再点一下，落下',
+       make:function(){ return cloneWidget('w1','.vt'); }},
+  wx:{el:'w2', sel:'.wx', slot:1, size:[196,196], init:initWx,     name:'天气',  desc:'她在下雨，你这儿晴', hint:'点一下，在她和你之间换重点',
+       make:function(){ return cloneWidget('w2','.wx'); }},
+  cal:{el:'w3', sel:'.cal', slot:2, size:[206,0], init:initCal,    name:'日历',  desc:'二十四日有个记号', hint:'点其他的日子画个圈（只有一个）；她的记号动不了',
+       make:function(){ return cloneWidget('w3','.cal'); }},
   stk:{el:'w4', sel:'.stk', slot:3, size:[158,0], init:initStk,    name:'贴纸',  desc:'她贴的一句话',     hint:'点一下，换一张纸的颜色',
        make:function(opts){
          var d=document.createElement('div');
@@ -1722,7 +1827,12 @@ var WIDGETS={
          d.appendChild(p); return d;
        }},
   gb:{el:'w5', sel:'.gb', slot:4, size:[180,0], init:null,        name:'游戏机', desc:'她的贪吃蛇',       hint:'摇杆一推，这局就归你了'},
-  gz:{el:'w6', sel:'.gz', slot:5, size:[250,0], init:initGuess,   name:'猜词',  desc:'凌晨的车站',       hint:'点空格，翻出那个字'},
+  gz:{el:'w6', sel:'.gz', slot:5, size:[250,0], init:initGuess,   name:'猜词',  desc:'凌晨的车站',       hint:'点空格，翻出那个字',
+       make:function(){
+         var c=cloneWidget('w6','.gz');
+         c.querySelectorAll('.tian b').forEach(function(b){ b.remove(); });   /* 新一局：翻过的字盖回去 */
+         return c;
+       }},
   alm:{el:'w7', sel:'.alm', slot:6, size:[238,0], init:null,      name:'闹钟',  desc:'她设的十点',       hint:'上下搓段式屏调时间（向下是加）；右缘点 AM/PM；底下换日子'}
 };
 var WKEYS=Object.keys(WIDGETS);
@@ -2182,8 +2292,8 @@ function stopDraw(){
   afterDraw.style.opacity=0;
 }
 
-function drawScene(){
-  if(warmthNow()<.25) return;   /* 冷透了，她连笔也不拿（warmth < .25 没有 ink） */
+function drawScene(cb){
+  if(warmthNow()<.25){ if(cb) cb(); return; }   /* 冷透了，她连笔也不拿（warmth < .25 没有 ink） */
   go(3);
   var t=calm?200:FIRST_PAUSE;
   strokes.forEach(function(el){
@@ -2204,6 +2314,7 @@ function drawScene(){
     afterDraw.style.transition='opacity 450ms';
     afterDraw.style.opacity=1;
   }, t+(calm?100:AFTER_PAUSE)));
+  if(cb) timers.push(setTimeout(cb, t+(calm?300:AFTER_PAUSE+900)));
 }
 
 /* ---------- widget 消隐 ----------
@@ -2763,6 +2874,7 @@ function herSay(sink,scroll,text,cb){
   document.body.classList.add('hertyping');
   if(scroll) scroll.scrollTop=scroll.scrollHeight;
   var hold=Math.min(2600, 700+text.length*140);
+  if(warmthNow()<.45) hold*=2;   /* 疏远的时候她回得慢：typing 时长 ×2（剧本第九天起可感） */
   st.t=setTimeout(function(){
     t.remove(); st.typing=null; document.body.classList.remove('hertyping');
     var old=sink.querySelector('.seen'); if(old) old.remove();
@@ -2781,7 +2893,7 @@ function herSay(sink,scroll,text,cb){
   },hold);
 }
 /* 事件卡：她把一件事摆到你面前。你的选择会被采纳、被记住、被翻出来 */
-function herCard(sink,scroll,text,opts){
+function herCard(sink,scroll,text,opts,cb){
   var st=sink._her || (sink._her={t:0,typing:null});
   setPresence('正在输入…');
   var t=document.createElement('div'); t.className='msg her typing';
@@ -2803,7 +2915,7 @@ function herCard(sink,scroll,text,opts){
       b.addEventListener('click',function(){
         if(card.classList.contains('done')) return;
         card.classList.add('done'); b.classList.add('sel'); buzz(8);
-        setTimeout(function(){ herSay(sink,scroll,o.reply); },800);
+        setTimeout(function(){ herSay(sink,scroll,o.reply,function(){ if(cb) cb(o); }); },800);
       });
       box.appendChild(b);
     });
@@ -3297,6 +3409,182 @@ function placeWidget(id,opts){
 }
 var tapDone=false;
 
+/* ---------- 剧本播放器 ----------
+   一段完整关系写成一份剧本（<script type="application/json" id="script">，字段见 SCRIPT.md），
+   演示者用「上一幕 / 下一幕 / 重头」推进。一幕是一组按序执行的动作，
+   say/card/ink/place 之间用 herTurn 的节奏（typing → 停留 → 到达）。
+   ?scene=N 直接从第 N 幕起播（拍素材用） */
+var SCRIPT=JSON.parse(document.getElementById('script').textContent);
+var player={i:0, playing:false, branch:null, makeup:false, marks:{}};
+
+/* 新副本的 DOM：克隆画布上的原件，剥掉 id（原件不动） */
+function cloneWidget(elId,sel){
+  var c=document.querySelector('#'+elId+' '+sel).cloneNode(true);
+  c.querySelectorAll('[id]').forEach(function(el){ el.removeAttribute('id'); });
+  return c;
+}
+/* 演示模式下代用户发一句（也可留给现场手打） */
+function youSay(sink,scroll,text){
+  sink.classList.add('live'); maybeStamp(sink);
+  var m=document.createElement('div'); m.className='msg you';
+  m._time=nowTime();
+  m.appendChild(document.createTextNode(text));
+  sink.appendChild(m);
+  if(scroll) scroll.scrollTop=scroll.scrollHeight;
+  setTimeout(function(){
+    m.style.animation='none';
+    if(sink.closest('.track') && typeof bubbles!=='undefined'){ bubbles.push(m); queueDim(); }
+  },500);
+}
+/* 滚动 tween：recall 滚到旧消息 400ms 再滚回 */
+function smoothTo(el,to,ms,done){
+  var from=el.scrollTop, t0=performance.now();
+  (function s(t){
+    var q=Math.min(1,(t-t0)/ms), e=q<.5?2*q*q:1-Math.pow(-2*q+2,2)/2;
+    el.scrollTop=from+(to-from)*e;
+    if(q<1) requestAnimationFrame(s); else if(done) done();
+  })(t0);
+}
+/* 主动消息：话先进对话屏（带时间戳）；你不在对话屏时，顶栏滑下一条极薄的玻璃条，
+   3.5s 自己收起，点了去对话屏。不震动、不红点、不催 */
+var abar=document.getElementById('abar'), abarT=0;
+abar.addEventListener('click',function(){
+  abar.classList.remove('show'); clearTimeout(abarT); go(2);
+});
+function arriveAct(text){
+  var screen2=document.querySelector('.screen[data-s="2"]');
+  var sink=screen2.querySelector('.thread');
+  sink.classList.add('live'); maybeStamp(sink);
+  var m=document.createElement('div'); m.className='msg her';
+  m._time=nowTime();
+  m.appendChild(document.createTextNode(text));
+  sink.appendChild(m);
+  if(go.now===2){ sink.scrollTop=sink.scrollHeight; return; }
+  abar.querySelector('.t').textContent=text;
+  abar.classList.add('show');
+  clearTimeout(abarT);
+  abarT=setTimeout(function(){ abar.classList.remove('show'); },3500);
+}
+/* 阶段卡（轻量占位，正式的 Step 4 做）：一张居中小纸，出一下就走 */
+function stageAct(a,next){
+  var el=document.getElementById('stagetmp');
+  el.querySelector('.t').textContent=a.title||'';
+  el.querySelector('.l').textContent=a.line||'';
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); setTimeout(next,520); },2200);
+}
+/* 翻旧账：她的话到达后，被引用的那条旧消息旁边出现一枚 stamp 并轻轻亮一下，
+   对话线滚到那条 400ms 再滚回 */
+function recallAct(a,next){
+  herSay(track,scroller,a.text,function(){
+    var el=a.ref && player.marks[a.ref];
+    if(!el || !el.isConnected){ setTimeout(next,400); return; }
+    var st=document.createElement('div'); st.className='stamp flash';
+    st.textContent='她翻了出来';
+    el.insertAdjacentElement('afterend',st);
+    var back=scroller.scrollTop;
+    smoothTo(scroller, Math.max(0,el.offsetTop-180), 400, function(){
+      setTimeout(function(){
+        smoothTo(scroller, back, 400, function(){ setTimeout(next,300); });
+      },700);
+    });
+  });
+}
+function execAct(a,next){
+  switch(a.a){
+    case 'say':
+      herSay(track,scroller,a.text,function(){
+        if(a.ref){ var v=document.getElementById(a.ref); if(v) herPoint(v); }
+        setTimeout(next, a.ref?1500:320);
+      });
+      break;
+    case 'you': youSay(track,scroller,a.text); setTimeout(next,760); break;
+    case 'place':
+      /* 手带她放：等落下再走；warmth < .45 她不出手，动作直接跳过 */
+      setTimeout(next, placeWidget(a.widget, a.data||{}) ? 2600 : 500);
+      break;
+    case 'ink':
+      /* 写字/画画：扁头笔那套原样（画完回画布）；warmth < .25 时她连笔也不拿 */
+      drawScene(function(){ setTimeout(function(){ go(4); next(); },600); });
+      break;
+    case 'card':
+      if(a.kind==='decide'){
+        herCard(track,scroller,a.text,a.options,function(o){
+          /* 你的选择被记下：一枚 stamp 留在那儿，翻旧账时就翻它 */
+          if(a.mark){
+            var st=document.createElement('div'); st.className='stamp';
+            st.textContent='她记下了：'+o.label;
+            track.appendChild(st);
+            player.marks[a.mark]=st;
+            scroller.scrollTop=scroller.scrollHeight;
+          }
+          setTimeout(next,900);
+        });
+      }else if(a.kind==='coop' && a.game==='guess'){
+        herSay(track,scroller,'猜一个',function(){
+          placeWidget('gz',{});
+          setTimeout(function(){
+            herSay(track,scroller,'就是前几天放给你听的那张',function(){ setTimeout(next,300); });
+          },2600);
+        });
+      }else next();
+      break;
+    case 'recall': recallAct(a,next); break;
+    case 'warmth': setWarmth(a.to, a.ms||4000); setTimeout(next,700); break;
+    case 'presence': setPresence(a.text); setTimeout(next,320); break;
+    case 'wait': setTimeout(next, a.ms||1000); break;
+    case 'arrive': arriveAct(a.text); setTimeout(next,1400); break;
+    case 'stage': stageAct(a,next); break;
+    case 'branch':
+      /* 分岔：播放器停在这儿，演示菜单里由演示者选「回 / 不回」 */
+      player.branch=a.options; player.playing=false; menuNote();
+      break;
+    case 'end': player.playing=false; menuNote(); go(14); break;   /* 剧终：没有下一个动作 */
+    default: next();
+  }
+}
+function runActs(acts,done){
+  var i=0;
+  (function next(){
+    if(i>=acts.length){ if(done) done(); return; }
+    execAct(acts[i++], next);
+  })();
+}
+function scene(n){
+  if(player.playing || player.branch) return;
+  var sc=SCRIPT.scenes[n-1];
+  if(!sc) return;
+  if(player.makeup && n>=SCRIPT.scenes.length){ menuNote(); return; }   /* 和好了：第十二天没有来 */
+  player.i=n; player.playing=true; menuNote();
+  if(go.now!==4) go(4);
+  runActs(sc.acts, function(){ player.playing=false; menuNote(); });
+}
+function chooseBranch(k){
+  var opts=player.branch; if(!opts) return;
+  player.branch=null;
+  var opt=opts[k]||{acts:[]};
+  player.playing=true; menuNote();
+  runActs(opt.acts||[], function(){
+    player.playing=false;
+    if(opt.makeup) player.makeup=true;
+    menuNote();
+  });
+}
+/* 菜单顶部小字：当前幕号（与分岔口） */
+function menuNote(){
+  var note=document.getElementById('devnote');
+  var sc=SCRIPT.scenes[player.i-1];
+  var s=player.i? ('第 '+player.i+' 幕 · '+sc.name) : '未开演';
+  if(player.branch) s+=' · 分岔';
+  else if(player.makeup) s+=' · 已和好';
+  else if(player.playing) s+=' …';
+  note.textContent=s;
+  dev.querySelectorAll('[data-branch]').forEach(function(b,i){
+    b.style.display=player.branch?'':'none';
+    if(player.branch && player.branch[i]) b.textContent=player.branch[i].label;
+  });
+}
+
 /* ---------- 演示菜单（测试脚手架） ----------
    默认藏掉；URL 带 ?dev=1，或触屏设备（手机）上常驻那颗小钮 */
 if(location.search.indexOf('dev=1')>=0 || matchMedia('(pointer:coarse)').matches)
@@ -3308,7 +3596,10 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
     /* warmth 五档直设：热/好/边界/疏远/结束；结束用 1.6s，其余默认 4s */
     if(b.dataset.w!==undefined){ setWarmth(+b.dataset.w, +b.dataset.w===0?1600:4000); dev.classList.remove('open'); return; }
     var a=b.dataset.act;
-    if(a==='restart') boot();
+    if(a==='prev') scene(Math.max(1,player.i-1));
+    else if(a==='next') scene(player.i+1);
+    else if(a==='replay'){ player.i=0; player.branch=null; player.makeup=false; player.marks={}; setWarmth(0.7,1600); menuNote(); boot(); }
+    else if(a==='restart') boot();
     else if(a==='draw') drawScene();
     else if(a==='canvas') go(4);
     else if(a==='shelf') go(12);
@@ -3326,6 +3617,11 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
     dev.classList.remove('open');
   });
 });
+/* 分岔口的两个选项只在她给出分岔时出现（第六幕） */
+dev.querySelectorAll('[data-branch]').forEach(function(b){
+  b.addEventListener('click',function(){ chooseBranch(+b.dataset.branch); dev.classList.remove('open'); });
+});
+menuNote();
 
 /* ---------- 玻璃感交互：设置 / 成就 / 引导共用 ----------
    打开：原页面先糊开（350ms），内容延迟 250ms 再淡入浮起；
@@ -3746,6 +4042,11 @@ function boot(){
 
 stopDraw();
 boot();
+/* ?scene=N：直接从第 N 幕起播（拍素材用），跳过一次进画布的点拨 */
+(function(){
+  var m=location.search.match(/[?&]scene=(\d+)/);
+  if(m){ tapDone=true; go(4); scene(Math.min(+m[1],SCRIPT.scenes.length)); }
+})();
 </script>
 </body>
 </html>

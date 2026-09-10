@@ -103,3 +103,26 @@ def test_dark_mode_screenshots(mobile_page, app_url):
     mobile_page.screenshot(
         path=ARTIFACTS / f"{mobile_page.device_id}-dark.png", full_page=True
     )
+
+
+def test_script_scene7_screenshot(mobile_page, app_url):
+    """剧本第 7 幕（结束）：?scene=7 直接起播，6 秒后截图（亮）。"""
+    mobile_page.goto(app_url + "?scene=7")
+    mobile_page.wait_for_selector("#app")
+    mobile_page.wait_for_timeout(6000)
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    mobile_page.screenshot(
+        path=ARTIFACTS / f"{mobile_page.device_id}-scene7.png", full_page=True
+    )
+
+
+def test_script_scene7_dark_screenshot(mobile_page, app_url):
+    """剧本第 7 幕（结束）：?scene=7 直接起播，6 秒后截图（暗）。"""
+    mobile_page.add_init_script("localStorage.setItem('after-dark','1')")
+    mobile_page.goto(app_url + "?scene=7")
+    mobile_page.wait_for_selector("#app")
+    mobile_page.wait_for_timeout(6000)
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    mobile_page.screenshot(
+        path=ARTIFACTS / f"{mobile_page.device_id}-scene7-dark.png", full_page=True
+    )
