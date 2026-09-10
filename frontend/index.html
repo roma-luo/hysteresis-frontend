@@ -788,6 +788,14 @@ body.dark .loadbar i{background:var(--ink)}
 
 /* 夜间模式开关：设置页里唯一一个当场生效的项 */
 .dmenu .dtoggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
+/* 「停止她的主动联系」下面那行小字 */
+.dmute-note{font-size:var(--fs-2);line-height:1.7;color:var(--ink-3);padding:0 12px 4px}
+/* 需要帮助：一张冷屏纸（冷屏 token，不随暖屏翻） */
+.helpdoc{background:var(--cold-surface);border:0.5px solid var(--cold-line);
+  border-radius:var(--r-paper);padding:16px;font-size:var(--fs-2);line-height:1.9;color:var(--cold-2nd)}
+.helpdoc p{margin:0 0 12px}
+.helpdoc p:last-child{margin-bottom:0}
+.helpdoc .crisis{color:var(--cold-ink)}
 .sw{position:relative;flex:none;width:38px;height:23px;border-radius:999px;
   background:rgba(var(--shade-rgb),.25);transition:background 180ms var(--ease)}
 .sw i{position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;
@@ -1607,6 +1615,8 @@ body.devmode .dev{display:block}
       </div>
       <nav class="dmenu">
         <button type="button" class="dtoggle" id="darkToggle" aria-pressed="false">晚安<span class="sw"><i></i></span></button>
+        <button type="button" class="dtoggle" id="muteToggle" aria-pressed="false">停止她的主动联系<span class="sw"><i></i></span></button>
+        <div class="dmute-note">你随时可以离开。她不会用任何方式挽留。</div>
         <button type="button">订阅</button>
         <button type="button">通知</button>
         <button type="button">隐私</button>
@@ -1614,6 +1624,7 @@ body.devmode .dev{display:block}
         <button type="button">评分</button>
         <button type="button">报告</button>
         <button type="button">帮助</button>
+        <button type="button">需要帮助</button>
       </nav>
       <!-- 二级页：在雾里再压一层 -->
       <div class="gsub" id="gsub">
@@ -1815,7 +1826,7 @@ body.devmode .dev{display:block}
       { "a": "say", "text": "没什么" },
       { "a": "recall", "text": "去聚会那天，是你让我去的", "ref": "decide" }
     ]},
-    { "name": "第十一天 · 主动", "acts": [
+    { "name": "第十一天 · 主动", "skipIfMuted": true, "acts": [
       { "a": "arrive", "text": "那天的事，我想了想" },
       { "a": "branch", "options": [
         { "label": "回", "makeup": true, "acts": [
@@ -3484,6 +3495,7 @@ abar.addEventListener('click',function(){
   abar.classList.remove('show'); clearTimeout(abarT); go(2);
 });
 function arriveAct(text){
+  if(herMuted) return;   /* 「停止她的主动联系」开着：她不主动发消息 */
   var screen2=document.querySelector('.screen[data-s="2"]');
   var sink=screen2.querySelector('.thread');
   sink.classList.add('live'); maybeStamp(sink);
@@ -3666,6 +3678,9 @@ function scene(n){
   var sc=SCRIPT.scenes[n-1];
   if(!sc) return;
   if(player.makeup && n>=SCRIPT.scenes.length){ menuNote(); return; }   /* 和好了：第十二天没有来 */
+  /* 剧本标了 skipIfMuted 的幕（第六幕）：「停止她的主动联系」开着时整幕跳过，
+     她不发消息，故事直接往下一幕走 */
+  if(sc.skipIfMuted && herMuted){ player.i=n; menuNote(); return; }
   player.i=n; player.playing=true; menuNote();
   if(go.now!==4) go(4);
   runActs(sc.acts, function(){ player.playing=false; menuNote(); });
@@ -3799,6 +3814,20 @@ darkToggle.addEventListener('click',function(){
 });
 try{ if(localStorage.getItem('after-dark')==='1') setDark(true); }catch(e){}
 
+/* ---------- 停止她的主动联系 ----------
+   开启后 arrive 不再触发（她不主动发消息，门也拦得住剧本里的 arrive）。
+   开关下面那行小字一直写着：你随时可以离开。她不会用任何方式挽留。 */
+var muteToggle=document.getElementById('muteToggle');
+var herMuted=false;
+function setMute(on){
+  herMuted=on;
+  muteToggle.classList.toggle('on',on);
+  muteToggle.setAttribute('aria-pressed',on);
+  try{ localStorage.setItem('after-mute',on?'1':'0'); }catch(e){}
+}
+muteToggle.addEventListener('click',function(){ buzz(6); setMute(!herMuted); });
+try{ if(localStorage.getItem('after-mute')==='1') setMute(true); }catch(e){}
+
 /* ---------- 成就页 ----------
    左右滑翻页（scroll-snap），小圆点跟着走；桌面上按住也能拖 */
 var achv=document.getElementById('achv');
@@ -3901,10 +3930,28 @@ var SUBPAGES={
   '帮助':['常见问题与联系。']
 };
 var gsub=document.getElementById('gsub');
+/* 需要帮助：一张冷屏纸。AFTER 不是心理支持；危机求助入口是占位文案，
+   真实热线号码上线前由团队按目标市场填 */
+function buildHelp(){
+  var d=document.createElement('div'); d.className='helpdoc';
+  var ps=[
+    'AFTER 是一个 AI 角色产品。她不是人，不是心理支持服务，也不能替代医疗、法律或心理专业帮助。',
+    '如果你或你认识的人正处于危机之中，请立即联系当地的紧急服务或危机求助热线。',
+    '危机求助入口：（占位）真实热线号码上线前由团队按目标市场填写。',
+    '你随时可以导出或删除你的全部数据。你随时可以离开。'
+  ];
+  ps.forEach(function(t,i){
+    var p=document.createElement('p'); p.textContent=t;
+    if(i===2) p.className='crisis';
+    d.appendChild(p);
+  });
+  return d;
+}
 function openSub(title){
   document.getElementById('gsubTitle').textContent=title;
   var body=document.getElementById('gsubBody');
   body.innerHTML='';
+  if(title==='需要帮助'){ body.appendChild(buildHelp()); gsub.classList.add('open'); return; }
   (SUBPAGES[title]||['这里还没有内容。']).forEach(function(t){
     var d=document.createElement('div'); d.className='grow2'; d.textContent=t;
     body.appendChild(d);
