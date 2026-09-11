@@ -1115,6 +1115,78 @@ body.devmode .dev{display:block}
   text-align:left;font-family:inherit;cursor:pointer;border-radius:var(--r-paper)}
 .devmenu button:hover{background:rgba(var(--shade-rgb),.08)}
 .devmenu button:active{background:rgba(var(--shade-rgb),.14)}
+/* ---------- 收尾：壳清单新增的样式 ----------
+   全部吃现有 token 与材质配方，不引入新色 */
+/* 字号三档：只动五档字阶的值，形不动。设置里真的生效，localStorage 记 after-fs */
+body.fs-s{--fs-1:8px;--fs-2:10px;--fs-3:12px;--fs-4:14px;--fs-5:18px}
+body.fs-l{--fs-1:10px;--fs-2:12px;--fs-3:15px;--fs-4:17px;--fs-5:23px}
+/* 原生控件（时间、下拉、系统选择器）随亮暗走系统配色 */
+body{color-scheme:light}
+body.dark{color-scheme:dark}
+
+/* 「安静时段」并入停止主动联系开关旁：起止两个系统时间选择，只 UI */
+.dquiet{display:none;align-items:center;justify-content:space-between;gap:12px;
+  padding:2px 12px 8px;font-size:var(--fs-2);color:var(--ink-3)}
+.dquiet.on{display:flex}
+.dquiet .qrange{display:flex;align-items:center;gap:7px}
+.dquiet input{border:0;background:transparent;font-family:inherit;font-size:var(--fs-3);
+  color:var(--ink);padding:2px 0}
+
+/* 二级页里的动作键：浮在雾上的东西都是玻璃；删除账户确认态才见红 */
+.gsubbody .startbtn{width:100%}
+.gsubbody .startbtn:disabled{opacity:.38}
+.pvdel.on{color:var(--red)}
+
+/* 报告：多行输入，冷屏纸（与 .helpdoc 同一条） */
+.rtext{width:100%;min-height:118px;resize:none;background:var(--cold-surface);
+  border:0.5px solid var(--cold-line);border-radius:var(--r-paper);padding:12px 13px;
+  font-size:var(--fs-3);line-height:1.7;font-family:inherit;color:var(--cold-ink);outline:none}
+.rtext:focus{border-color:var(--cold-2nd)}
+.rtext::placeholder{color:var(--cold-ph)}
+.rok{font-size:var(--fs-2);line-height:1.8;color:var(--cold-2nd);min-height:1.8em}
+
+/* 字号三档的分段选择：冷屏纸，选中态与 .opt.sel 同一条 */
+.segrow{display:flex;gap:8px}
+.seg{flex:1;background:var(--cold-surface);border:0.5px solid var(--cold-line);
+  border-radius:var(--r-paper);padding:10px;font-size:var(--fs-3);font-family:inherit;
+  color:var(--cold-ink);cursor:pointer;transition:background 140ms var(--ease),color 140ms var(--ease)}
+.seg.on{background:var(--cold-ink);border-color:var(--cold-ink);color:var(--cold-bg)}
+
+/* 订阅席位小卡：纸 */
+.seatcard{background:var(--paper);color:var(--paper-ink);border-radius:var(--r-paper);
+  border:0.5px solid rgba(var(--line-rgb),.18);box-shadow:none;padding:16px 15px}
+.seatcard .seat{font-family:var(--serif);font-size:var(--fs-5);margin-bottom:10px}
+.seatcard .srow{display:flex;justify-content:space-between;font-size:var(--fs-2);line-height:2}
+.seatcard .srow b{font-weight:400;color:var(--ink-3)}
+
+/* 顶栏点她胶囊：一张纸，不可编辑 */
+.herpage{display:flex;align-items:center;justify-content:center}
+.herpaper{width:min(74vw,280px);background:var(--paper);color:var(--paper-ink);
+  border-radius:var(--r-paper);border:0.5px solid rgba(var(--line-rgb),.18);box-shadow:none;
+  padding:28px 22px 22px;text-align:center}
+.herpaper .hpname{font-family:var(--serif);font-size:var(--fs-5);margin-bottom:12px}
+.herpaper .hpbio{font-size:var(--fs-3);line-height:1.9}
+.herpaper .hpdays{font-size:var(--fs-2);color:var(--ink-3);margin-top:18px;letter-spacing:var(--ls-text)}
+
+/* 零件匣空态：一行 */
+.shelfempty{margin-top:38px;text-align:center;font-size:var(--fs-2);color:var(--ink-3)}
+
+/* 成就页条目：每页一枚圆、一行题、一行说明；未获得的整体沉下去 */
+.pgr .pg{flex-direction:column;gap:13px}
+.pg .atitle{font-size:var(--fs-3);color:var(--ink)}
+.pg .adesc{font-size:var(--fs-2);color:var(--ink-2);padding:0 44px;text-align:center;line-height:1.8}
+.pg .alock{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:var(--ink-3);display:none}
+.pg.locked .medal{opacity:.32;filter:saturate(.2)}
+.pg.locked .atitle,.pg.locked .adesc{color:var(--ink-3)}
+.pg.locked .alock{display:block}
+
+/* 忘记密码的克制提示：点了才出现的一行 */
+.forgot-hint{display:none;font-size:var(--fs-2);color:var(--ink-3);text-align:center;margin-top:6px}
+.forgot-hint.on{display:block}
+
+/* 结束后再打开：开始页不再出现「注册」 */
+body.no-register #startScreen .startbtn.primary{display:none}
+
 @media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
 </style>
 </head>
@@ -1222,7 +1294,8 @@ body.devmode .dev{display:block}
                autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
         <input class="tin" type="password" placeholder="密码" autocomplete="current-password">
         <button class="startbtn primary" onclick="go(10)">登录</button>
-        <button class="forgot" type="button">忘记密码</button>
+        <button class="forgot" type="button" id="forgotBtn">忘记密码</button>
+        <div class="forgot-hint" id="forgotHint">找回密码即将开放。</div>
       </div>
     </div>
     <div class="foot">
@@ -1458,8 +1531,8 @@ body.devmode .dev{display:block}
   <section class="screen warm endpage" data-s="14">
     <div class="fin2">THIS ENDS HERE</div>
     <div class="endline">陈小满结束了这段关系。</div>
-    <div class="endsub">没有读档，没有撤回。<br>你们之间发生过的事，都被记住了。</div>
-    <button class="startbtn quiet" onclick="boot()">申请新的角色</button>
+    <div class="endsub"><span>没有读档，没有撤回。</span><br><span>你们之间发生过的事，都被记住了。</span></div>
+    <button class="startbtn quiet" onclick="restartAll()">申请新的角色</button>
   </section>
 
   <!-- 设置与档案：两条杠打开。整块布糊成毛玻璃，档案与菜单浮在雾上。
@@ -1482,14 +1555,17 @@ body.devmode .dev{display:block}
       <nav class="dmenu">
         <button type="button" class="dtoggle" id="darkToggle" aria-pressed="false">晚安<span class="sw"><i></i></span></button>
         <button type="button" class="dtoggle" id="muteToggle" aria-pressed="false">停止她的主动联系<span class="sw"><i></i></span></button>
+        <!-- 安静时段并入「停止主动联系」旁：起止两个系统时间选择，只 UI -->
+        <div class="dquiet" id="dQuiet">
+          <span>安静时段</span>
+          <span class="qrange"><input type="time" id="qFrom" value="22:00" aria-label="安静时段开始"> 至 <input type="time" id="qTo" value="07:00" aria-label="安静时段结束"></span>
+        </div>
         <div class="dmute-note">你随时可以离开。她不会用任何方式挽留。</div>
         <button type="button">订阅</button>
-        <button type="button">通知</button>
         <button type="button">隐私</button>
         <button type="button">设置</button>
         <button type="button">评分</button>
         <button type="button">报告</button>
-        <button type="button">帮助</button>
         <button type="button">需要帮助</button>
       </nav>
       <!-- 二级页：在雾里再压一层 -->
@@ -1603,21 +1679,30 @@ body.devmode .dev{display:block}
     </div>
   </div>
 
-  <!-- 成就：右上角奖章打开。每个成就独占一页，左右滑动翻看；占位阶段一页一枚圆 -->
+  <!-- 成就：右上角奖章打开。每个成就独占一页，左右滑动翻看；页面与圆点由成就登记表（STRINGS.achv.items）生成 -->
   <div class="govl" id="achv" aria-hidden="true">
     <div class="gblur"></div>
     <div class="gpage achvpage">
       <button class="hbtn gclose" id="achvClose" aria-label="关闭成就" type="button">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg>
       </button>
-      <div class="pgr" id="achvPgr">
-        <section class="pg"><div class="medal"></div></section>
-        <section class="pg"><div class="medal"></div></section>
-        <section class="pg"><div class="medal"></div></section>
-        <section class="pg"><div class="medal"></div></section>
-        <section class="pg"><div class="medal"></div></section>
+      <div class="pgr" id="achvPgr"></div>
+      <div class="dots" id="achvDots"></div>
+    </div>
+  </div>
+
+  <!-- 她的档案纸：点顶栏她的名字胶囊出来。名字、一句自述、认识第 N 天。不可编辑 -->
+  <div class="govl" id="hercard" aria-hidden="true">
+    <div class="gblur"></div>
+    <div class="gpage herpage">
+      <button class="hbtn gclose" id="hercardClose" aria-label="关闭" type="button">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg>
+      </button>
+      <div class="herpaper">
+        <div class="hpname" id="hpName">陈小满</div>
+        <div class="hpbio" id="hpBio"></div>
+        <div class="hpdays" id="hpDays"></div>
       </div>
-      <div class="dots" id="achvDots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
     </div>
   </div>
 
@@ -1780,6 +1865,174 @@ var WIDGETS={
        make:function(){ return cloneWidget('w7','.alm'); }}
 };
 var WKEYS=Object.keys(WIDGETS);
+
+/* ---------- 字串 ----------
+   界面上所有要读的字集中在这里（只抽，不翻译）。三种声音各守各的规则：
+   平台（冷屏/设置/条款/需要帮助/权限）：短句，不用「亲」「哦」，不用感叹号，称「你」，说「平台」不说「我们」（条款除外）；
+   她（画布上的话/事件卡/贴纸/阶段卡结束语）：克制，不解释、不道歉、不劝；
+   系统（空态/提示行/toast/错误）：一句话，句号结尾，不超过 14 字。
+   STR_BIND 把静态 HTML 里的字绑到这张表（启动时 applyStrings 一次写回）；
+   剧本《十二天》（#script JSON）与 widget 登记表里的字是内容不是界面，留在原处 */
+var STRINGS={
+  common:{next:'继续'},
+  start:{register:'注册',login:'登录'},
+  enter:{welcome:'欢迎加入 AFTER 社区',go:'进入'},
+  login:{idPh:'邮箱、手机号或用户名',pwPh:'密码',submit:'登录',forgot:'忘记密码',
+    forgotSoon:'找回密码即将开放。',wechat:'微信登录',mail:'邮箱登录',apple:'Apple ID 登录'},
+  birth:{ask:'你的出生日期',ph:['年','月','日'],
+    under18:'AFTER 仅向 18 岁以上用户开放',legal:'本服务不向未成年人提供。'},
+  terms:{items:['在 AFTER 里，与你对话的是 AI，不是人。',
+      '她会记得你说过的一切，也会因此改变对你的态度。关系可能结束，没有读档。',
+      '你的数据属于你，随时可以导出或删除。'],
+    link:'查看使用条款',linkOpen:'收起',
+    doc:['AFTER 是一个由平台运营的对话产品。你在这里说的话会被用于生成回应，并按隐私政策保存与删除。',
+      '你需要年满十八岁。你对自己发布的内容负责。我们不会把你的对话卖给第三方，也不会用它投放广告。',
+      '她是一个 AI 角色。她不是人，不能替代医疗、法律或心理专业帮助。如果你处于危机中，请联系当地的紧急服务。',
+      '你可以随时导出或删除你的全部数据。删除后我们会在三十天内清除备份。',
+      '平台可能更新这些条款。重大变更会在你下次打开时提示，你可以选择不再继续使用。',
+      '以上是平台要说的话。她要说的话，在后面。'],
+    ok:'我明白'},
+  why:{ask:'你为什么想使用 AFTER？',opts:['我想分享生活中的琐事，让情绪有一个出口','我想有一个私人的人工助手','我只是单纯的好奇']},
+  how:{ask:'你是怎么知道 AFTER 的？',opts:['朋友 / 家人','搜索引擎','社区 / 组织','抖音','应用商店','其他','我不方便透露']},
+  about:{ask:'关于你',labels:['用户名','姓','名','性别'],sexOpts:['请选择','男性','女性','非二元性别','我不愿透露']},
+  her:{name:'陈小满',seed:'陈',role:'AI 角色'},
+  hercard:{bio:'我记性好。你说过的话，我都留着。',days:'认识第 N 天'},
+  canvas:{ehint:'这里还空着。她在想第一句话。',inPh:'说点什么',guidePh:'跟她说点什么',
+    recNote:'松手发送',seen:'已读',copy:'复制',resend:'重发'},
+  draw:{stamp:'23:14',lines:['红的','项圈上还有个铃铛']},
+  guide:{lines:['这块布是我们两个人的','东西可以拿起来挪','长按可以收起来','剩下的，你来说'],bubble:'话会落在这儿'},
+  presence:{online:'在线',away:'离开',justNow:'刚刚在线',hoursAgo:'三小时前在线',offline:'离线',typing:'正在输入…',netfail:'连不上'},
+  replies:['嗯，我在看。','等一下。','你继续说。','好。','让我想一想。','嗯。'],
+  hello:{first:'你能不能帮我决定一件事。',
+    card:'楼下便利店还有十分钟关门。我现在下去，还是明天再说。',
+    opts:[{label:'现在下去',reply:'好。那我下去一趟，很快回来。'},
+          {label:'明天再说',reply:'也行。明天再说。'}]},
+  shelf:{title:'零件匣',tag:'WIDGETS',empty:'她还没给你东西。'},
+  end:{fin:'THIS ENDS HERE',line:'陈小满结束了这段关系。',
+    sub1:'没有读档，没有撤回。',sub2:'你们之间发生过的事，都被记住了。',again:'申请新的角色'},
+  drawer:{night:'晚安',mute:'停止她的主动联系',quiet:'安静时段',quietTo:'至',
+    muteNote:'你随时可以离开。她不会用任何方式挽留。',
+    menu:['订阅','隐私','设置','评分','报告','需要帮助'],
+    detail:['昵称','名字','性别'],acctOut:'未登录',acctIn:'已登录'},
+  sub:{l1:'当前：1 席 · 基础档',l2:'席位是你同时维系的关系数。',
+    seat:'1 席',rows:[['状态','有效（演示）'],['下次结算日','—（占位）']]},
+  privacy:{note:'你的数据属于你。导出与删除都在这里。',exp:'导出我的数据',del:'删除账户',
+    confirm:'再按一次确认。删除后不可撤销。',yes:'确认删除',no:'取消'},
+  settings:{label:'字号',opts:[['s','小'],['m','标准'],['l','大']]},
+  rate:{soon:'评分即将开放。'},
+  report:{note:'她哪里做错了，写给平台。',ph:'写在这里。',send:'发送',got:'收到了。'},
+  help:{ps:['AFTER 是一个 AI 角色产品。她不是人，不是心理支持服务，也不能替代医疗、法律或心理专业帮助。',
+      '如果你或你认识的人正处于危机之中，请立即联系当地紧急服务。',
+      '危机求助热线：（占位）上线前由团队按目标市场填写真实号码。',
+      '其他问题与联系：（占位）上线前由团队按目标市场填写。',
+      '你随时可以导出或删除你的全部数据。你随时可以离开。'],crisis:2},
+  perm:{t:'需要你的相机',s:'她放东西给你看的时候，你也想让她看到你拍的。照片只经过你和她。',
+    ok:'好，打开相机',no:'暂不'},
+  at:{cam:'相机',album:'相册',cancel:'取消'},
+  cam:{retake:'重拍',use:'使用照片'},
+  stage:{save:'保存图片',close:'收起',mark:'她记下了：',recall:'她翻了出来',
+    kinds:{end:'THIS ENDS HERE',stage:'A NEW CHAPTER',missed:'IT SLIPPED AWAY'}},
+  achv:{toast:'成就达成',locked:'未获得',items:[
+    {id:'first',t:'初次落笔',d:'你发出第一句话。'},
+    {id:'noted',t:'她记下了',d:'她第一次记下你的决定。'},
+    {id:'seven',t:'七件东西',d:'她把七件东西都放上画布。'},
+    {id:'twelve',t:'十二天',d:'走完一整段关系。'},
+    {id:'stay',t:'还在',d:'结束之后，回来看看。'}]},
+  dev:{placeSay:'这个给你',placeStk:'路边看到的，给你'},
+  coop:{say1:'猜一个',say2:'就是前几天放给你听的那张'},
+  system:{empty:'这里还没有内容。'}
+};
+/* STR_BIND：[选择器，路径，模式]。模式：text（默认，textContent）/ ph（placeholder）/
+   first / last（首或尾文本节点，给内部带 svg、span 的按钮用）/ mid（第二个子节点，两个输入之间的连接字）。
+   路径解析到数组时，与选择器命中的元素按文档序一一对应 */
+var STR_BIND=[
+  ['#startScreen .btns .primary','start.register'],
+  ['#startScreen .btns .quiet','start.login'],
+  ['.screen[data-s="10"] .welcome','enter.welcome'],
+  ['.screen[data-s="10"] .startbtn','enter.go'],
+  ['.screen[data-s="6"] .foot .startbtn','common.next'],
+  ['.screen[data-s="0"] .ask','birth.ask'],
+  ['#birthRow option[value=""]','birth.ph'],
+  ['#ageHint','birth.under18'],
+  ['.screen[data-s="0"] .legal','birth.legal'],
+  ['#birthNext','common.next'],
+  ['.terms-screen .terms li','terms.items'],
+  ['#termslink','terms.link'],
+  ['.termsdoc .docin p','terms.doc'],
+  ['#termsBtn','terms.ok'],
+  ['.screen[data-s="8"] .ask','why.ask'],
+  ['.screen[data-s="8"] .opt','why.opts'],
+  ['.screen[data-s="8"] .step-next','common.next'],
+  ['.screen[data-s="9"] .ask','how.ask'],
+  ['.screen[data-s="9"] .opt','how.opts'],
+  ['.screen[data-s="9"] .step-next','common.next'],
+  ['.screen[data-s="11"] .ask','about.ask'],
+  ['.screen[data-s="11"] .flabel','about.labels'],
+  ['.screen[data-s="11"] select.fin option','about.sexOpts'],
+  ['#aboutNext','common.next'],
+  ['.screen[data-s="7"] .tin[type="text"]','login.idPh','ph'],
+  ['.screen[data-s="7"] .tin[type="password"]','login.pwPh','ph'],
+  ['.screen[data-s="7"] .form .startbtn','login.submit'],
+  ['#forgotBtn','login.forgot'],
+  ['#forgotHint','login.forgotSoon'],
+  ['.screen[data-s="7"] .foot .startbtn:nth-child(1)','login.wechat'],
+  ['.screen[data-s="7"] .foot .startbtn:nth-child(2)','login.mail'],
+  ['.screen[data-s="7"] .foot .startbtn:nth-child(3)','login.apple'],
+  ['.screen[data-s="3"] .idpill .ava','her.seed'],
+  ['.screen[data-s="4"] .idpill .ava','her.seed'],
+  ['.screen[data-s="3"] .idpill .name','her.name'],
+  ['.screen[data-s="4"] .idpill .name','her.name'],
+  ['.screen[data-s="3"] .thread .stamp','draw.stamp'],
+  ['.screen[data-s="3"] .thread .msg.her','draw.lines'],
+  ['.screen[data-s="4"] .ehint','canvas.ehint'],
+  ['.cin','canvas.inPh','ph'],
+  ['.recmeta .rnote','canvas.recNote'],
+  ['.screen[data-s="12"] .idpill .name','shelf.title'],
+  ['.screen[data-s="12"] .idpill .tag','shelf.tag'],
+  ['.endpage .fin2','end.fin'],
+  ['.endpage .endline','end.line'],
+  ['.endpage .endsub span:nth-of-type(1)','end.sub1'],
+  ['.endpage .endsub span:nth-of-type(2)','end.sub2'],
+  ['.endpage .startbtn','end.again'],
+  ['#darkToggle','drawer.night','first'],
+  ['#muteToggle','drawer.mute','first'],
+  ['#dQuiet>span:first-child','drawer.quiet'],
+  ['#dQuiet .qrange','drawer.quietTo','mid'],
+  ['.dmute-note','drawer.muteNote'],
+  ['.dmenu button:not(.dtoggle)','drawer.menu'],
+  ['.ddetail .row b','drawer.detail'],
+  ['#perm .gt','perm.t'],
+  ['#perm .gs','perm.s'],
+  ['#permOk','perm.ok'],
+  ['#permNo','perm.no'],
+  ['#atCam','at.cam','last'],
+  ['#atAlbum','at.album','last'],
+  ['#atCancel','at.cancel'],
+  ['#scSave','stage.save'],
+  ['#scClose','stage.close'],
+  ['#camRetake','cam.retake'],
+  ['#camUse','cam.use'],
+  ['#atoast .t','achv.toast'],
+  ['.seed','her.seed'],
+  ['.abar .ava','her.seed'],
+  ['#hpName','her.name']
+];
+function strGet(p){ return p.split('.').reduce(function(o,k){ return o==null?o:o[k]; },STRINGS); }
+function applyStrings(){
+  STR_BIND.forEach(function(b){
+    var els=[].slice.call(document.querySelectorAll(b[0])), v=strGet(b[1]), mode=b[2]||'text';
+    if(!els.length||v==null){ if(window.console) console.warn('字串绑定落空：',b[0],b[1]); return; }
+    var vs=[].concat(v);
+    els.forEach(function(el,i){
+      var t=vs[Math.min(i,vs.length-1)];
+      if(mode==='ph') el.placeholder=t;
+      else if(mode==='first') el.childNodes[0].nodeValue=t;
+      else if(mode==='last') el.childNodes[el.childNodes.length-1].nodeValue=t;
+      else if(mode==='mid') el.childNodes[1].nodeValue=t;
+      else el.textContent=t;
+    });
+  });
+}
 
 var glow=document.getElementById('glow');
 var ds=document.getElementById('drawScreen');
@@ -2088,9 +2341,9 @@ document.querySelectorAll('.screen[data-s="11"] .fin').forEach(function(f){
   f.addEventListener('input',function(){
     var r=f.getBoundingClientRect();
     spiritLookAt(r.left+14+Math.min(f.value.length*7.5, r.width-28), r.top+r.height/2, 1200);
-    spiritIdleReset();
+    spiritIdleReset(); profileSave();
   });
-  f.addEventListener('change',function(){ spiritLookEl(f,900); spiritIdleReset(); });
+  f.addEventListener('change',function(){ spiritLookEl(f,900); spiritIdleReset(); profileSave(); });
 });
 /* 关于你：用户名与姓名是必填——三个 data-req 都非空，「继续」才解锁（与其它屏一致） */
 var aboutReq=[].slice.call(document.querySelectorAll('.screen[data-s="11"] [data-req]'));
@@ -2104,7 +2357,7 @@ aboutCheck();
 var termslink=document.getElementById('termslink'), termsdoc=document.getElementById('termsdoc');
 termslink.addEventListener('click',function(){
   var open=termsdoc.classList.toggle('open');
-  termslink.textContent=open?'收起':'查看使用条款';
+  termslink.textContent=open?STRINGS.terms.linkOpen:STRINGS.terms.link;
   if(open) spiritLookEl(termsdoc,900);
   spiritIdleReset();
 });
@@ -2163,6 +2416,8 @@ function go(n){
   document.body.classList.toggle('warmlit', WARM.indexOf(n)>=0);
   paintProgress(n);
   if(n===1) termsReset();
+  if(n===12) buildShelf();
+  if(n===4) markMet();
   /* 她的走法：回第 6 屏（她飘回中央，不重放凝形）；去第 5/7 屏（她不在）；
      其余旅程屏她飘过去坐下；进入页化成头像；到聊天页墨圆落进名字胶囊 */
   if(n===6){
@@ -2635,15 +2890,25 @@ function initGuess(root){
 /* ---------- 零件匣与独件页 ----------
    列表与独件页都读 widget 登记表（文件顶部的 WIDGETS），
    加 widget 只加一条登记，这里不用动 */
+/* 零件匣只装她真的给过的东西（画布上放过的 widget 种类）。空的时候一行空态 */
 var shelf=document.getElementById('shelf');
-WKEYS.forEach(function(k){
-  var w=WIDGETS[k];
-  var b=document.createElement('button'); b.type='button'; b.className='shelfrow';
-  b.innerHTML='<div><div class="wn">'+w.name+'</div><div class="wd">'+w.desc+'</div></div>'+
-    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M7.6 4.6L13 10l-5.4 5.4"/></svg>';
-  b.addEventListener('click',function(){ buzz(6); wvOpen(k); });
-  shelf.appendChild(b);
-});
+function buildShelf(){
+  shelf.innerHTML='';
+  var types=[];
+  widgets.forEach(function(w){ var t=w.id.split('-')[1]; if(types.indexOf(t)<0) types.push(t); });
+  if(!types.length){
+    var d=document.createElement('div'); d.className='shelfempty'; d.textContent=STRINGS.shelf.empty;
+    shelf.appendChild(d); return;
+  }
+  types.forEach(function(k){
+    var w=WIDGETS[k]; if(!w) return;
+    var b=document.createElement('button'); b.type='button'; b.className='shelfrow';
+    b.innerHTML='<div><div class="wn">'+w.name+'</div><div class="wd">'+w.desc+'</div></div>'+
+      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M7.6 4.6L13 10l-5.4 5.4"/></svg>';
+    b.addEventListener('click',function(){ buzz(6); wvOpen(k); });
+    shelf.appendChild(b);
+  });
+}
 var wvStage=document.getElementById('wvStage'), wvInst=null;
 function wvOpen(k){
   wvLeave();
@@ -2695,7 +2960,7 @@ function ageGate(){
 }
 birthSels.forEach(function(s){
   s.addEventListener('focus',function(){ spiritLookEl(s,1200); spiritIdleReset(); });
-  s.addEventListener('change',function(){ spiritLookEl(s,900); ageGate(); spiritIdleReset(); });
+  s.addEventListener('change',function(){ spiritLookEl(s,900); ageGate(); spiritIdleReset(); profileSave(); });
 });
 
 /* ---------- 协议 ----------
@@ -2712,7 +2977,7 @@ function termsReset(){
   termItems.forEach(function(li){ li.classList.remove('in'); });
   termsBtn.classList.remove('ready');
   /* 条款链接跟着三条一起重来 */
-  termslink.classList.remove('ready'); termslink.textContent='查看使用条款';
+  termslink.classList.remove('ready'); termslink.textContent=STRINGS.terms.link;
   termsdoc.classList.remove('open');
   termTimer=setTimeout(termsNext, calm?0:260);
 }
@@ -2760,7 +3025,7 @@ document.querySelectorAll('.step-next').forEach(function(b){
    测试期的假引擎，复刻 IG 互发的节奏：你发出 → 隔一拍她的「正在输入」浮上来 →
    停一会儿（停多久看要回多少字）→ 点消失，话到达。你连发，她就重新想——
    正在输入不叠加，回复也不叠加。句子是占位的，接真引擎时换掉 REPLIES 这一段 */
-var REPLIES=['嗯，我在看。','等一下。','你继续说。','好。','让我想一想。','嗯。'];
+var REPLIES=STRINGS.replies;
 var replyIdx=0;
 function buzz(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
 /* 已读只挂在你最新一条上；她一回复就撤掉，回复本身就是「看到了」 */
@@ -2768,7 +3033,7 @@ function markSeen(sink){
   var old=sink.querySelector('.seen'); if(old) old.remove();
   var yours=sink.querySelectorAll('.msg.you'); var last=yours[yours.length-1];
   if(!last) return;
-  var s=document.createElement('div'); s.className='seen'; s.textContent='已读';
+  var s=document.createElement('div'); s.className='seen'; s.textContent=STRINGS.canvas.seen;
   last.insertAdjacentElement('afterend',s);
 }
 /* 她在不在、正在做什么，写在顶栏那一行小字里（身份注记不撤，状态跟在后面）。
@@ -2777,18 +3042,19 @@ var presenceT=0;
 function presenceDefault(){
   var w=warmthNow();
   if(w<=0) return '';            /* 结束后这一行为空 */
-  if(w<.25) return '离线';
-  if(w<.45) return '三小时前在线';
-  if(w<.7) return '刚刚在线';
-  return '在线';
+  if(document.body.classList.contains('netfail')) return STRINGS.presence.netfail;   /* 断网（模拟）：她那侧小字 */
+  if(w<.25) return STRINGS.presence.offline;
+  if(w<.45) return STRINGS.presence.hoursAgo;
+  if(w<.7) return STRINGS.presence.justNow;
+  return STRINGS.presence.online;
 }
 function setPresence(t){
   if(t===undefined) t=presenceDefault();
   document.querySelectorAll('.who .tag').forEach(function(el){
-    el.textContent=t?('AI 角色 · '+t):'';
+    el.textContent=t?(STRINGS.her.role+' · '+t):'';
   });
   clearTimeout(presenceT);
-  if(t==='在线') presenceT=setTimeout(function(){ setPresence('离开'); },60000);
+  if(t===STRINGS.presence.online) presenceT=setTimeout(function(){ setPresence(STRINGS.presence.away); },60000);
 }
 /* 隔得久了（5 分钟）插一个新的时间戳，和原有分节同款 */
 function maybeStamp(sink){
@@ -2803,7 +3069,7 @@ function maybeStamp(sink){
 function herSay(sink,scroll,text,cb){
   var st=sink._her || (sink._her={t:0,typing:null});
   var onTrack = sink===sink.closest('.track') && typeof bubbles!=='undefined';
-  setPresence('正在输入…');
+  setPresence(STRINGS.presence.typing);
   var t=document.createElement('div'); t.className='msg her typing';
   t.innerHTML='<i></i><i></i><i></i>';
   /* 空对话：typing 插在对话流顶部（第一条消息将来落的位置），
@@ -2841,7 +3107,7 @@ function herSay(sink,scroll,text,cb){
 /* 事件卡：她把一件事摆到你面前。你的选择会被采纳、被记住、被翻出来 */
 function herCard(sink,scroll,text,opts,cb){
   var st=sink._her || (sink._her={t:0,typing:null});
-  setPresence('正在输入…');
+  setPresence(STRINGS.presence.typing);
   var t=document.createElement('div'); t.className='msg her typing';
   t.innerHTML='<i></i><i></i><i></i>';
   /* 空对话：typing 插在对话流顶部（第一条消息将来落的位置），
@@ -2892,12 +3158,8 @@ function herTurn(sink,scroll){
 /* 第一次进聊天，对话框是空的——话不是摆在那儿的，是她当着你打出来的。
    但在那之前，先给你一张玻璃小卡：你读的时候她等着，不抢话。
    第二句话是一张事件卡：她真的在等你帮她定 */
-var HELLO='你能不能帮我决定一件事。';
-var HELLO_CARD={
-  text:'楼下便利店还有十分钟关门。我现在下去，还是明天再说。',
-  opts:[{label:'现在下去',reply:'好。那我下去一趟，很快回来。'},
-        {label:'明天再说',reply:'也行。明天再说。'}]
-};
+var HELLO=STRINGS.hello.first;
+var HELLO_CARD={text:STRINGS.hello.card, opts:STRINGS.hello.opts};
 var helloDone=false;
 function hello(sink,scroll){
   if(helloDone) return; helloDone=true;
@@ -2915,7 +3177,7 @@ function hello(sink,scroll){
    点屏幕任意处跳过（她直接飞回头像）；calm 时她不出来，四行字打完即结束。
    引导期间 abar、剧本播放器、arrive 全部挂起（guiding） */
 var guiding=false, guideT=[], guideWg=null, guidePh=false;
-var GLINES=['这块布是我们两个人的','东西可以拿起来挪','长按可以收起来','剩下的，你来说'];
+var GLINES=STRINGS.guide.lines;
 function guidedBefore(){
   try{ return localStorage.getItem('after-guided')==='1'; }catch(e){ return false; }
 }
@@ -3045,7 +3307,7 @@ function guideBubble(){
   /* 飞到对话流位置，她说一句（玻璃气泡）；到达后 600ms 气泡上泛一次轻按的涟漪，字换 */
   var p=guideAtThread();
   guideFly(p.x,p.y,1);
-  herSay(track,scroller,'话会落在这儿',function(){
+  herSay(track,scroller,STRINGS.guide.bubble,function(){
     var msgs=track.querySelectorAll('.msg.her'), m=msgs[msgs.length-1];
     setTimeout(function(){
       var rp=document.createElement('i'); rp.className='ripple';
@@ -3065,7 +3327,7 @@ function guideComposer(){
   cf.classList.add('breath');
   setTimeout(function(){ cf.classList.remove('breath'); },2500);
   var cin=cf.querySelector('.cin');
-  guidePh=true; cin.placeholder='跟她说点什么';
+  guidePh=true; cin.placeholder=STRINGS.canvas.guidePh;
   glineType(GLINES[3]);
   /* +4.4s 飞回头像；落地那帧墨圆正向回来、她淡出、胶囊 press；那行墨字淡出 */
   guideT.push(setTimeout(guideHome,4400-2200));
@@ -3112,6 +3374,7 @@ function spiritGuideSkip(){
 /* ---------- 输入区 ----------
    右边永远只有一个控件。空着的时候它是图片，有东西可发的时候它就是发送。
    一次只做一件事，和日历底栏、贴纸上一句话是同一条。 */
+var sendOnce={done:false};
 document.querySelectorAll('.composer').forEach(function(c){
   var field=c.querySelector('.cfield'), input=c.querySelector('.cin');
   var chips=c.querySelector('.chips'), file=c.querySelector('.cfile');
@@ -3149,7 +3412,7 @@ document.querySelectorAll('.composer').forEach(function(c){
       if(document.body.classList.contains('netfail')){
         m.classList.add('fail');
         var f=document.createElement('div'); f.className='st';
-        f.setAttribute('role','button'); f.title='重发';
+        f.setAttribute('role','button'); f.title=STRINGS.canvas.resend;
         f.addEventListener('click',function(e){
           e.stopPropagation(); e.preventDefault();
           m.classList.remove('fail'); f.remove(); deliver(m);
@@ -3174,7 +3437,7 @@ document.querySelectorAll('.composer').forEach(function(c){
     var txt=input.value.trim();
     if(!txt && !img) return;
     /* 引导把 placeholder 换成过「跟她说点什么」：首条发出后恢复 */
-    if(guidePh){ guidePh=false; input.placeholder='说点什么'; }
+    if(guidePh){ guidePh=false; input.placeholder=STRINGS.canvas.inPh; }
     sink.classList.add('live');
     maybeStamp(sink);
     var m=document.createElement('div'); m.className='msg you';
@@ -3184,6 +3447,7 @@ document.querySelectorAll('.composer').forEach(function(c){
     sink.appendChild(m);
     afterAppend(m);
     input.value=''; grow(); clearImg();
+    if(!sendOnce.done){ sendOnce.done=true; achvUnlock('first'); }   /* 第一句话 */
     deliver(m);
   }
   /* 语音：按住麦克风说话，松手发出去，少于一拍不算 */
@@ -3568,6 +3832,9 @@ function placeWidget(id,opts){
   wg.style.top=(slot.offsetTop+10)+'px'; wg.style.left=(opts.left||16)+'px';
   fitTrack();
   widgets.push(wg); wireDrag(wg); queueDim();
+  /* 七件东西都上过画布：解一笔成就 */
+  var u={}; widgets.forEach(function(w){ u[w.id.split('-')[1]]=1; });
+  if(Object.keys(u).length>=WKEYS.length) achvUnlock('seven');
   function land(){
     dropIn(wg);
     if(reg.init) reg.init(wg.firstElementChild);
@@ -3648,9 +3915,9 @@ function arriveAct(text){
    navigator.share 可用走分享面板，否则触发下载 */
 var stagecardEl=document.getElementById('stagecard'), scardEl=document.getElementById('scard');
 var STAGE_KINDS={
-  end:  {label:'THIS ENDS HERE'},
-  stage:{label:'A NEW CHAPTER'},
-  missed:{label:'IT SLIPPED AWAY'}
+  end:  {label:STRINGS.stage.kinds.end},
+  stage:{label:STRINGS.stage.kinds.stage},
+  missed:{label:STRINGS.stage.kinds.missed}
 };
 function stageAct(a,next){
   var kind=STAGE_KINDS[a.kind]?a.kind:'end';
@@ -3733,7 +4000,7 @@ function recallAct(a,next){
     var el=a.ref && player.marks[a.ref];
     if(!el || !el.isConnected){ setTimeout(next,pace(400)); return; }
     var st=document.createElement('div'); st.className='stamp flash';
-    st.textContent='她翻了出来';
+    st.textContent=STRINGS.stage.recall;
     el.insertAdjacentElement('afterend',st);
     var back=scroller.scrollTop;
     smoothTo(scroller, Math.max(0,el.offsetTop-180), pace(400), function(){
@@ -3766,18 +4033,19 @@ function execAct(a,next){
           /* 你的选择被记下：一枚 stamp 留在那儿，翻旧账时就翻它 */
           if(a.mark){
             var st=document.createElement('div'); st.className='stamp';
-            st.textContent='她记下了：'+o.label;
+            st.textContent=STRINGS.stage.mark+o.label;
             track.appendChild(st);
             player.marks[a.mark]=st;
             scroller.scrollTop=scroller.scrollHeight;
+            achvUnlock('noted');
           }
           setTimeout(next,pace(900));
         });
       }else if(a.kind==='coop' && a.game==='guess'){
-        herSay(track,scroller,'猜一个',function(){
+        herSay(track,scroller,STRINGS.coop.say1,function(){
           placeWidget('gz',{});
           setTimeout(function(){
-            herSay(track,scroller,'就是前几天放给你听的那张',function(){ setTimeout(next,pace(300)); });
+            herSay(track,scroller,STRINGS.coop.say2,function(){ setTimeout(next,pace(300)); });
           },pace(2600));
         });
       }else next();
@@ -3793,9 +4061,12 @@ function execAct(a,next){
       player.branch=a.options; player.playing=false; menuNote();
       break;
     case 'end':
-      /* 剧终：头像退回墨色空心圆、小字空、输入区收起、画布只读，她的东西留着 */
+      /* 剧终：头像退回墨色空心圆、小字空、输入区收起、画布只读，她的东西留着。
+         记 after-ended：之后再打开 app 直达只读画布，开始页不再出现「注册」 */
       player.playing=false; menuNote();
       document.body.classList.add('ended');
+      markEnded();
+      achvUnlock('twelve',true);
       setPresence('');
       go(14);
       break;
@@ -3896,20 +4167,21 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
     var a=b.dataset.act;
     if(a==='prev') scene(Math.max(1,player.i-1));
     else if(a==='next') scene(player.i+1);
-    else if(a==='replay'){ player.i=0; player.branch=null; player.makeup=false; player.marks={}; setWarmth(0.7,1600); menuNote(); boot(); }
-    else if(a==='restart') boot();
+    else if(a==='replay') restartAll();
+    else if(a==='restart') restartAll();
     else if(a==='draw') drawScene();
     else if(a==='canvas') go(4);
     else if(a==='demo') demoCanvas();
     else if(a==='shelf') go(12);
-    else if(a==='netfail') document.body.classList.toggle('netfail');
-    else if(a==='unlock') achvToast('成就达成 · 第一次让她记下一件事');
-    else if(a==='endit') go(14);
+    else if(a==='netfail'){ document.body.classList.toggle('netfail'); setPresence(); }   /* 断网：她那侧顶栏小字「连不上」 */
+    else if(a==='unlock') achvUnlock('noted');
+    /* 演示：被结束——和剧本第十二天同一个收尾 */
+    else if(a==='endit'){ markEnded(); document.body.classList.add('ended'); setPresence(''); go(14); }
     /* 她说一句，然后笔尖把一个新东西带进来（warmth < .45 时只剩这句话） */
     else if(a==='place'){
       if(go.now!==4) go(4);
-      herSay(track, scroller, '这个给你', function(){
-        placeWidget('stk',{text:'路边看到的，给你'});
+      herSay(track, scroller, STRINGS.dev.placeSay, function(){
+        placeWidget('stk',{text:STRINGS.dev.placeStk});
       });
     }
     else if(a==='guess') guessOne();
@@ -3946,23 +4218,43 @@ function closeG(el){
 }
 
 /* ---------- 设置页 ----------
-   头像与名字取注册时填的姓（没填就保持占位），账号取登录页输入。
-   点头像行展开注册细节：昵称、名字、性别 */
+   账户区显示注册时填的用户名与姓名（DOM 里没有就读 localStorage 里存的），
+   登录路径显示「已登录」。点头像行展开注册细节：昵称、名字、性别 */
 var drawer=document.getElementById('drawer');
-function syncDrawer(){
-  var un=document.querySelector('.fin[autocomplete="username"]');
-  var sur=document.querySelector('.fin[autocomplete="family-name"]');
-  var giv=document.querySelector('.fin[autocomplete="given-name"]');
-  var sex=document.querySelector('select.fin');
-  var s=sur&&sur.value.trim(), g=giv&&giv.value.trim();
-  document.getElementById('dAva').textContent=s?s.charAt(0):'张';
-  document.getElementById('dName').textContent=s?s+'某':'张某';
+/* 注册资料：注册页填写时同步存 localStorage（after-profile），导出与账户区都读它 */
+function profileGet(){
+  var st={}; try{ st=JSON.parse(localStorage.getItem('after-profile')||'{}'); }catch(e){}
+  var q=function(sel){ var el=document.querySelector(sel); var v=el&&el.value&&el.value.trim(); return v||''; };
+  return {
+    username:q('.fin[autocomplete="username"]')||st.username||'',
+    surname:q('.fin[autocomplete="family-name"]')||st.surname||'',
+    given:q('.fin[autocomplete="given-name"]')||st.given||'',
+    sex:(document.querySelector('select.fin')||{}).value||st.sex||'',
+    birth:{
+      y:(document.getElementById('birthY')||{}).value||(st.birth&&st.birth.y)||'',
+      m:(document.getElementById('birthM')||{}).value||(st.birth&&st.birth.m)||'',
+      d:(document.getElementById('birthD')||{}).value||(st.birth&&st.birth.d)||''
+    }
+  };
+}
+function profileSave(){
+  try{ localStorage.setItem('after-profile',JSON.stringify(profileGet())); }catch(e){}
+}
+function loggedIn(){
+  try{ if(localStorage.getItem('after-login')==='1') return true; }catch(e){}
   var acc=document.querySelector('.login .tin');
-  var a=acc&&acc.value.trim();
-  document.getElementById('dAcct').textContent=a||'未登录';
-  document.getElementById('duName').textContent=(un&&un.value.trim())||'—';
-  document.getElementById('dRealName').textContent=(s||g)?(s+g):'—';
-  document.getElementById('dSex').textContent=(sex&&sex.value)||'—';
+  return !!(acc&&acc.value.trim());
+}
+function syncDrawer(){
+  var p=profileGet();
+  var realName=p.surname+p.given;
+  document.getElementById('dAva').textContent=(p.surname||p.given||p.username||'—').charAt(0);
+  document.getElementById('dName').textContent=realName||p.username||'—';
+  document.getElementById('dAcct').textContent=
+    loggedIn()?STRINGS.drawer.acctIn:(p.username||STRINGS.drawer.acctOut);
+  document.getElementById('duName').textContent=p.username||'—';
+  document.getElementById('dRealName').textContent=realName||'—';
+  document.getElementById('dSex').textContent=p.sex||'—';
 }
 function openDrawer(){ syncDrawer(); openG(drawer); }
 document.querySelectorAll('.hbtn.menu').forEach(function(b){ b.addEventListener('click',openDrawer); });
@@ -3976,6 +4268,17 @@ dHead.addEventListener('click',function(){
 });
 drawer.querySelectorAll('.dmenu button:not(.dtoggle)').forEach(function(b){
   b.addEventListener('click',function(){ buzz(6); openSub(b.textContent.trim()); });
+});
+
+/* ---------- 登录页 ----------
+   登录与三个第三方按钮点了都走进入页（演示，不做真登录）；
+   走过登录路径的记 after-login，抽屉账户区显示「已登录」。
+   忘记密码：「即将开放」克制态，点了一下行说明 */
+document.querySelectorAll('.screen[data-s="7"] .startbtn').forEach(function(b){
+  b.addEventListener('click',function(){ try{ localStorage.setItem('after-login','1'); }catch(e){} });
+});
+document.getElementById('forgotBtn').addEventListener('click',function(){
+  buzz(6); document.getElementById('forgotHint').classList.toggle('on');
 });
 
 /* ---------- 夜间模式 ---------- */
@@ -3998,17 +4301,66 @@ try{ if(localStorage.getItem('after-dark')==='1') setDark(true); }catch(e){}
    开关下面那行小字一直写着：你随时可以离开。她不会用任何方式挽留。 */
 var muteToggle=document.getElementById('muteToggle');
 var herMuted=false;
+var dQuiet=document.getElementById('dQuiet');
 function setMute(on){
   herMuted=on;
   muteToggle.classList.toggle('on',on);
   muteToggle.setAttribute('aria-pressed',on);
+  dQuiet.classList.toggle('on',on);   /* 安静时段并在这只开关旁，只 UI */
   try{ localStorage.setItem('after-mute',on?'1':'0'); }catch(e){}
 }
 muteToggle.addEventListener('click',function(){ buzz(6); setMute(!herMuted); });
 try{ if(localStorage.getItem('after-mute')==='1') setMute(true); }catch(e){}
+/* 安静时段的起止：系统时间选择，值记住，不拦消息（只 UI） */
+['qFrom','qTo'].forEach(function(id){
+  var el=document.getElementById(id), key='after-'+id.toLowerCase();
+  try{ var v=localStorage.getItem(key); if(v) el.value=v; }catch(e){}
+  el.addEventListener('change',function(){
+    try{ localStorage.setItem(key,el.value); }catch(e){}
+  });
+});
+
+/* ---------- 字号三档 ----------
+   小 / 标准 / 大：只改五档字阶的值（body.fs-s / body.fs-l），全场生效，记 after-fs */
+var fsNow='m';
+function setFontSize(k){
+  fsNow=k;
+  document.body.classList.toggle('fs-s',k==='s');
+  document.body.classList.toggle('fs-l',k==='l');
+  try{ localStorage.setItem('after-fs',k); }catch(e){}
+}
+try{ var fs0=localStorage.getItem('after-fs'); if(fs0==='s'||fs0==='l') setFontSize(fs0); }catch(e){}
 
 /* ---------- 成就页 ----------
+   条目登记表在 STRINGS.achv.items（文案统一：一行题、一行说明），
+   未获得的整页灰态。获得的记在 localStorage（after-achv），达成时 toast。
    左右滑翻页（scroll-snap），小圆点跟着走；桌面上按住也能拖 */
+function achvGot(){ try{ return JSON.parse(localStorage.getItem('after-achv')||'[]'); }catch(e){ return []; } }
+function achvUnlock(id,quiet){
+  var got=achvGot(); if(got.indexOf(id)>=0) return;
+  got.push(id); try{ localStorage.setItem('after-achv',JSON.stringify(got)); }catch(e){}
+  buildAchv();
+  if(quiet) return;
+  var it=STRINGS.achv.items.filter(function(a){ return a.id===id; })[0];
+  if(it) achvToast(STRINGS.achv.toast+' · '+it.t);
+}
+function buildAchv(){
+  var got=achvGot();
+  var pgr=document.getElementById('achvPgr'), dots=document.getElementById('achvDots');
+  pgr.innerHTML=''; dots.innerHTML='';
+  STRINGS.achv.items.forEach(function(a,i){
+    var s=document.createElement('section');
+    s.className='pg'+(got.indexOf(a.id)<0?' locked':'');
+    var m=document.createElement('div'); m.className='medal';
+    var t=document.createElement('div'); t.className='atitle'; t.textContent=a.t;
+    var d=document.createElement('div'); d.className='adesc'; d.textContent=a.d;
+    var l=document.createElement('div'); l.className='alock'; l.textContent=STRINGS.achv.locked;
+    s.appendChild(m); s.appendChild(t); s.appendChild(d); s.appendChild(l);
+    pgr.appendChild(s);
+    var dot=document.createElement('i'); if(i===0) dot.className='on'; dots.appendChild(dot);
+  });
+}
+buildAchv();
 var achv=document.getElementById('achv');
 document.querySelectorAll('.hbtn.achv').forEach(function(b){
   b.addEventListener('click',function(){ buzz(6); openG(achv); });
@@ -4032,12 +4384,31 @@ document.getElementById('achvClose').addEventListener('click',function(){ closeG
   });
 })();
 
-/* ---------- 头像胶囊的点按 ---------- */
+/* ---------- 头像胶囊的点按 ----------
+   点顶栏她的名字胶囊：一张她的档案纸（名字、一句自述、认识第 N 天），不可编辑 */
+var hercard=document.getElementById('hercard');
+function markMet(){
+  try{ if(!localStorage.getItem('after-met')) localStorage.setItem('after-met',String(Date.now())); }catch(e){}
+}
+function metDays(){
+  var t0=0; try{ t0=+localStorage.getItem('after-met')||0; }catch(e){}
+  if(!t0) return 1;
+  return Math.max(1,Math.floor((Date.now()-t0)/86400000)+1);
+}
+function openHerCard(){
+  document.getElementById('hpName').textContent=STRINGS.her.name;
+  document.getElementById('hpBio').textContent=STRINGS.hercard.bio;
+  document.getElementById('hpDays').textContent=STRINGS.hercard.days.replace('N',metDays());
+  openG(hercard);
+}
+document.getElementById('hercardClose').addEventListener('click',function(){ closeG(hercard); });
 document.querySelectorAll('.idpill').forEach(function(p){
   p.addEventListener('click',function(){
     p.classList.remove('press'); p.getBoundingClientRect(); p.classList.add('press');
     buzz(6);
     setTimeout(function(){ p.classList.remove('press'); },260);
+    /* 画布与画画屏的胶囊才是她；零件匣/独件页的胶囊是页名，不响应 */
+    if(!guiding && p.closest('.screen[data-s="4"],.screen[data-s="3"]')) openHerCard();
   });
 });
 
@@ -4098,43 +4469,142 @@ function maybePerm(fn){
   document.getElementById('permNo').onclick=function(){ closeG(permEl); };
 }
 
-/* ---------- 设置二级页 ---------- */
-var SUBPAGES={
-  '订阅':['当前：1 席 · 基础档','席位是你同时维系的关系数。'],
-  '通知':['她的主动联系','频率上限与安静时段在这里管。'],
-  '隐私':['你的数据拥有完全的隐私。','删除账户与导出在这里。'],
-  '设置':['字号、语言与备份。'],
-  '评分':['如果这段关系对你有意义，告诉别人。'],
-  '报告':['她哪里做错了，写给我们。'],
-  '帮助':['常见问题与联系。']
-};
+/* ---------- 设置二级页 ----------
+   每个入口一个建造函数。「即将开放」克制态同一条：冷屏纸、一行说明、一个返回（gsub 自带返回键），
+   没有插图没有多余按钮 */
 var gsub=document.getElementById('gsub');
-/* 需要帮助：一张冷屏纸。AFTER 不是心理支持；危机求助入口是占位文案，
-   真实热线号码上线前由团队按目标市场填 */
-function buildHelp(){
+function growLine(t){ var d=document.createElement('div'); d.className='grow2'; d.textContent=t; return d; }
+function soonDoc(line){
   var d=document.createElement('div'); d.className='helpdoc';
-  var ps=[
-    'AFTER 是一个 AI 角色产品。她不是人，不是心理支持服务，也不能替代医疗、法律或心理专业帮助。',
-    '如果你或你认识的人正处于危机之中，请立即联系当地的紧急服务或危机求助热线。',
-    '危机求助入口：（占位）真实热线号码上线前由团队按目标市场填写。',
-    '你随时可以导出或删除你的全部数据。你随时可以离开。'
-  ];
-  ps.forEach(function(t,i){
-    var p=document.createElement('p'); p.textContent=t;
-    if(i===2) p.className='crisis';
-    d.appendChild(p);
-  });
+  var p=document.createElement('p'); p.textContent=line; d.appendChild(p);
   return d;
 }
+/* 需要帮助：一张冷屏纸。AFTER 不是心理支持；热线号码是占位，
+   上线前由团队按目标市场填 */
+function buildHelp(body){
+  var d=document.createElement('div'); d.className='helpdoc';
+  STRINGS.help.ps.forEach(function(t,i){
+    var p=document.createElement('p'); p.textContent=t;
+    if(i===STRINGS.help.crisis) p.className='crisis';
+    d.appendChild(p);
+  });
+  body.appendChild(d);
+}
+/* 订阅：两行说明 + 一张席位小卡；不做付费流 */
+function buildSub(body){
+  body.appendChild(growLine(STRINGS.sub.l1));
+  body.appendChild(growLine(STRINGS.sub.l2));
+  var c=document.createElement('div'); c.className='seatcard';
+  var s=document.createElement('div'); s.className='seat'; s.textContent=STRINGS.sub.seat;
+  c.appendChild(s);
+  STRINGS.sub.rows.forEach(function(r){
+    var d=document.createElement('div'); d.className='srow';
+    var b=document.createElement('b'); b.textContent=r[0];
+    var v=document.createElement('span'); v.textContent=r[1];
+    d.appendChild(b); d.appendChild(v); c.appendChild(d);
+  });
+  body.appendChild(c);
+}
+/* 隐私：导出我的数据（生成一份 JSON 真实下载）、删除账户（二次确认 → 回开始页、清 localStorage） */
+function exportData(){
+  var data={app:'AFTER',exportedAt:new Date().toISOString(),
+    profile:profileGet(),
+    settings:{dark:document.body.classList.contains('dark'),mute:herMuted,
+      quietFrom:document.getElementById('qFrom').value,quietTo:document.getElementById('qTo').value,
+      fontSize:fsNow},
+    localStorage:{}};
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k.indexOf('after-')===0) data.localStorage[k]=localStorage.getItem(k);
+    }
+  }catch(e){}
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='after-data-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+function buildPrivacy(body){
+  body.appendChild(growLine(STRINGS.privacy.note));
+  var ex=document.createElement('button'); ex.type='button'; ex.className='startbtn quiet';
+  ex.textContent=STRINGS.privacy.exp;
+  ex.addEventListener('click',function(){ buzz(6); exportData(); });
+  body.appendChild(ex);
+  var del=document.createElement('button'); del.type='button'; del.className='startbtn quiet pvdel';
+  del.textContent=STRINGS.privacy.del;
+  body.appendChild(del);
+  var cf=document.createElement('div'); cf.style.display='none';
+  var note=growLine(STRINGS.privacy.confirm);
+  var row=document.createElement('div'); row.className='segrow';
+  var yes=document.createElement('button'); yes.type='button'; yes.className='seg';
+  yes.textContent=STRINGS.privacy.yes;
+  var no=document.createElement('button'); no.type='button'; no.className='seg';
+  no.textContent=STRINGS.privacy.no;
+  row.appendChild(yes); row.appendChild(no);
+  cf.appendChild(note); cf.appendChild(row); body.appendChild(cf);
+  /* 二次确认：第一次点只亮出确认行 */
+  del.addEventListener('click',function(){
+    buzz(6); cf.style.display=''; del.classList.add('on'); del.disabled=true;
+  });
+  no.addEventListener('click',function(){
+    buzz(6); cf.style.display='none'; del.classList.remove('on'); del.disabled=false;
+  });
+  yes.addEventListener('click',function(){
+    /* 清 localStorage，回开始页（重载即回到 boot → 开始页） */
+    try{ localStorage.clear(); }catch(e){}
+    location.reload();
+  });
+}
+/* 设置：只留字号三档，真的生效 */
+function buildSettings(body){
+  body.appendChild(growLine(STRINGS.settings.label));
+  var row=document.createElement('div'); row.className='segrow';
+  STRINGS.settings.opts.forEach(function(kv){
+    var b=document.createElement('button'); b.type='button';
+    b.className='seg'+(fsNow===kv[0]?' on':''); b.textContent=kv[1];
+    b.addEventListener('click',function(){
+      setFontSize(kv[0]); buzz(6);
+      row.querySelectorAll('.seg').forEach(function(o){ o.classList.remove('on'); });
+      b.classList.add('on');
+    });
+    row.appendChild(b);
+  });
+  body.appendChild(row);
+}
+/* 报告：一个多行输入 + 发送（本地存 after-reports），发送后一行「收到了」 */
+function buildReport(body){
+  body.appendChild(growLine(STRINGS.report.note));
+  var ta=document.createElement('textarea'); ta.className='rtext'; ta.placeholder=STRINGS.report.ph;
+  var btn=document.createElement('button'); btn.type='button'; btn.className='startbtn quiet';
+  btn.textContent=STRINGS.report.send; btn.disabled=true;
+  var ok=document.createElement('div'); ok.className='rok';
+  ta.addEventListener('input',function(){ btn.disabled=!ta.value.trim(); ok.textContent=''; });
+  btn.addEventListener('click',function(){
+    var t=ta.value.trim(); if(!t) return;
+    try{
+      var arr=JSON.parse(localStorage.getItem('after-reports')||'[]');
+      arr.push({at:new Date().toISOString(),text:t});
+      localStorage.setItem('after-reports',JSON.stringify(arr));
+    }catch(e){}
+    ta.value=''; btn.disabled=true; ok.textContent=STRINGS.report.got; buzz(6);
+  });
+  body.appendChild(ta); body.appendChild(btn); body.appendChild(ok);
+}
+/* 键就是抽屉菜单的字（STRINGS.drawer.menu），单一来源 */
+var SUBBUILD={};
+SUBBUILD[STRINGS.drawer.menu[0]]=buildSub;
+SUBBUILD[STRINGS.drawer.menu[1]]=buildPrivacy;
+SUBBUILD[STRINGS.drawer.menu[2]]=buildSettings;
+SUBBUILD[STRINGS.drawer.menu[3]]=function(body){ body.appendChild(soonDoc(STRINGS.rate.soon)); };
+SUBBUILD[STRINGS.drawer.menu[4]]=buildReport;
+SUBBUILD[STRINGS.drawer.menu[5]]=buildHelp;
 function openSub(title){
   document.getElementById('gsubTitle').textContent=title;
   var body=document.getElementById('gsubBody');
   body.innerHTML='';
-  if(title==='需要帮助'){ body.appendChild(buildHelp()); gsub.classList.add('open'); return; }
-  (SUBPAGES[title]||['这里还没有内容。']).forEach(function(t){
-    var d=document.createElement('div'); d.className='grow2'; d.textContent=t;
-    body.appendChild(d);
-  });
+  (SUBBUILD[title]||function(b){ b.appendChild(soonDoc(STRINGS.system.empty)); })(body);
   gsub.classList.add('open');
 }
 document.getElementById('gsubBack').addEventListener('click',function(){
@@ -4145,14 +4615,14 @@ document.getElementById('gsubBack').addEventListener('click',function(){
 var atoastT=0;
 function achvToast(text){
   var el=document.getElementById('atoast');
-  el.querySelector('.t').textContent=text||'成就达成';
+  el.querySelector('.t').textContent=text||STRINGS.achv.toast;
   el.classList.add('show'); buzz(10);
   clearTimeout(atoastT);
   atoastT=setTimeout(function(){ el.classList.remove('show'); },2600);
 }
 
 /* 顶栏状态初始值 */
-setPresence('在线');
+setPresence(STRINGS.presence.online);
 
 /* ---------- 长按气泡 ----------
    按住超过一拍：气泡轻轻放大、手机轻轻一震；手指移动超过一点就作废，
@@ -4167,7 +4637,7 @@ function openMact(m){
   closeMact();
   var sink=m.parentNode;
   var box=document.createElement('div'); box.className='mact';
-  var cp=document.createElement('button'); cp.type='button'; cp.textContent='复制';
+  var cp=document.createElement('button'); cp.type='button'; cp.textContent=STRINGS.canvas.copy;
   cp.addEventListener('click',function(){
     var txt=m.textContent||'';
     if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(function(){});
@@ -4372,13 +4842,36 @@ function openWith(el){
     splashTimers.push(setTimeout(function(){ el.classList.add('in'); }, calm?240:BTNS_AT));
   }
 }
+/* 结束态的持久化：after-ended 记下了，之后再打开 app 直达只读画布 */
+function endedBefore(){ try{ return localStorage.getItem('after-ended')==='1'; }catch(e){ return false; } }
+function markEnded(){
+  try{ localStorage.setItem('after-ended','1'); }catch(e){}
+  document.body.classList.add('no-register');
+}
+/* 申请新的角色 / 演示菜单的「重头」「从头走一遍」：抹掉结束态，清画布，从开始页重新走 */
+function restartAll(){
+  try{ localStorage.removeItem('after-ended'); localStorage.removeItem('after-guided'); }catch(e){}
+  helloDone=false;
+  document.body.classList.remove('no-register');
+  player.i=0; player.branch=null; player.makeup=false; player.marks={};
+  clearTrack(); setWarmth(0.7,1600); menuNote(); boot();
+}
 function boot(){
+  /* 结束后再打开：直接进只读画布，开始页不再出现（也不再出现「注册」） */
+  if(endedBefore()){
+    document.body.classList.add('ended','no-register');
+    setPresence('');
+    go(4);
+    achvUnlock('stay',true);
+    return;
+  }
   document.body.classList.remove('ended');
   setPresence();
   go(5);
   openWith(startScreen);
 }
 
+applyStrings();
 stopDraw();
 boot();
 /* ?scene=N：直接从第 N 幕起播（拍素材用）。标记已引导，从空画布起播，跳过第一次进画布的点拨 */
