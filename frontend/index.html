@@ -182,9 +182,25 @@ body.glassed .glow{filter:blur(18px)}
 /* 点一下她的胶囊，轻轻放大再弹回——和长按气泡同一根弹簧曲线 */
 .who .idpill.press{transform:scale(1.055)}
 .hbtn.achv{margin-left:auto}
-/* seed 与 ava 同一套样式：墨圆落进胶囊时同字同号，看不出来换了人 */
+/* seed 与 ava 同一套样式：墨圆落进胶囊时一模一样，看不出来换了人。
+   里头不是字，是一枚慢慢晕开的小光点 */
 .who .ava,.seed{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--base);
   display:flex;align-items:center;justify-content:center;font-size:var(--fs-2);flex:none}
+/* 她是一枚小光点：纯色墨圆上一点琥珀，3600ms 慢慢晕开——
+   和屋子的光、她的凝形同拍。夜间 --lum 自己反转 */
+.ava .dot,.seed .dot{width:7px;height:7px;border-radius:50%;background:var(--lum);
+  box-shadow:0 0 5px 1px rgba(245,201,138,.35),0 0 12px 4px rgba(245,201,138,.12);
+  animation:avadot 3600ms ease-in-out 1200ms infinite}
+@keyframes avadot{
+  0%,100%{box-shadow:0 0 5px 1px rgba(245,201,138,.30),0 0 12px 4px rgba(245,201,138,.10)}
+  50%{box-shadow:0 0 8px 3px rgba(245,201,138,.60),0 0 22px 8px rgba(245,201,138,.20)}
+}
+body.dark .ava .dot,body.dark .seed .dot{background:var(--lum);
+  animation-name:avadot-dark}
+@keyframes avadot-dark{
+  0%,100%{box-shadow:0 0 5px 1px rgba(242,207,160,.30),0 0 12px 4px rgba(242,207,160,.10)}
+  50%{box-shadow:0 0 8px 3px rgba(242,207,160,.55),0 0 22px 8px rgba(242,207,160,.18)}
+}
 .who .name{font-size:var(--fs-3);color:var(--ink)}
 .who .tag{font-size:var(--fs-1);color:var(--ink-5);letter-spacing:var(--ls-text);margin-top:2px}
 .hbtn{position:relative;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;
@@ -586,7 +602,7 @@ body.dark .spirit.formed.litup .lum3{--lo:.16}
 @keyframes poke{0%{transform:none}30%{transform:scale(1.1,.9) translateY(4px)}100%{transform:none}}
 .spirit.hop svg{animation:hop 420ms var(--spring)}
 @keyframes hop{0%{transform:none}30%{transform:scale(1.06,.94) translateY(2px)}60%{transform:translateY(-6px)}100%{transform:none}}
-/* 化成头像：路径退，墨圆与「陈」进。seeding 状态下她不应答 */
+/* 化成头像：路径退，墨圆与光点进。seeding 状态下她不应答 */
 .seed{position:absolute;
   opacity:0;transform:scale(2.2);transition:opacity 900ms var(--ease),transform 1100ms var(--ease)}
 .spirit.seeding .body,.spirit.seeding .after,.spirit.seeding .lum,.spirit.seeding .eyes{
@@ -1206,7 +1222,7 @@ body.no-register #startScreen .startbtn.primary{display:none}
       <use class="body" href="#ghost"/>
       <g class="eyes" id="spiritEyes"><circle cx="94.1" cy="63.6" r="8"/><circle cx="142.7" cy="63.6" r="8"/></g>
     </svg>
-    <div class="seed">陈</div>
+    <div class="seed"><i class="dot"></i></div>
   </div>
   <!-- 引导时布上那行墨字：她说的话，逐字打出来 -->
   <div class="gline out" id="gline"></div>
@@ -1407,7 +1423,7 @@ body.no-register #startScreen .startbtn.primary{display:none}
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M4.5 7h11M6.5 13h7"/></svg>
       </button>
       <div class="idpill" role="button" aria-label="她的档案">
-        <span class="ava">陈</span>
+        <span class="ava"><i class="dot"></i></span>
         <div><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
       </div>
       <button class="hbtn achv" aria-label="成就" type="button">
@@ -1464,7 +1480,7 @@ body.no-register #startScreen .startbtn.primary{display:none}
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M4.5 7h11M6.5 13h7"/></svg>
       </button>
       <div class="idpill" role="button" aria-label="她的档案">
-        <span class="ava">陈</span>
+        <span class="ava"><i class="dot"></i></span>
         <div><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
       </div>
       <button class="hbtn achv" aria-label="成就" type="button">
@@ -1616,7 +1632,7 @@ body.no-register #startScreen .startbtn.primary{display:none}
 
   <!-- 主动消息到达条：你不在对话屏时从顶栏滑下的一条极薄玻璃 -->
   <div class="abar" id="abar" role="button" aria-label="她发来的新消息">
-    <span class="ava">陈</span><span class="t"></span>
+    <span class="ava"><i class="dot"></i></span><span class="t"></span>
   </div>
 
   <!-- 阶段卡：结束或跨阶段时的一张竖卡（3:4），全屏居中，纸材质 -->
@@ -1978,8 +1994,6 @@ var STR_BIND=[
   ['.screen[data-s="7"] .foot .startbtn:nth-child(1)','login.wechat'],
   ['.screen[data-s="7"] .foot .startbtn:nth-child(2)','login.mail'],
   ['.screen[data-s="7"] .foot .startbtn:nth-child(3)','login.apple'],
-  ['.screen[data-s="3"] .idpill .ava','her.seed'],
-  ['.screen[data-s="4"] .idpill .ava','her.seed'],
   ['.screen[data-s="3"] .idpill .name','her.name'],
   ['.screen[data-s="4"] .idpill .name','her.name'],
   ['.screen[data-s="3"] .thread .stamp','draw.stamp'],
@@ -2013,8 +2027,6 @@ var STR_BIND=[
   ['#camRetake','cam.retake'],
   ['#camUse','cam.use'],
   ['#atoast .t','achv.toast'],
-  ['.seed','her.seed'],
-  ['.abar .ava','her.seed'],
   ['#hpName','her.name']
 ];
 function strGet(p){ return p.split('.').reduce(function(o,k){ return o==null?o:o[k]; },STRINGS); }
