@@ -290,7 +290,7 @@ def test_her_card_paper(mobile_page, app_url):
 
 
 def test_achv_charms_empty_and_unlock(mobile_page, app_url):
-    """成就页：新用户五个挂位全空（只有开口环）；演示解锁一枚后该位挂上挂件。"""
+    """成就页：新用户五页全空（只有开口环、圆点全空心）；演示解锁一枚后该页挂上挂件。"""
     go_canvas(mobile_page, app_url, "?dev=1")
     mobile_page.click(f"{CANVAS} .hbtn.achv")
     mobile_page.wait_for_selector("#achv.open")
@@ -300,9 +300,14 @@ def test_achv_charms_empty_and_unlock(mobile_page, app_url):
     if mode == "gl":
         slots = mobile_page.evaluate("window.__charmsSlots()")
         assert len(slots) == 5 and not any(s["hasCharm"] for s in slots)
+        assert mobile_page.evaluate("window.__charmsPage()") == 0  # 全空时停第一页
     else:
-        assert mobile_page.eval_on_selector_all("#achvFall .cslot", "els => els.length") == 5
-        assert mobile_page.eval_on_selector_all("#achvFall .cslot.on", "els => els.length") == 0
+        assert mobile_page.eval_on_selector_all("#achvFall .pg", "els => els.length") == 5
+        assert mobile_page.eval_on_selector_all("#achvFall .pg.got", "els => els.length") == 0
+    # 翻页圆点：五个全空心；常驻纸条空
+    assert mobile_page.eval_on_selector_all("#achvDots i", "els => els.length") == 5
+    assert mobile_page.eval_on_selector_all("#achvDots i.got", "els => els.length") == 0
+    assert mobile_page.eval_on_selector("#achvNote", "el => el.textContent") == ""
     shot(mobile_page, "achv-empty")
     mobile_page.click("#achvClose")
     # 演示菜单是脚手架，用 JS 点击（真机演示路径不走它）
@@ -321,27 +326,35 @@ def test_achv_charms_empty_and_unlock(mobile_page, app_url):
             timeout=15000)
         slots = mobile_page.evaluate("window.__charmsSlots()")
         assert slots[0]["id"] == "rose"
+        assert mobile_page.evaluate("window.__charmsPage()") == 0  # 停最新解锁的那一枚
     else:
-        mobile_page.wait_for_selector("#achvFall .cslot.on", timeout=15000)
-        assert mobile_page.eval_on_selector_all("#achvFall .cslot.on", "els => els.length") == 1
+        mobile_page.wait_for_selector("#achvFall .pg.got", timeout=15000)
+        assert mobile_page.eval_on_selector_all("#achvFall .pg.got", "els => els.length") == 1
+    # 圆点一枚实心，纸条是玫瑰那句
+    assert mobile_page.eval_on_selector_all("#achvDots i.got", "els => els.length") == 1
+    assert "我说不的时候" in mobile_page.eval_on_selector("#achvNote", "el => el.textContent")
     shot(mobile_page, "achv-one-charm")
 
 
 def test_achv_charms_all_param(mobile_page, app_url):
-    """?charms=all：五枚强制全解锁，成就页整串挂齐（验收截图用例）。"""
-    go_canvas(mobile_page, app_url, "?charms=all")
-    mobile_page.click(f"{CANVAS} .hbtn.achv")
+    """演示「五枚都有」：直接进满串页，五页都有挂件、圆点全实心、停最新一枚。"""
+    go_canvas(mobile_page, app_url, "?dev=1")
+    mobile_page.evaluate("document.querySelector('.devbtn').click()")
+    mobile_page.evaluate("document.querySelector(\".devmenu [data-act='charmsAll']\").click()")
     mobile_page.wait_for_selector("#achv.open")
     mobile_page.wait_for_function("() => window.__charmsMode !== undefined", timeout=15000)
-    mobile_page.wait_for_timeout(1200)
+    mobile_page.wait_for_timeout(600)
     mode = mobile_page.evaluate("window.__charmsMode")
     if mode == "gl":
         slots = mobile_page.evaluate("window.__charmsSlots()")
         assert [s["id"] for s in slots] == ["rose", "letter", "egg", "match", "ring"]
         assert all(s["hasCharm"] for s in slots)
+        assert mobile_page.evaluate("window.__charmsPage()") == 4  # 停最新解锁的那一枚
     else:
-        assert mobile_page.eval_on_selector_all("#achvFall .cslot.on", "els => els.length") == 5
-    shot(mobile_page, "achv-charms-all")
+        assert mobile_page.eval_on_selector_all("#achvFall .pg.got", "els => els.length") == 5
+    assert mobile_page.eval_on_selector_all("#achvDots i.got", "els => els.length") == 5
+    assert "先放你这儿" in mobile_page.eval_on_selector("#achvNote", "el => el.textContent")
+    shot(mobile_page, "achv-all")
 
 
 def test_shelf_empty_then_seven(mobile_page, app_url):
