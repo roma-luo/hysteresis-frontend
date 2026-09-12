@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- 挂件独立预览页（不进主程序）：盯形状和材质用。
+     ?id=rose 单枚放大 · ?all 五枚一排 · ?dark=1 夜间底色 · ?flat=1 平涂降级
+     不接 localStorage、不接演示菜单。 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>挂件预览</title>
+<style>
+  body{margin:0;background:#FCFBFA;overflow:hidden;font:14px/1.4 system-ui}
+  body.dark{background:#17130F}
+  canvas{display:block;width:100vw;height:100vh;touch-action:none}
+  #tip{position:fixed;left:14px;top:12px;color:#8a7f76;opacity:.8}
+</style>
+<canvas id="c"></canvas>
+<div id="f" hidden></div>
+<div id="tip"></div>
+<script type="module">
+  import * as M from '../charms.js';
+  const q = new URLSearchParams(location.search);
+  const dark = q.has('dark');
+  if (dark) document.body.classList.add('dark');
+  const ALL = ['rose', 'letter', 'egg', 'match', 'ring'];
+  const ids = q.get('id') ? [q.get('id')] : ALL;
+  document.getElementById('tip').textContent = ids.join(' · ') + (q.has('flat') ? '（平涂）' : '');
+  M.openPage({
+    canvas: document.getElementById('c'),
+    fallEl: document.getElementById('f'),
+    unlocked: ids.map((id, i) => ({ id, at: 0, day: i + 1 })),
+    fresh: [],
+    calm: q.has('flat'), forceFlat: q.has('flat'),
+    nogate: true,
+    dark: dark,
+    fx: q.has('fx'),
+    startAt: q.get('id') ? Math.max(0, ALL.indexOf(q.get('id'))) : 0,
+    onPage: function () {}, onNote: function () {}, onBuzz: function () {},
+    toFlat: function () { document.getElementById('tip').textContent += ' → 平铺'; }
+  });
+</script>
