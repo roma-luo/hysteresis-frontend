@@ -731,7 +731,7 @@ body.poked .pool{animation:poolpulse 700ms var(--ease)}
    顶边一线更亮的边是玻璃的厚度，不是描边 */
 /* 玻璃共享配方：凡是浮在布上、不是物件的东西都吃这一份。
    禁止 box-shadow——玻璃靠边缘的光浮起来，不靠影子 */
-.hbtn,.who .idpill,.cfield,.cbtn,.msg.you,.glass,.gcard,.medal,.mact,
+.hbtn,.who .idpill,.cfield,.cbtn,.msg.you,.glass,.gcard,.mact,.achvnote,
 .atsheet .panel,.atoast,.shelfrow,.ecard,.tin,.grow2,.startbtn.quiet,.abar{
   background:var(--glass-fill);
   -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
@@ -860,18 +860,48 @@ body.dark .loadbar i{background:var(--ink)}
 .dtoggle.on .sw{background:var(--ink)}
 .dtoggle.on .sw i{transform:translateX(15px)}
 
-/* 成就页：每个成就独占一页，左右滑动翻看。占位阶段只有一枚圆 */
-.achvpage{padding:0}
-.pgr{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab}
-.pgr::-webkit-scrollbar{display:none}
-.pgr .pg{flex:0 0 100%;scroll-snap-align:center;display:flex;align-items:center;justify-content:center}
-.medal{width:118px;height:118px;border-radius:50%}
-.dots{display:flex;justify-content:center;gap:7px;
-  padding-bottom:calc(44px + env(safe-area-inset-bottom))}
-.dots i{width:5px;height:5px;border-radius:50%;background:var(--ink-3);opacity:.45;
-  transition:opacity 200ms var(--ease)}
-.dots i.on{opacity:1}
+/* 成就页：她给的挂件。GL 画布占满雾层（three.js 实时渲染）；
+   降级（无 WebGL2 / 减动效 / 太慢）时同位置平铺平涂 PNG */
+.achvpage{padding:0;overflow:hidden}
+.achvhead{padding:calc(env(safe-area-inset-top) + 20px) 22px 8px}
+#achvGl{flex:1;min-height:0;width:100%;display:block;touch-action:none}
+#achvFall{flex:1;min-height:0;display:none;flex-direction:column;justify-content:space-evenly;
+  padding:4px 0 30px}
+#achvFall:not([hidden]){display:flex}
+#achvFall .crow{position:relative;display:flex;justify-content:space-evenly;align-items:flex-start}
+/* 降级页的两根杆：一条细线，环压在上面 */
+#achvFall .crow::before{content:'';position:absolute;left:10%;right:10%;top:6px;height:1px;
+  background:var(--ink-3);opacity:.22}
+#achvFall .cslot{display:flex;flex-direction:column;align-items:center;width:30%;color:var(--ink-3)}
+#achvFall .crow:last-child .cslot{width:36%}
+.cslot .cring{width:24px;height:13px;opacity:.5}
+.cslot .cring svg{width:100%;height:100%;display:block}
+.cslot .cchain{width:9px;height:40px;opacity:.4;margin-top:-1px}
+.cslot .cchain svg{width:100%;height:100%;display:block}
+.cslot .cimg{width:96px;height:96px;margin-top:-2px;transform-origin:50% 0;
+  animation:csway 3.8s ease-in-out infinite alternate}
+.cslot:nth-child(2) .cimg{animation-duration:4.4s;animation-delay:-1.2s}
+.cslot:nth-child(3) .cimg{animation-duration:3.3s;animation-delay:-.6s}
+.cslot .cimg.sw,.cslot.fresh .cimg{animation:cswayBig 1.5s var(--ease) 1,csway 3.8s ease-in-out 1.6s infinite alternate}
+@keyframes csway{from{transform:rotate(-2.2deg)}to{transform:rotate(2.2deg)}}
+@keyframes cswayBig{0%{transform:rotate(0)}18%{transform:rotate(9deg)}42%{transform:rotate(-7deg)}
+  68%{transform:rotate(4deg)}100%{transform:rotate(0)}}
+/* 点一枚 / 拖一枚的反馈条：日期 · 第 N 天 · 她那句话（写在页面上，不写在物件上） */
+.achvnote{position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));z-index:2;
+  max-width:84%;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;
+  transform:translate(-50%,8px);transition:opacity .3s var(--ease),transform .3s var(--ease);
+  font-size:var(--fs-2);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.achvnote.show{opacity:1;transform:translate(-50%,0)}
+/* 她给的过程：PNG 落在画布上晃两下，4s 后飘进右上角圆键 */
+.charmwg{width:96px;height:96px;transform-origin:50% 6%}
+.charmwg img{width:96px;height:96px;display:block}
+.charmwg.sway2{animation:cswayBig 1.5s var(--ease) 1}
+.charmfly{position:fixed;z-index:95;width:96px;height:96px;pointer-events:none;
+  transition:transform .68s cubic-bezier(.45,.05,.25,1),opacity .68s ease}
+/* 圆键：有过挂件之后图标变成小开口环；新到一枚带红点，打开成就页即消失 */
+.hbtn.achv .cdot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;
+  background:#BE4A40;opacity:0;transform:scale(.4);transition:opacity .25s var(--ease),transform .25s var(--ease)}
+.hbtn.achv.reddot .cdot{opacity:1;transform:none}
 
 /* ---------- 零件匣与独件页 ----------
    每个 widget 一个独立页面：居中放在布上，底下一行提示。
@@ -1186,15 +1216,6 @@ body.dark{color-scheme:dark}
 
 /* 零件匣空态：一行 */
 .shelfempty{margin-top:38px;text-align:center;font-size:var(--fs-2);color:var(--ink-3)}
-
-/* 成就页条目：每页一枚圆、一行题、一行说明；未获得的整体沉下去 */
-.pgr .pg{flex-direction:column;gap:13px}
-.pg .atitle{font-size:var(--fs-3);color:var(--ink)}
-.pg .adesc{font-size:var(--fs-2);color:var(--ink-2);padding:0 44px;text-align:center;line-height:1.8}
-.pg .alock{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:var(--ink-3);display:none}
-.pg.locked .medal{opacity:.32;filter:saturate(.2)}
-.pg.locked .atitle,.pg.locked .adesc{color:var(--ink-3)}
-.pg.locked .alock{display:block}
 
 /* 忘记密码的克制提示：点了才出现的一行 */
 .forgot-hint{display:none;font-size:var(--fs-2);color:var(--ink-3);text-align:center;margin-top:6px}
@@ -1687,7 +1708,7 @@ body.no-register #startScreen .startbtn.primary{display:none}
       <button data-w="0.45">warmth · 边界</button>
       <button data-w="0.25">warmth · 疏远</button>
       <button data-w="0">warmth · 结束</button>
-      <button data-act="unlock">演示：成就达成</button>
+      <button data-act="unlock">演示：她给个挂件</button>
       <button data-act="endit">演示：被结束</button>
       <button data-act="place">放一个新东西</button>
       <button data-act="reguide">重放引导</button>
@@ -1695,15 +1716,21 @@ body.no-register #startScreen .startbtn.primary{display:none}
     </div>
   </div>
 
-  <!-- 成就：右上角奖章打开。每个成就独占一页，左右滑动翻看；页面与圆点由成就登记表（STRINGS.achv.items）生成 -->
+  <!-- 成就：右上角圆键打开。她给的挂件——两根横杆上一串 3D 挂件（charms.js，three.js 实时渲染），
+       空位只挂一个开口环；降级（无 WebGL2 / 减动效 / 太慢）时同一串平涂 PNG。挂件上没有字，
+       日期与第几天都在底部纸条上 -->
   <div class="govl" id="achv" aria-hidden="true">
     <div class="gblur"></div>
     <div class="gpage achvpage">
+      <div class="gsubhead achvhead">
+        <span class="t" id="achvTitle">她给的挂件</span>
+      </div>
       <button class="hbtn gclose" id="achvClose" aria-label="关闭成就" type="button">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg>
       </button>
-      <div class="pgr" id="achvPgr"></div>
-      <div class="dots" id="achvDots"></div>
+      <canvas id="achvGl"></canvas>
+      <div id="achvFall" hidden></div>
+      <div class="achvnote" id="achvNote"></div>
     </div>
   </div>
 
@@ -1748,15 +1775,16 @@ body.no-register #startScreen .startbtn.primary{display:none}
 {
   "title": "十二天",
   "scenes": [
-    { "name": "第一天 · 糖", "acts": [
+    { "name": "第一天 · 糖", "day": 1, "acts": [
       { "a": "warmth", "to": 0.85, "ms": 4000 },
       { "a": "say", "text": "放个东西给你听" },
       { "a": "place", "widget": "vt" },
+      { "a": "wait", "ms": 3000 },
       { "a": "say", "text": "凌晨的车站。我最近在听这张" },
       { "a": "say", "text": "你别说话，听完再说" },
       { "a": "ink", "scene": "cat" }
     ]},
-    { "name": "第三天 · 你说", "acts": [
+    { "name": "第三天 · 你说", "day": 3, "acts": [
       { "a": "card", "kind": "decide", "text": "周末那个聚会，你觉得我该去吗",
         "options": [
           { "label": "去",   "reply": "好。那我就去。你说的，我记下了" },
@@ -1764,26 +1792,26 @@ body.no-register #startScreen .startbtn.primary{display:none}
         ],
         "mark": "decide" }
     ]},
-    { "name": "第五天 · 一起", "acts": [
+    { "name": "第五天 · 一起", "day": 5, "acts": [
       { "a": "warmth", "to": 0.9, "ms": 4000 },
       { "a": "card", "kind": "coop", "game": "guess" },
       { "a": "place", "widget": "cal" },
       { "a": "say", "text": "二十四号我圈了。你说过那天要给我看照片，我记下了，省得你忘" }
     ]},
-    { "name": "第七天 · 边界", "acts": [
+    { "name": "第七天 · 边界", "day": 7, "acts": [
       { "a": "you", "text": "你能不能只对我一个人这样好" },
-      { "a": "say", "text": "这种话，不要再问第二次" },
+      { "a": "say", "text": "这种话，不要再问第二次", "refuse": true },
       { "a": "warmth", "to": 0.45, "ms": 4000 },
       { "a": "presence", "text": "刚刚在线" }
     ]},
-    { "name": "第九天 · 疏远", "acts": [
+    { "name": "第九天 · 疏远", "day": 9, "acts": [
       { "a": "warmth", "to": 0.25, "ms": 4000 },
       { "a": "say", "text": "嗯" },
       { "a": "you", "text": "你最近怎么了" },
       { "a": "say", "text": "没什么" },
       { "a": "recall", "text": "去聚会那天，是你让我去的", "ref": "decide" }
     ]},
-    { "name": "第十一天 · 主动", "skipIfMuted": true, "acts": [
+    { "name": "第十一天 · 主动", "day": 11, "skipIfMuted": true, "acts": [
       { "a": "arrive", "text": "那天的事，我想了想" },
       { "a": "branch", "options": [
         { "label": "回", "makeup": true, "acts": [
@@ -1794,7 +1822,7 @@ body.no-register #startScreen .startbtn.primary{display:none}
         { "label": "不回", "acts": [] }
       ]}
     ]},
-    { "name": "第十二天 · 结束", "acts": [
+    { "name": "第十二天 · 结束", "day": 12, "acts": [
       { "a": "warmth", "to": 0, "ms": 1600 },
       { "a": "wait", "ms": 1800 },
       { "a": "stage", "kind": "end", "title": "第十二天", "line": "就到这儿吧", "days": "8.24 — 9.4" },
@@ -1878,9 +1906,15 @@ var WIDGETS={
          return c;
        }},
   alm:{tpl:'w7', sel:'.alm', size:[238,0], init:initAlm,   name:'闹钟',  desc:'她设的十点',       hint:'上下搓段式屏调时间（向下是加）；右缘点 AM/PM；底下换日子',
-       make:function(){ return cloneWidget('w7','.alm'); }}
+       make:function(){ return cloneWidget('w7','.alm'); }},
+  /* 挂件不是零件：不进零件匣，模板也没有——内容就是一张离屏渲好的 PNG */
+  charm:{tpl:null, sel:null, size:[96,96], init:null,      name:'挂件',  desc:'她给的挂件',       hint:'',
+       make:function(opts){
+         var d=document.createElement('div'); d.className='charmwg';
+         var i=document.createElement('img'); i.src=opts.img||''; i.alt=''; i.draggable=false;
+         d.appendChild(i); return d;
+       }}
 };
-var WKEYS=Object.keys(WIDGETS);
 
 /* ---------- 字串 ----------
    界面上所有要读的字集中在这里（只抽，不翻译）。三种声音各守各的规则：
@@ -1948,12 +1982,12 @@ var STRINGS={
   cam:{retake:'重拍',use:'使用照片'},
   stage:{save:'保存图片',close:'收起',mark:'她记下了：',recall:'她翻了出来',
     kinds:{end:'THIS ENDS HERE',stage:'A NEW CHAPTER',missed:'IT SLIPPED AWAY'}},
-  achv:{toast:'成就达成',locked:'未获得',items:[
-    {id:'first',t:'初次落笔',d:'你发出第一句话。'},
-    {id:'noted',t:'她记下了',d:'她第一次记下你的决定。'},
-    {id:'seven',t:'七件东西',d:'她把七件东西都放上画布。'},
-    {id:'twelve',t:'十二天',d:'走完一整段关系。'},
-    {id:'stay',t:'还在',d:'结束之后，回来看看。'}]},
+  achv:{title:'她给的挂件',items:[
+    {id:'rose',  line:'我说不的时候，也是真的。'},
+    {id:'letter',line:'这次，是我先开的口。'},
+    {id:'egg',   line:'你碰了，它就归你了。'},
+    {id:'match', line:'一根一天，三根了。'},
+    {id:'ring',  line:'七天了。先放你这儿。'}]},
   dev:{placeSay:'这个给你',placeStk:'路边看到的，给你'},
   coop:{say1:'猜一个',say2:'就是前几天放给你听的那张'},
   system:{empty:'这里还没有内容。'}
@@ -2026,7 +2060,8 @@ var STR_BIND=[
   ['#scClose','stage.close'],
   ['#camRetake','cam.retake'],
   ['#camUse','cam.use'],
-  ['#atoast .t','achv.toast'],
+  ['#atoast .t','stage.mark'],
+  ['#achvTitle','achv.title'],
   ['#hpName','her.name']
 ];
 function strGet(p){ return p.split('.').reduce(function(o,k){ return o==null?o:o[k]; },STRINGS); }
@@ -2110,6 +2145,7 @@ function paintGlow(w){
    布色与漂移速度吃 --w，--w 不能过渡，用 rAF 推过去 */
 function setWarmth(w,ms){
   if(ms===undefined) ms=4000;
+  var prevW=warmthNow();
   document.body.dataset.warmth=w;
   var idle=glowActive===glowA?glowB:glowA;
   paintGroup(idle,w);
@@ -2121,6 +2157,7 @@ function setWarmth(w,ms){
   document.body.classList.toggle('hot', w>=0.9);
   document.body.classList.toggle('distant', w<=0.25);
   setPresence();
+  if(prevW>=.6 && w<=.45) charmUnlock('rose');   /* 她第一次冷下来（≥.6 → ≤.45）：凋谢的玫瑰 */
   cancelAnimationFrame(wTween);
   var cur=parseFloat(document.body.style.getPropertyValue('--w'));
   if(isNaN(cur)) cur=warmthNow();
@@ -2913,6 +2950,7 @@ function buildShelf(){
     shelf.appendChild(d); return;
   }
   types.forEach(function(k){
+    if(k==='charm') return;                /* 挂件不进零件匣（它飞进右上角圆键了） */
     var w=WIDGETS[k]; if(!w) return;
     var b=document.createElement('button'); b.type='button'; b.className='shelfrow';
     b.innerHTML='<div><div class="wn">'+w.name+'</div><div class="wd">'+w.desc+'</div></div>'+
@@ -3181,6 +3219,7 @@ function hello(sink,scroll){
       setTimeout(function(){ herCard(sink,scroll,HELLO_CARD.text,HELLO_CARD.opts); },900);
     });
   },1100);
+  setTimeout(realDayCheck,4000);   /* 真实模式：按自然日补发第三天 / 第七天的挂件 */
 }
 
 /* ---------- 她的引导 ----------
@@ -3386,7 +3425,6 @@ function spiritGuideSkip(){
 /* ---------- 输入区 ----------
    右边永远只有一个控件。空着的时候它是图片，有东西可发的时候它就是发送。
    一次只做一件事，和日历底栏、贴纸上一句话是同一条。 */
-var sendOnce={done:false};
 document.querySelectorAll('.composer').forEach(function(c){
   var field=c.querySelector('.cfield'), input=c.querySelector('.cin');
   var chips=c.querySelector('.chips'), file=c.querySelector('.cfile');
@@ -3459,7 +3497,6 @@ document.querySelectorAll('.composer').forEach(function(c){
     sink.appendChild(m);
     afterAppend(m);
     input.value=''; grow(); clearImg();
-    if(!sendOnce.done){ sendOnce.done=true; achvUnlock('first'); }   /* 第一句话 */
     deliver(m);
   }
   /* 语音：按住麦克风说话，松手发出去，少于一拍不算 */
@@ -3827,7 +3864,7 @@ var wgSeq=0;
 function placeWidget(id,opts){
   opts=opts||{};
   var reg=WIDGETS[id];
-  if(!reg || !reg.make || handOut() || go.now!==4) return null;
+  if(!reg || !reg.make || (!opts.force && handOut()) || go.now!==4) return null;
   /* 第一件东西落下之前，空态那行字先走 */
   var eh=track.querySelector('.ehint');
   if(eh && !track.classList.contains('live')){
@@ -3844,9 +3881,13 @@ function placeWidget(id,opts){
   wg.style.top=(slot.offsetTop+10)+'px'; wg.style.left=(opts.left||16)+'px';
   fitTrack();
   widgets.push(wg); wireDrag(wg); queueDim();
-  /* 七件东西都上过画布：解一笔成就 */
-  var u={}; widgets.forEach(function(w){ u[w.id.split('-')[1]]=1; });
-  if(Object.keys(u).length>=WKEYS.length) achvUnlock('seven');
+  /* 她第一次放 widget、且你碰了它（拖或点都算）：她给的蛋形小游戏机 */
+  if(!eggTouch.done && id!=='charm'){
+    eggTouch.done=true;
+    wg.addEventListener('pointerup',function(){
+      setTimeout(function(){ charmUnlock('egg'); },300);
+    },{once:true});
+  }
   function land(){
     dropIn(wg);
     if(reg.init) reg.init(wg.firstElementChild);
@@ -3897,13 +3938,14 @@ function smoothTo(el,to,ms,done){
 }
 /* 主动消息：话先进对话屏（带时间戳）；你不在对话屏时，顶栏滑下一条极薄的玻璃条，
    3.5s 自己收起，点了去对话屏。不震动、不红点、不催 */
-var abar=document.getElementById('abar'), abarT=0;
+var abar=document.getElementById('abar'), abarT=0, arriveOnce={done:false};
 abar.addEventListener('click',function(){
   abar.classList.remove('show'); clearTimeout(abarT); go(4);
 });
 function arriveAct(text){
   if(herMuted) return;   /* 「停止她的主动联系」开着：她不主动发消息 */
   if(guiding) return;    /* 引导期间挂起：她正带着你看，不插话 */
+  if(!arriveOnce.done){ arriveOnce.done=true; charmUnlock('letter'); }   /* 她第一次主动发来消息：信封 */
   var sink=track;
   var eh=sink.querySelector('.ehint'); if(eh) eh.classList.add('bye');
   sink.classList.add('live'); maybeStamp(sink);
@@ -4027,6 +4069,7 @@ function execAct(a,next){
     case 'say':
       herSay(track,scroller,a.text,function(){
         if(a.ref){ var v=document.getElementById(a.ref); if(v) herPoint(v); }
+        if(a.refuse) charmUnlock('rose');     /* 她第一次拒绝：凋谢的玫瑰 */
         setTimeout(next, pace(a.ref?1500:320));
       });
       break;
@@ -4049,7 +4092,6 @@ function execAct(a,next){
             track.appendChild(st);
             player.marks[a.mark]=st;
             scroller.scrollTop=scroller.scrollHeight;
-            achvUnlock('noted');
           }
           setTimeout(next,pace(900));
         });
@@ -4078,7 +4120,6 @@ function execAct(a,next){
       player.playing=false; menuNote();
       document.body.classList.add('ended');
       markEnded();
-      achvUnlock('twelve',true);
       setPresence('');
       go(14);
       break;
@@ -4102,7 +4143,10 @@ function scene(n){
   if(sc.skipIfMuted && herMuted){ player.i=n; menuNote(); return; }
   player.i=n; player.playing=true; menuNote();
   if(go.now!==4) go(4);
-  runActs(sc.acts, function(){ player.playing=false; menuNote(); });
+  /* 第几天到了：她先把那天的挂件给你，再说正事 */
+  charmSceneStart(sc, function(){
+    runActs(sc.acts, function(){ player.playing=false; menuNote(); });
+  });
 }
 function chooseBranch(k){
   var opts=player.branch; if(!opts) return;
@@ -4186,7 +4230,12 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
     else if(a==='demo') demoCanvas();
     else if(a==='shelf') go(12);
     else if(a==='netfail'){ document.body.classList.toggle('netfail'); setPresence(); }   /* 断网：她那侧顶栏小字「连不上」 */
-    else if(a==='unlock') achvUnlock('noted');
+    else if(a==='unlock'){
+      /* 演示：她给下一枚挂件（按登记表的顺序） */
+      var order=['rose','letter','egg','match','ring'];
+      var next1=order.filter(function(id){ return !charmGot(id); })[0];
+      if(next1){ if(go.now!==4) go(4); charmUnlock(next1); }
+    }
     /* 演示：被结束——和剧本第十二天同一个收尾 */
     else if(a==='endit'){ markEnded(); document.body.classList.add('ended'); setPresence(''); go(14); }
     /* 她说一句，然后笔尖把一个新东西带进来（warmth < .45 时只剩这句话） */
@@ -4343,58 +4392,156 @@ function setFontSize(k){
 }
 try{ var fs0=localStorage.getItem('after-fs'); if(fs0==='s'||fs0==='l') setFontSize(fs0); }catch(e){}
 
-/* ---------- 成就页 ----------
-   条目登记表在 STRINGS.achv.items（文案统一：一行题、一行说明），
-   未获得的整页灰态。获得的记在 localStorage（after-achv），达成时 toast。
-   左右滑翻页（scroll-snap），小圆点跟着走；桌面上按住也能拖 */
-function achvGot(){ try{ return JSON.parse(localStorage.getItem('after-achv')||'[]'); }catch(e){ return []; } }
-function achvUnlock(id,quiet){
-  var got=achvGot(); if(got.indexOf(id)>=0) return;
-  got.push(id); try{ localStorage.setItem('after-achv',JSON.stringify(got)); }catch(e){}
-  buildAchv();
-  if(quiet) return;
-  var it=STRINGS.achv.items.filter(function(a){ return a.id===id; })[0];
-  if(it) achvToast(STRINGS.achv.toast+' · '+it.t);
+/* ---------- 她给的挂件（成就页） ----------
+   挂件登记表与 3D 场景在 frontend/charms.js（首次打开/首次解锁时动态 import，主画布零开销）。
+   解锁记录 localStorage.after-charms：[{id,at,day}]；看过哪些记 after-charms-seen。
+   她给的过程：离屏渲 PNG → 笔尖放到画布（charm widget）→ 晃两下 → 她说一句 →
+   4s 后 PNG 飘进右上角圆键（FLIP），圆键图标从此是小开口环，新到一枚带红点 */
+var charmsMod=null, charmsLoad=null, eggTouch={done:false};
+function loadCharms(){
+  if(!charmsLoad) charmsLoad=import('./charms.js').then(function(m){ charmsMod=m; return m; },function(){ return null; });
+  return charmsLoad;
 }
-function buildAchv(){
-  var got=achvGot();
-  var pgr=document.getElementById('achvPgr'), dots=document.getElementById('achvDots');
-  pgr.innerHTML=''; dots.innerHTML='';
-  STRINGS.achv.items.forEach(function(a,i){
-    var s=document.createElement('section');
-    s.className='pg'+(got.indexOf(a.id)<0?' locked':'');
-    var m=document.createElement('div'); m.className='medal';
-    var t=document.createElement('div'); t.className='atitle'; t.textContent=a.t;
-    var d=document.createElement('div'); d.className='adesc'; d.textContent=a.d;
-    var l=document.createElement('div'); l.className='alock'; l.textContent=STRINGS.achv.locked;
-    s.appendChild(m); s.appendChild(t); s.appendChild(d); s.appendChild(l);
-    pgr.appendChild(s);
-    var dot=document.createElement('i'); if(i===0) dot.className='on'; dots.appendChild(dot);
+if('requestIdleCallback' in window) requestIdleCallback(function(){ loadCharms(); });
+function charmsGot(){ try{ return JSON.parse(localStorage.getItem('after-charms')||'[]'); }catch(e){ return []; } }
+function charmGot(id){ return charmsGot().some(function(c){ return c.id===id; }); }
+function charmItem(id){ return STRINGS.achv.items.filter(function(a){ return a.id===id; })[0]; }
+function charmsUnseen(){
+  var seen=[]; try{ seen=JSON.parse(localStorage.getItem('after-charms-seen')||'[]'); }catch(e){}
+  return charmsGot().map(function(c){ return c.id; }).filter(function(id){ return seen.indexOf(id)<0; });
+}
+function charmsMarkSeen(){
+  try{ localStorage.setItem('after-charms-seen',JSON.stringify(charmsGot().map(function(c){ return c.id; }))); }catch(e){}
+}
+/* 圆键：奖章 → 小开口环（有过挂件之后），红点=新到未看 */
+var RING_ICON='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><circle cx="9.7" cy="10.5" r="5.3"/><path d="M12.4 4.4a5.3 5.3 0 0 1 3.4 3.5"/></svg><i class="cdot"></i>';
+function ringBtn(dot){
+  document.querySelectorAll('.hbtn.achv').forEach(function(b){
+    if(!b.classList.contains('ringed')){ b.classList.add('ringed'); b.innerHTML=RING_ICON; }
+    b.classList.toggle('reddot',!!dot);
   });
 }
-buildAchv();
-var achv=document.getElementById('achv');
-document.querySelectorAll('.hbtn.achv').forEach(function(b){
-  b.addEventListener('click',function(){ buzz(6); openG(achv); });
-});
-document.getElementById('achvClose').addEventListener('click',function(){ closeG(achv); });
-(function(){
-  var pgr=document.getElementById('achvPgr'), dots=document.getElementById('achvDots');
-  function syncDots(){
-    var i=Math.round(pgr.scrollLeft/pgr.clientWidth);
-    dots.querySelectorAll('i').forEach(function(d,k){ d.classList.toggle('on',k===i); });
+/* 解锁的唯一入口。done 在她说完那句之后回（剧本幕前要给挂件时靠它排队） */
+function charmUnlock(id,done){
+  if(charmGot(id)){ if(done) done(); return; }
+  var list=charmsGot(), sc=SCRIPT.scenes[player.i-1];
+  var rec={id:id, at:Date.now(), day:(player.playing&&sc&&sc.day)||metDays()};
+  list.push(rec);
+  try{ localStorage.setItem('after-charms',JSON.stringify(list)); }catch(e){}
+  ringBtn(true);
+  if(charmsMod && charmsMod.hangNow) charmsMod.hangNow(rec);   /* 成就页正开着：当场挂上 */
+  loadCharms().then(function(m){
+    var withImg=function(png){
+      if(go.now===4 && !document.body.classList.contains('ended')){
+        var wg=placeWidget('charm',{img:png,force:true});
+        if(wg){
+          wg.firstElementChild.classList.add('sway2');
+          setTimeout(function(){ flyCharm(wg,png); },4000);
+        }
+      }
+      var it=charmItem(id);
+      if(it) charmSay(it.line,done); else if(done) done();
+    };
+    if(m && m.charmPNG) m.charmPNG(id).then(withImg,function(){ withImg(m.flatPNG(id,512)); });
+    else withImg('');
+  });
+}
+/* 她的打字机一次只有一台：正打着就等一会儿再说 */
+function charmSay(text,done){
+  if(document.body.classList.contains('hertyping')){ setTimeout(function(){ charmSay(text,done); },900); return; }
+  herSay(track,scroller,text,function(){ if(done) done(); });
+}
+/* PNG 飘进右上角圆键：量好两头的位置，克隆一张飞过去，画布上的原件收掉 */
+function flyCharm(wg,png){
+  var btn=document.querySelector('.screen[data-s="4"] .hbtn.achv');
+  if(!wg.isConnected || !btn) return;
+  var r=wg.getBoundingClientRect(), b=btn.getBoundingClientRect();
+  if(!r.width){ cleanup(); return; }
+  var c=document.createElement('img');
+  c.src=png; c.className='charmfly'; c.alt='';
+  c.style.left=r.left+'px'; c.style.top=r.top+'px';
+  c.style.width=r.width+'px'; c.style.height=r.height+'px';
+  document.body.appendChild(c);
+  wg.style.transition='opacity .3s var(--ease)'; wg.style.opacity='0';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    var dx=b.left+b.width/2-(r.left+r.width/2), dy=b.top+b.height/2-(r.top+r.height/2);
+    c.style.transform='translate('+dx+'px,'+dy+'px) scale(.14)'; c.style.opacity='.2';
+  });});
+  setTimeout(function(){
+    c.remove(); cleanup();
+    btn.classList.add('press'); setTimeout(function(){ btn.classList.remove('press'); },300);
+  },720);
+  function cleanup(){
+    var slot=track.querySelector('.slot[data-w="'+wg.id+'"]'); if(slot) slot.remove();
+    var ix=widgets.indexOf(wg); if(ix>=0) widgets.splice(ix,1);
+    wg.remove(); fitTrack();
   }
-  pgr.addEventListener('scroll',function(){ requestAnimationFrame(syncDots); });
-  var px=null, sl=0;
-  pgr.addEventListener('pointerdown',function(e){ px=e.clientX; sl=pgr.scrollLeft; });
-  pgr.addEventListener('pointermove',function(e){
-    if(px===null) return;
-    pgr.scrollLeft=sl-(e.clientX-px);
+}
+/* 打开 / 关闭成就页 */
+var achv=document.getElementById('achv'), achvNoteT=0;
+document.querySelectorAll('.hbtn.achv').forEach(function(b){
+  b.addEventListener('click',function(){
+    buzz(6); openG(achv); ringBtn(false);
+    openCharmsPage();
   });
-  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
-    pgr.addEventListener(ev,function(){ px=null; });
+});
+document.getElementById('achvClose').addEventListener('click',function(){
+  closeG(achv);
+  if(charmsMod) charmsMod.closePage();
+});
+function openCharmsPage(){
+  var env={
+    canvas:document.getElementById('achvGl'), fallEl:document.getElementById('achvFall'),
+    unlocked:charmsGot(), fresh:charmsUnseen(), calm:calm,
+    forceFlat:location.search.indexOf('flat=1')>=0,
+    dark:document.body.classList.contains('dark'),
+    fx:location.search.indexOf('fx=1')>=0,
+    onBuzz:buzz, onNote:showAchvNote
+  };
+  charmsMarkSeen();
+  loadCharms().then(function(m){
+    if(!m) return;
+    env.toFlat=function(){ m.openPage(Object.assign({},env,{forceFlat:true})); };   /* 性能闸触发 */
+    m.openPage(env);
   });
-})();
+}
+/* 底部纸条：日期 · 第 N 天 · 她那句话，3.5s 自己收 */
+function showAchvNote(rec){
+  if(!rec) return;
+  var it=charmItem(rec.id), d=new Date(rec.at||Date.now());
+  var el=document.getElementById('achvNote');
+  el.textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 第 '+rec.day+' 天'+(it?' · '+it.line:'');
+  el.classList.add('show');
+  clearTimeout(achvNoteT);
+  achvNoteT=setTimeout(function(){ el.classList.remove('show'); },3500);
+}
+/* 幕首：第几天到了，她先给挂件再说正事（day 字段见 SCRIPT.md） */
+function charmSceneStart(sc,done){
+  var due=[];
+  if(sc.day>=3 && !charmGot('match')) due.push('match');
+  if(sc.day>=7 && !charmGot('ring')) due.push('ring');
+  (function next(){
+    var id=due.shift();
+    if(!id){ done(); return; }
+    charmUnlock(id,function(){ setTimeout(next,600); });
+  })();
+}
+/* 真实模式：按首条消息起算自然日（剧本在播时不掺和） */
+function realDayCheck(){
+  if(player.playing || player.branch) return;
+  var d=metDays();
+  if(d>=7){ charmUnlock('ring'); charmUnlock('match'); }
+  else if(d>=3) charmUnlock('match');
+}
+/* ?charms=all：五枚全解锁（拍素材 / 验收用，不走仪式） */
+if(location.search.indexOf('charms=all')>=0){
+  var _all=['rose','letter','egg','match','ring'], _have=charmsGot(), _added=false;
+  _all.forEach(function(id){
+    if(!_have.some(function(c){ return c.id===id; })){ _have.push({id:id,at:Date.now(),day:metDays()}); _added=true; }
+  });
+  if(_added) try{ localStorage.setItem('after-charms',JSON.stringify(_have)); }catch(e){}
+}
+if(charmsGot().length) ringBtn(charmsUnseen().length>0);
 
 /* ---------- 头像胶囊的点按 ----------
    点顶栏她的名字胶囊：一张她的档案纸（名字、一句自述、认识第 N 天），不可编辑 */
@@ -4623,11 +4770,11 @@ document.getElementById('gsubBack').addEventListener('click',function(){
   gsub.classList.remove('open');
 });
 
-/* ---------- 成就达成 toast ---------- */
+/* ---------- 通用 toast（顶部一条，暂未被用；留着给以后的一行提示） ---------- */
 var atoastT=0;
 function achvToast(text){
   var el=document.getElementById('atoast');
-  el.querySelector('.t').textContent=text||STRINGS.achv.toast;
+  el.querySelector('.t').textContent=text||'';
   el.classList.add('show'); buzz(10);
   clearTimeout(atoastT);
   atoastT=setTimeout(function(){ el.classList.remove('show'); },2600);
@@ -4874,7 +5021,6 @@ function boot(){
     document.body.classList.add('ended','no-register');
     setPresence('');
     go(4);
-    achvUnlock('stay',true);
     return;
   }
   document.body.classList.remove('ended');

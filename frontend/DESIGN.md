@@ -185,6 +185,15 @@
 - 零件匣只装她真的给过的东西（画布上放过的种类）；空匣一行「她还没给你东西。」。独件页一件一物，副本与原件吃同一套交互（机器类各自实例）。
 - 机器实例进第 4 屏 start、离屏 stop；清画布随 DOM 退役。
 
+### 她给的挂件（成就页）
+
+- 成就页是一串挂在两根横杆上的 3D 挂件：`frontend/charms.js`（three.js，`vendor/three-bundle.js`，esbuild 一次性打包产物入库、不走 CDN）在首次打开/首次解锁时动态 import，主画布零开销。五枚全是程序化几何（1 单位 = 1cm，尺寸与 Blender/打样共用）：凋谢的玫瑰（她第一次拒绝）、信封（她第一次主动发消息）、蛋形小游戏机（她第一次放 widget 且你碰了它）、火柴盒（第三天）、戒指（第七天，直接套在开口环上不加链）。
+- 挂件上没有任何文字：日期 · 第 N 天 · 她那句话写在页面底部纸条上。空位只挂一个开口环，没有剪影没有问号。
+- 待机各自相位轻摆；点一枚荡起来（buzz(5)）并浮纸条；按住拖动只转它（绕 y 轴），松手回正；手机倾斜整串朝重力方向偏（≤12°）。
+- 她给的过程：离屏 renderer 把该挂件（含小环、不含链）渲成 512×512 透明 PNG（每枚只渲一次，存 `after-charm-img-*`）→ 笔尖把它当 charm widget 放到画布 → 晃两下 → 她说一句 → 4s 后 PNG 飘进右上角圆键（FLIP），圆键图标从此是小开口环，新到一枚带红点，打开成就页即消失。首次打开时新到的那枚多晃一次。
+- 降级（无 WebGL2 / 减动效 / `?flat=1` / 8 帧平均 >24ms）：同一串平涂 PNG（flatPNG 2D 绘制），CSS 摆动保留，不能转。`?charms=all` 五枚强制全解锁（拍素材）；`?fx=1` 桌面后期（GTAO+景深）。
+- 解锁钩子：say 带 `refuse:true` 或 warmth 首次 ≥.6→≤.45（玫瑰）· `arriveAct` 首次（信封，不含 hello）· 首个 widget 上首次 pointerup（蛋机）· 剧本 `day`≥3 / ≥7（火柴盒/戒指，幕首她先给挂件再说正事）；真实模式按 `after-met` 自然日，hello 后补发。
+
 ---
 
 ## 八、剧本播放器与状态
@@ -197,7 +206,7 @@
 
 ### localStorage 键（全部 `after-` 前缀；隐私页「导出我的数据」全量打包，「删除账户」全清）
 
-`after-guided` 引导已播 · `after-dark` 夜间 · `after-mute` 停止主动联系 · `after-qfrom/qto` 安静时段（只 UI）· `after-cam-asked` 相机前置已问 · `after-profile` 注册资料 · `after-login` 走过登录路径 · `after-fs` 字号三档 · `after-reports` 报告 · `after-achv` 成就 · `after-met` 认识第 1 天 · `after-ended` 结束态
+`after-guided` 引导已播 · `after-dark` 夜间 · `after-mute` 停止主动联系 · `after-qfrom/qto` 安静时段（只 UI）· `after-cam-asked` 相机前置已问 · `after-profile` 注册资料 · `after-login` 走过登录路径 · `after-fs` 字号三档 · `after-reports` 报告 · `after-charms` 她给的挂件 · `after-charms-seen` 挂件已看 · `after-charm-img-*` 挂件 PNG 缓存 · `after-met` 认识第 1 天 · `after-ended` 结束态
 
 ---
 
