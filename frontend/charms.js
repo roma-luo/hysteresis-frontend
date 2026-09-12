@@ -20,20 +20,11 @@ export const CHARMS = [
   { id: 'ring',   build: buildRing,   noChain: true  }   /* 第七天：直接套在开口环上，不加链 */
 ];
 
-/* 两排挂位：上排三个、下排两个（以后加挂件继续往下加杆）。
-   杆可以出血出屏；z 向前后错开（真的挂串前后本来就不在一个平面上） */
-const RODS = [
-  { x0: -6.4, x1: 6.4, y: 2.55 },
-  { x0: -4.2, x1: 4.2, y: -6.0 }
-];
-const SLOTS = [
-  { id: 'rose',   x: -4.6, z: .6,  rod: 0 },
-  { id: 'letter', x: -0.2, z: 1.4, rod: 0 },
-  { id: 'egg',    x: 4.4,  z: -.6, rod: 0 },
-  { id: 'match',  x: -2.3, z: .8,  rod: 1 },
-  { id: 'ring',   x: 2.3,  z: -.4, rod: 1 }
-];
+/* 一页一枚：五个挂位按 CHARMS 顺序排成一行，间距 PAGE_W（世界单位，fitRenderer 里算，
+   保证相邻页不入镜）；每页页顶中央一个开口环，下面按原逻辑挂珠链 + 挂件 */
+const SLOTS = CHARMS.map(function (c) { return { id: c.id }; });
 const CHAIN_LEN = 2.4, CHAIN_BEADS = 14;
+let PAGE_W = 12;
 
 /* ================= 材质 ================= */
 
@@ -181,15 +172,17 @@ function buildRose() {
   return g;
 }
 
-/* 2 · 信封：左上角穿环，斜挂着；封口盖打开 35°，信纸露出 .5，盖尖一枚火漆 */
+/* 2 · 信封：左上角穿环，从角上斜垂下来（重力把对角线拉直）；封口盖打开 35°，
+   信纸露出 .5，盖尖一枚火漆 */
 function buildLetter() {
   const g = new T.Group();
   const inner = new T.Group();
   const bodyM = frosted('#F2C9B3', { transmission: .38 });
-  const tilt = .2;
-  /* 挂点在左上角：先摆正再算倾斜后的角位置，让角正好落在环下 */
+  const tilt = -.7;
+  /* 角（-2,+1.35）落在环下 (0,-.62)：center = R(-θ)·H − P，对角线对正，质量基本居中 */
   const cos = Math.cos(tilt), sin = Math.sin(tilt);
-  const cx = -( -2 * cos - 1.35 * sin ), cy = -.62 - ( -2 * sin + 1.35 * cos );
+  const hx = 0, hy = -.62;
+  const cx = (hx * cos + hy * sin) - (-2), cy = (-hx * sin + hy * cos) - 1.35;
   const body = new T.Mesh(new T.RoundedBoxGeometry(4, 2.7, .35, 4, .12), bodyM);
   body.position.set(cx, cy, 0);
   inner.add(body);
@@ -198,7 +191,8 @@ function buildLetter() {
   inner.add(sheet);
   const flapShape = new T.Shape();
   flapShape.moveTo(-2, 0); flapShape.lineTo(2, 0); flapShape.lineTo(0, -1.45); flapShape.closePath();
-  const flap = new T.Mesh(new T.ExtrudeGeometry(flapShape, { depth: .06, bevelEnabled: false }), bodyM);
+  const flap = new T.Mesh(new T.ExtrudeGeometry(flapShape, { depth: .08, bevelEnabled: false }),
+    frosted('#E9B498', { transmission: .3 }));   /* 盖比身深半档，薄薄一片才看得出来 */
   flap.position.set(cx, cy + 1.35, .2);    /* 铰在上边 */
   flap.rotation.x = Math.PI - .61;         /* 拆过了：盖翻到后边，离竖直 35° */
   inner.add(flap);
@@ -210,7 +204,7 @@ function buildLetter() {
     new T.MeshStandardMaterial({ color: '#7E2F2F', roughness: .5 }));
   dent.position.z = .065;
   seal.add(dent);
-  inner.rotation.z = tilt;
+  inner.rotation.z = tilt;                 /* 从左上角斜垂，对角线对正 */
   g.add(inner);
   g.add(connRing());
   return g;
@@ -298,10 +292,10 @@ function buildMatch() {
   const g = new T.Group();
   const inner = new T.Group();
   const sleeve = new T.Mesh(new T.RoundedBoxGeometry(3.2, 2.2, .9, 3, .08), frosted('#D9A25A', { transmission: .32 }));
-  sleeve.position.set(1.15, -1.7, 0);
+  sleeve.position.set(.7, -1.7, 0);
   inner.add(sleeve);
   const drawer = new T.Mesh(new T.RoundedBoxGeometry(3.0, 2.0, .75, 2, .06), paper('#F0E4C8'));
-  drawer.position.set(1.15, -.65, 0);      /* 向上抽出 1.1 */
+  drawer.position.set(.7, -.65, 0);        /* 向上抽出 1.1 */
   inner.add(drawer);
   const stickM = paper('#E7D9A8'), headM = frosted('#B23A2E', { roughness: .3, transmission: .2 });
   [-.34, 0, .34].forEach(function (dx, i) {
@@ -311,15 +305,15 @@ function buildMatch() {
     const h = new T.Mesh(new T.SphereGeometry(.12, 12, 10), headM);
     h.scale.set(1, .82, 1); h.position.y = 2.62;
     m.add(s, h);
-    m.position.set(1.15 + dx, -1.15, 0);
+    m.position.set(.7 + dx, -1.15, 0);
     m.rotation.z = T.MathUtils.degToRad([-2.2, .8, 2.6][i]);   /* 不整齐 */
     inner.add(m);
   });
   const ph = new T.Mesh(new T.BoxGeometry(2.9, .5, .05),
     new T.MeshStandardMaterial({ color: '#5A4A3A', roughness: 1 }));
-  ph.position.set(1.15, -1.7, .475);
+  ph.position.set(.7, -1.7, .475);
   inner.add(ph);
-  inner.rotation.z = .12;
+  inner.rotation.z = .1;
   g.add(inner);
   g.add(connRing());
   return g;
@@ -499,46 +493,39 @@ let firstOpenIds = [];
 function buildScene() {
   scene = new T.Scene();
   scene.environment = sharedEnv(renderer);
-  const dark = pageEnv && pageEnv.dark;
-  scene.environmentIntensity = dark ? .75 : 1.15;
-  const key = new T.DirectionalLight('#FFF2E8', dark ? 2.6 : 2.4); key.position.set(5, 9, 7);
-  const fill = new T.DirectionalLight('#D9E2F0', dark ? .4 : .55); fill.position.set(-7, 3, -5);
-  scene.add(key, fill);
+  applyLighting(pageEnv && pageEnv.dark);
   camera = new T.PerspectiveCamera(26, 1, .1, 200);
-  camera.position.set(0, -4.55, 40);
-  camera.lookAt(0, -4.75, 0);
-  /* 两根横杆，端头小珠 */
-  const rodM = nickel();
-  RODS.forEach(function (r) {
-    const len = r.x1 - r.x0;
-    const rod = new T.Mesh(new T.CylinderGeometry(.06, .06, len, 12), rodM);
-    rod.rotation.z = Math.PI / 2;
-    rod.position.set((r.x0 + r.x1) / 2, r.y, 0);
-    scene.add(rod);
-    [r.x0, r.x1].forEach(function (x) {
-      const cap = new T.Mesh(new T.SphereGeometry(.09, 10, 8), rodM);
-      cap.position.set(x, r.y, 0);
-      scene.add(cap);
-    });
-  });
   mobile = new T.Group();
   scene.add(mobile);
-  /* 五个挂位：环 +（解锁的）链与挂件；空位只挂一个开口环 */
+  /* 五个挂位按 CHARMS 顺序排一行（x 在 fitRenderer 里按 PAGE_W 落位）：
+     页顶中央开口环 +（解锁的）链与挂件；空页只有一个开口环 */
   slots = SLOTS.map(function (s, i) {
     const g = new T.Group();
-    g.position.set(s.x, RODS[s.rod].y, s.z);
     mobile.add(g);
     const ring = splitRing(.42, .075);
     ring.position.y = -.45;
     g.add(ring);
     const slot = {
       id: s.id, group: g, charm: null, pivot: null,
-      a: 0, v: 0, spin: 0, spinV: 0, dragging: false,
+      a: 0, v: 0,
       phase: i * 1.7, per: 3.2 + (i % 3) * .45
     };
     if (unlocked[s.id]) hangCharm(slot);
     return slot;
   });
+}
+/* 亮暗只调环境与灯，不重建场景 */
+let keyLight = null, fillLight = null, darkNow = null;
+function applyLighting(dark) {
+  darkNow = dark;
+  scene.environmentIntensity = dark ? .75 : 1.15;
+  if (!keyLight) {
+    keyLight = new T.DirectionalLight('#FFF2E8', 2.4); keyLight.position.set(5, 9, 7);
+    fillLight = new T.DirectionalLight('#D9E2F0', .55); fillLight.position.set(-7, 3, -5);
+    scene.add(keyLight, fillLight);
+  }
+  keyLight.intensity = dark ? 2.6 : 2.4;
+  fillLight.intensity = dark ? .4 : .55;
 }
 function hangCharm(slot) {
   const def = CHARMS.filter(function (c) { return c.id === slot.id; })[0];
@@ -564,22 +551,28 @@ function fitRenderer() {
   renderer.setSize(w, h, false);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   camera.aspect = w / h;
-  /* 长焦正交感：按画幅反推距离，整串（含边距）始终居中装下 */
-  const fitH = 16.6, fitW = 13.4;
-  const dist = Math.max(fitH / 2, fitW / 2 / camera.aspect) / Math.tan(camera.fov * Math.PI / 360);
-  camera.position.set(0, -4.55, dist);
-  camera.lookAt(0, -4.75, 0);
+  /* 一枚挂件含环与链总高约 9.2（蛋机最长）：fitH 11.5，看向页中偏下 */
+  const fitH = 11.5;
+  const dist = (fitH / 2) / Math.tan(camera.fov * Math.PI / 360);
+  camera.position.set(0, -4.6, dist);
+  camera.lookAt(0, -4.6, 0);
   camera.updateProjectionMatrix();
+  /* 相邻页不入镜（桌面宽屏也是），五页自然排开 */
+  const visibleW = fitH * camera.aspect;
+  PAGE_W = Math.max(12, visibleW * 1.05);
+  slots.forEach(function (s, i) { s.group.position.x = i * PAGE_W; });
+  mobile.position.x = -page * PAGE_W;
+  mx = mobile.position.x; mxv = 0;
   if (composer) composer.setSize(w, h);
 }
-/* 点一下：荡起来（±14° 衰减），震一下，底部浮纸条 */
+/* 点一下（位移 < 7px 且 < 450ms）：当前页的挂件荡起来，空页无反应 */
 function tapSlot(slot) {
+  if (!slot || !slot.charm) return;
   slot.v += (slot.a > 0 ? -1 : 1) * .62;
   if (pageEnv.onBuzz) pageEnv.onBuzz(5);
   if (pageEnv.onNote) pageEnv.onNote(unlocked[slot.id]);
 }
 const ray = new T.Raycaster(), ndc = new T.Vector2();
-let active = null;
 function pick(ev) {
   const r = pageEnv.canvas.getBoundingClientRect();
   ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
@@ -593,35 +586,56 @@ function pick(ev) {
   const id = o && o.userData.slotId;
   return slots.filter(function (s) { return s.id === id; })[0] || null;
 }
+/* 翻页手势：横向位移 > 10px 且压过竖向才进拖动，mobile.position.x 跟手；
+   松手按速度（> .35 px/ms）或位移（> 屏宽 30%）进上/下一页，否则弹回 */
+let page = 0, mx = 0, mxv = 0, dragX = null;
 function onDown(ev) {
-  /* iOS 13+ 的陀螺仪要一次用户手势内的授权，悄悄试，不给就算了 */
-  if (!tiltOn && typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission().then(function (r) {
-      if (r === 'granted') { window.addEventListener('deviceorientation', onTilt); tiltOn = true; }
-    }).catch(function () {});
-  }
-  const s = pick(ev);
-  if (!s) return;                          /* 空位：无反应 */
-  active = { slot: s, x: ev.clientX, y: ev.clientY, t: performance.now(), moved: 0 };
-  s.dragging = false;
+  dragX = { x: ev.clientX, y: ev.clientY, t: performance.now(),
+            dx: 0, dy: 0, dragging: false, lx: ev.clientX, lt: performance.now(), vx: 0 };
   pageEnv.canvas.setPointerCapture && pageEnv.canvas.setPointerCapture(ev.pointerId);
 }
 function onMove(ev) {
-  if (!active) return;
-  const dx = ev.clientX - active.x;
-  active.moved += Math.abs(dx);
-  active.x = ev.clientX;
-  if (active.moved > 7) active.slot.dragging = true;
-  if (active.slot.dragging) active.slot.spin += dx * .02;   /* 拿起来转着看 */
+  if (!dragX) return;
+  const now = performance.now();
+  dragX.dx = ev.clientX - dragX.x;
+  dragX.dy = ev.clientY - dragX.y;
+  /* 瞬时速度（指数平滑），松手那刻用 */
+  const dtm = Math.max(1, now - dragX.lt);
+  dragX.vx = dragX.vx * .7 + ((ev.clientX - dragX.lx) / dtm) * .3;
+  dragX.lx = ev.clientX; dragX.lt = now;
+  if (!dragX.dragging && Math.abs(dragX.dx) > 10 && Math.abs(dragX.dx) > Math.abs(dragX.dy)) {
+    dragX.dragging = true;
+  }
+  if (dragX.dragging) {
+    const wpp = (11.5 * camera.aspect) / (pageEnv.canvas.clientWidth || 1);   /* 世界/像素 */
+    mobile.position.x = -page * PAGE_W + dragX.dx * wpp;
+    mxv = 0;
+  }
 }
 function onUp(ev) {
-  if (!active) return;
-  const s = active.slot;
-  if (!s.dragging && performance.now() - active.t < 450) tapSlot(s);
-  s.dragging = false;
-  active = null;
+  if (!dragX) return;
+  const d = dragX; dragX = null;
+  const dt = performance.now() - d.t;
+  if (d.dragging) {
+    const w = pageEnv.canvas.clientWidth || 1;
+    let to = page;
+    if (Math.abs(d.vx) > .35) to = page + (d.vx < 0 ? 1 : -1);
+    else if (Math.abs(d.dx) > w * .3) to = page + (d.dx < 0 ? 1 : -1);
+    gotoPage(to);
+    return;
+  }
+  if (Math.abs(d.dx) < 7 && Math.abs(d.dy) < 10 && dt < 450) {
+    const s = pick(ev);
+    if (s && slots.indexOf(s) === page) tapSlot(s);
+  }
 }
+/* 弹簧追 -page * PAGE_W；onPage(i, rec|null) 交给 index 更新纸条与圆点 */
+export function gotoPage(i, instant) {
+  page = T.MathUtils.clamp(i, 0, slots.length - 1);
+  if (instant) { mx = -page * PAGE_W; mxv = 0; if (mobile) mobile.position.x = mx; }
+  if (pageEnv && pageEnv.onPage) pageEnv.onPage(page, unlocked[slots[page].id] || null);
+}
+export function pageIndex() { return page; }
 function onTilt(e) {
   if (e.gamma === null || e.beta === null) return;
   tiltY = T.MathUtils.clamp(-e.gamma * Math.PI / 180 * .55, -.21, .21);   /* 最大 12° */
@@ -631,18 +645,22 @@ function loop(t) {
   const dt = Math.min(.05, (t - lastT) / 1000 || .016);
   lastT = t;
   const time = t / 1000;
-  slots.forEach(function (s) {
+  /* 翻页弹簧 */
+  if (!dragX || !dragX.dragging) {
+    const target = -page * PAGE_W;
+    const acc = (target - mx) * 14 - mxv * 7;
+    mxv += acc * dt; mx += mxv * dt;
+    mobile.position.x = mx;
+  }
+  slots.forEach(function (s, i) {
+    if (Math.abs(i - page) > 1) return;    /* 待机微摆只跑当前页与邻页 */
     /* 待机：各自相位 ±2° 微摆；点一下的冲量叠进来，弹簧衰减 */
     const idle = Math.sin(time * 2 * Math.PI / s.per + s.phase) * .035;
     const acc = (idle - s.a) * 6 - s.v * 2.4;
     s.v += acc * dt; s.a += s.v * dt;
     s.group.rotation.z = s.a;
-    /* 松手后转回正 */
-    const sacc = -s.spin * 8 - s.spinV * 3.2;
-    s.spinV += sacc * dt; s.spin += s.spinV * dt;
-    if (s.charm) s.charm.rotation.y = s.spin;
   });
-  /* 手机倾斜：整串朝重力方向偏 */
+  /* 手机倾斜：整页挂件顺重力偏 */
   mobile.rotation.z += (tiltY - mobile.rotation.z) * .05;
   mobile.rotation.x += (tiltX - mobile.rotation.x) * .05;
   if (composer) composer.render(); else renderer.render(scene, camera);
@@ -745,6 +763,7 @@ export function openPage(env) {
     const s = slots.filter(function (x) { return x.id === id; })[0];
     if (s) s.v += .8;
   });
+  gotoPage(env.startAt || 0, true);        /* 默认停在最新解锁的那一枚（index 传 startAt） */
   frames = []; gated = !!env.nogate;   /* nogate 只给调试页跳过性能闸（真机必走） */
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission !== 'function') {
@@ -758,6 +777,8 @@ export function openPage(env) {
   window.__charmsSlots = function () {                /* 测试探针 */
     return slots.map(function (s) { return { id: s.id, hasCharm: !!s.charm }; });
   };
+  window.__charmsPage = function () { return page; };  /* 测试探针：当前页号 */
+  window.__charmsGoto = function (i) { gotoPage(i, true); };  /* 调试翻页 */
   return 'gl';
 }
 export function closePage() {
@@ -770,12 +791,15 @@ export function closePage() {
     pageEnv.canvas.removeEventListener('pointercancel', onUp);
   }
   if (tiltOn) { window.removeEventListener('deviceorientation', onTilt); tiltOn = false; }
-  active = null;
+  dragX = null;
 }
-/* 解锁时页面正开着（少见）：当场挂上去 */
+/* 解锁时页面正开着（少见）：当场挂上去；若正在这一页，顺手刷新纸条 */
 export function hangNow(rec) {
   if (!slots.length) return;
   unlocked[rec.id] = rec;
   const s = slots.filter(function (x) { return x.id === rec.id; })[0];
-  if (s && !s.charm) hangCharm(s);
+  if (s && !s.charm) {
+    hangCharm(s);
+    if (slots.indexOf(s) === page && pageEnv && pageEnv.onPage) pageEnv.onPage(page, rec);
+  }
 }
