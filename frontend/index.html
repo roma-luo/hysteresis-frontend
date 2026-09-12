@@ -1715,6 +1715,8 @@ body.no-register #startScreen .startbtn.primary{display:none}
       <button data-w="0.25">warmth · 疏远</button>
       <button data-w="0">warmth · 结束</button>
       <button data-act="unlock">演示：她给个挂件</button>
+      <button data-act="charmsAll">演示：五枚都有</button>
+      <button data-act="charmsReset">演示：清空挂件</button>
       <button data-act="endit">演示：被结束</button>
       <button data-act="place">放一个新东西</button>
       <button data-act="reguide">重放引导</button>
@@ -4245,6 +4247,9 @@ dev.querySelectorAll('.devmenu button').forEach(function(b){
       var next1=order.filter(function(id){ return !charmGot(id); })[0];
       if(next1){ if(go.now!==4) go(4); charmUnlock(next1); }
     }
+    /* 演示：五枚都有——直接开成就页看满串；清空挂件——回到新用户态 */
+    else if(a==='charmsAll'){ charmsGrantAll(); ringBtn(false); openG(achv); openCharmsPage(); }
+    else if(a==='charmsReset'){ charmsReset(); }
     /* 演示：被结束——和剧本第十二天同一个收尾 */
     else if(a==='endit'){ markEnded(); document.body.classList.add('ended'); setPresence(''); go(14); }
     /* 她说一句，然后笔尖把一个新东西带进来（warmth < .45 时只剩这句话） */
@@ -4424,6 +4429,7 @@ function charmsMarkSeen(){
 }
 /* 圆键：奖章 → 小开口环（有过挂件之后），红点=新到未看 */
 var RING_ICON='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><circle cx="9.7" cy="10.5" r="5.3"/><path d="M12.4 4.4a5.3 5.3 0 0 1 3.4 3.5"/></svg><i class="cdot"></i>';
+var MEDAL_ICON='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.6" r="4"/><path d="M7.4 10.9L6 16.4l4-2.3 4 2.3-1.4-5.5"/></svg>';
 function ringBtn(dot){
   document.querySelectorAll('.hbtn.achv').forEach(function(b){
     if(!b.classList.contains('ringed')){ b.classList.add('ringed'); b.innerHTML=RING_ICON; }
@@ -4558,14 +4564,26 @@ function realDayCheck(){
   if(d>=7){ charmUnlock('ring'); charmUnlock('match'); }
   else if(d>=3) charmUnlock('match');
 }
-/* ?charms=all：五枚全解锁（拍素材 / 验收用，不走仪式） */
-if(location.search.indexOf('charms=all')>=0){
-  var _all=['rose','letter','egg','match','ring'], _have=charmsGot(), _added=false;
-  _all.forEach(function(id){
-    if(!_have.some(function(c){ return c.id===id; })){ _have.push({id:id,at:Date.now(),day:metDays()}); _added=true; }
+/* 五枚直接给齐（演示按钮与 ?charms=all 共用，不走仪式） */
+function charmsGrantAll(){
+  var have=charmsGot(), added=false;
+  STRINGS.achv.items.forEach(function(a){
+    if(!have.some(function(c){ return c.id===a.id; })){ have.push({id:a.id,at:Date.now(),day:metDays()}); added=true; }
   });
-  if(_added) try{ localStorage.setItem('after-charms',JSON.stringify(_have)); }catch(e){}
+  if(added) try{ localStorage.setItem('after-charms',JSON.stringify(have)); }catch(e){}
+  return have;
 }
+/* 清空挂件：记录、看过记号、PNG 缓存全删；圆键恢复奖章；成就页开着就关掉 */
+function charmsReset(){
+  try{ localStorage.removeItem('after-charms'); localStorage.removeItem('after-charms-seen'); }catch(e){}
+  STRINGS.achv.items.forEach(function(a){ try{ localStorage.removeItem('after-charm-img-'+a.id); }catch(e){} });
+  document.querySelectorAll('.hbtn.achv').forEach(function(b){
+    b.classList.remove('ringed','reddot'); b.innerHTML=MEDAL_ICON;
+  });
+  if(achv.classList.contains('open')){ closeG(achv); if(charmsMod) charmsMod.closePage(); }
+}
+/* ?charms=all：五枚全解锁（拍素材 / 验收用，不走仪式） */
+if(location.search.indexOf('charms=all')>=0) charmsGrantAll();
 if(charmsGot().length) ringBtn(charmsUnseen().length>0);
 
 /* ---------- 头像胶囊的点按 ----------

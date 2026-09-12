@@ -543,6 +543,7 @@ function hangCharm(slot) {
     const chain = beadChain();
     chain.position.y = -.85;
     slot.group.add(chain);
+    slot.chain = chain;
     pivot.position.y = -.85 - CHAIN_LEN - .3;
   } else {
     pivot.position.y = -.9;                /* 戒指：直接套在开口环上 */
@@ -553,6 +554,15 @@ function hangCharm(slot) {
   pivot.add(charm);
   slot.pivot = pivot; slot.charm = charm;
   slot.v += .5;                            /* 挂上去那一下轻轻荡 */
+}
+/* 清空挂件（演示菜单）：把挂着的摘下来，几何还掉 */
+function unhangCharm(slot) {
+  [slot.pivot, slot.chain].forEach(function (o) {
+    if (!o) return;
+    slot.group.remove(o);
+    o.traverse(function (m) { if (m.geometry) m.geometry.dispose(); });
+  });
+  slot.pivot = null; slot.chain = null; slot.charm = null;
 }
 function fitRenderer() {
   const cvs = pageEnv.canvas;
@@ -767,10 +777,11 @@ export function openPage(env) {
       if (!scene) {
         buildScene();
       } else {
-        /* 场景只建一次：新解锁的挂上去，亮暗只调环境与灯 */
+        /* 场景只建一次：新解锁的挂上去，摘掉的取下来，亮暗只调环境与灯 */
         if (!!env.dark !== darkNow) applyLighting(!!env.dark);
         slots.forEach(function (s) {
           if (unlocked[s.id] && !s.charm) hangCharm(s);
+          else if (!unlocked[s.id] && s.charm) unhangCharm(s);
         });
       }
       fitRenderer();
