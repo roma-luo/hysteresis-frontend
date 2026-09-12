@@ -1160,7 +1160,9 @@ body.devmode .dev{display:block}
 .dev>.devbtn::after{content:"";position:absolute;inset:-8px}
 .devmenu{position:absolute;right:0;top:30px;display:none;flex-direction:column;
   background:rgba(255,255,255,.93);border:0.5px solid rgba(var(--shade-rgb),.22);border-radius:var(--r-glass);
-  padding:6px;min-width:132px;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
+  padding:6px;min-width:132px;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
+  max-height:56vh;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.devmenu::-webkit-scrollbar{display:none}
 .dev.open .devmenu{display:flex}
 .devmenu .devnote{font-size:var(--fs-1);letter-spacing:var(--ls-caps);color:var(--ink-3);text-align:center;padding:4px 0 5px}
 .devmenu button{background:transparent;border:0;padding:8px 10px;font-size:var(--fs-3);color:var(--ink);
