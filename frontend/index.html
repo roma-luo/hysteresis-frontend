@@ -860,38 +860,44 @@ body.dark .loadbar i{background:var(--ink)}
 .dtoggle.on .sw{background:var(--ink)}
 .dtoggle.on .sw i{transform:translateX(15px)}
 
-/* 成就页：她给的挂件。GL 画布占满雾层（three.js 实时渲染）；
-   降级（无 WebGL2 / 减动效 / 太慢）时同位置平铺平涂 PNG */
+/* 成就页：她给的挂件。一页一枚，左右滑动翻看（GL 画布占满雾层）；
+   降级（无 WebGL2 / 减动效 / 太慢）时同一套翻页平铺平涂 PNG */
 .achvpage{padding:0;overflow:hidden}
 .achvhead{padding:calc(env(safe-area-inset-top) + 20px) 22px 8px}
 #achvGl{flex:1;min-height:0;width:100%;display:block;touch-action:none}
-#achvFall{flex:1;min-height:0;display:none;flex-direction:column;justify-content:space-evenly;
-  padding:4px 0 30px}
-#achvFall:not([hidden]){display:flex}
-#achvFall .crow{position:relative;display:flex;justify-content:space-evenly;align-items:flex-start}
-/* 降级页的两根杆：一条细线，环压在上面 */
-#achvFall .crow::before{content:'';position:absolute;left:10%;right:10%;top:6px;height:1px;
-  background:var(--ink-3);opacity:.22}
-#achvFall .cslot{display:flex;flex-direction:column;align-items:center;width:30%;color:var(--ink-3)}
-#achvFall .crow:last-child .cslot{width:36%}
-.cslot .cring{width:24px;height:13px;opacity:.5}
-.cslot .cring svg{width:100%;height:100%;display:block}
-.cslot .cchain{width:9px;height:40px;opacity:.4;margin-top:-1px}
-.cslot .cchain svg{width:100%;height:100%;display:block}
-.cslot .cimg{width:96px;height:96px;margin-top:-2px;transform-origin:50% 0;
+#achvFall{flex:1;min-height:0;display:none}
+#achvFall:not([hidden]){display:block}
+/* 平铺降级：横向翻页（scroll-snap），一页一枚竖排：环 → 链 → 图 */
+.pgr{height:100%;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab}
+.pgr::-webkit-scrollbar{display:none}
+.pgr .pg{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;color:var(--ink-3);gap:0}
+.pg .cring{width:24px;height:13px;opacity:.5}
+.pg .cring svg{width:100%;height:100%;display:block}
+.pg .cchain{width:9px;height:40px;opacity:.4;margin-top:-1px}
+.pg .cchain svg{width:100%;height:100%;display:block}
+.pg .cimg{width:96px;height:96px;margin-top:-2px;transform-origin:50% 0;
   animation:csway 3.8s ease-in-out infinite alternate}
-.cslot:nth-child(2) .cimg{animation-duration:4.4s;animation-delay:-1.2s}
-.cslot:nth-child(3) .cimg{animation-duration:3.3s;animation-delay:-.6s}
-.cslot .cimg.sw,.cslot.fresh .cimg{animation:cswayBig 1.5s var(--ease) 1,csway 3.8s ease-in-out 1.6s infinite alternate}
+.pg:nth-child(2n) .cimg{animation-duration:4.4s;animation-delay:-1.2s}
+.pg:nth-child(3n) .cimg{animation-duration:3.3s;animation-delay:-.6s}
+.pg .cimg.sw,.pg.fresh .cimg{animation:cswayBig 1.5s var(--ease) 1,csway 3.8s ease-in-out 1.6s infinite alternate}
 @keyframes csway{from{transform:rotate(-2.2deg)}to{transform:rotate(2.2deg)}}
 @keyframes cswayBig{0%{transform:rotate(0)}18%{transform:rotate(9deg)}42%{transform:rotate(-7deg)}
   68%{transform:rotate(4deg)}100%{transform:rotate(0)}}
-/* 点一枚 / 拖一枚的反馈条：日期 · 第 N 天 · 她那句话（写在页面上，不写在物件上） */
-.achvnote{position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));z-index:2;
-  max-width:84%;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;
-  transform:translate(-50%,8px);transition:opacity .3s var(--ease),transform .3s var(--ease);
-  font-size:var(--fs-2);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.achvnote.show{opacity:1;transform:translate(-50%,0)}
+/* 页脚：常驻纸条（当前页的日期 · 第 N 天 · 她那句话）+ 翻页圆点（实心=已有） */
+.achvfoot{flex:none;display:flex;flex-direction:column;align-items:center;gap:13px;
+  padding:8px 0 calc(22px + env(safe-area-inset-bottom))}
+.achvnote{max-width:84%;min-height:17px;padding:8px 16px;border-radius:999px;
+  font-size:var(--fs-2);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:opacity .25s var(--ease)}
+.achvnote:empty{opacity:0}
+.dots{display:flex;justify-content:center;gap:7px}
+.dots i{width:5px;height:5px;border-radius:50%;box-sizing:border-box;
+  border:1px solid var(--ink-3);background:none;opacity:.45;
+  transition:opacity 200ms var(--ease),background 200ms var(--ease)}
+.dots i.got{background:var(--ink-3);border-color:transparent}
+.dots i.on{opacity:1}
 /* 她给的过程：PNG 落在画布上晃两下，4s 后飘进右上角圆键 */
 .charmwg{width:96px;height:96px;transform-origin:50% 6%}
 .charmwg img{width:96px;height:96px;display:block}
@@ -1730,7 +1736,10 @@ body.no-register #startScreen .startbtn.primary{display:none}
       </button>
       <canvas id="achvGl"></canvas>
       <div id="achvFall" hidden></div>
-      <div class="achvnote" id="achvNote"></div>
+      <div class="achvfoot">
+        <div class="achvnote" id="achvNote"></div>
+        <div class="dots" id="achvDots"></div>
+      </div>
     </div>
   </div>
 
@@ -4478,7 +4487,7 @@ function flyCharm(wg,png){
   }
 }
 /* 打开 / 关闭成就页 */
-var achv=document.getElementById('achv'), achvNoteT=0;
+var achv=document.getElementById('achv');
 document.querySelectorAll('.hbtn.achv').forEach(function(b){
   b.addEventListener('click',function(){
     buzz(6); openG(achv); ringBtn(false);
@@ -4490,14 +4499,18 @@ document.getElementById('achvClose').addEventListener('click',function(){
   if(charmsMod) charmsMod.closePage();
 });
 function openCharmsPage(){
+  var list=charmsGot(), order=STRINGS.achv.items.map(function(a){ return a.id; });
+  var startAt=list.length?order.indexOf(list[list.length-1].id):0;   /* 默认停在最新解锁的那一枚 */
   var env={
     canvas:document.getElementById('achvGl'), fallEl:document.getElementById('achvFall'),
-    unlocked:charmsGot(), fresh:charmsUnseen(), calm:calm,
+    unlocked:list, fresh:charmsUnseen(), calm:calm,
     forceFlat:location.search.indexOf('flat=1')>=0,
     dark:document.body.classList.contains('dark'),
     fx:location.search.indexOf('fx=1')>=0,
-    onBuzz:buzz, onNote:showAchvNote
+    startAt:startAt<0?0:startAt,
+    onBuzz:buzz, onNote:writeNote, onPage:achvPageTo
   };
+  buildAchvDots(list);
   charmsMarkSeen();
   loadCharms().then(function(m){
     if(!m) return;
@@ -4505,15 +4518,27 @@ function openCharmsPage(){
     m.openPage(env);
   });
 }
-/* 底部纸条：日期 · 第 N 天 · 她那句话，3.5s 自己收 */
-function showAchvNote(rec){
-  if(!rec) return;
-  var it=charmItem(rec.id), d=new Date(rec.at||Date.now());
+/* 翻页圆点：当前页 .on，已解锁 .got（实心），未解锁空心 */
+function buildAchvDots(list){
+  var dots=document.getElementById('achvDots');
+  dots.innerHTML='';
+  STRINGS.achv.items.forEach(function(a,i){
+    var d=document.createElement('i');
+    if(list.some(function(c){ return c.id===a.id; })) d.className='got';
+    if(i===0) d.classList.add('on');
+    dots.appendChild(d);
+  });
+}
+/* 常驻纸条：当前页的「M月D日 · 第 N 天 · 她那句话」；空页清空（文字在页面上，不在物件上） */
+function writeNote(rec){
   var el=document.getElementById('achvNote');
+  if(!rec){ el.textContent=''; return; }
+  var it=charmItem(rec.id), d=new Date(rec.at||Date.now());
   el.textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 第 '+rec.day+' 天'+(it?' · '+it.line:'');
-  el.classList.add('show');
-  clearTimeout(achvNoteT);
-  achvNoteT=setTimeout(function(){ el.classList.remove('show'); },3500);
+}
+function achvPageTo(i,rec){
+  document.querySelectorAll('#achvDots i').forEach(function(d,k){ d.classList.toggle('on',k===i); });
+  writeNote(rec);
 }
 /* 幕首：第几天到了，她先给挂件再说正事（day 字段见 SCRIPT.md） */
 function charmSceneStart(sc,done){
