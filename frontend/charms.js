@@ -688,7 +688,7 @@ function loop(t) {
   }
 }
 
-/* ---------- 平铺降级页 ---------- */
+/* ---------- 平铺降级页：同一套翻页（scroll-snap），一页一枚 ---------- */
 const RING_SVG =
   '<svg viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">' +
   '<path d="M20 3.4a7 7 0 1 1-4.95 2.05"/></svg>';
@@ -702,34 +702,51 @@ function buildFlat() {
   pageEnv.canvas.style.display = 'none';
   f.hidden = false;
   f.innerHTML = '';
-  const rows = [[0, 3], [3, 5]];
-  rows.forEach(function (range) {
-    const row = document.createElement('div');
-    row.className = 'crow';
-    CHARMS.slice(range[0], range[1]).forEach(function (c) {
-      const rec = unlocked[c.id];
-      const s = document.createElement('div');
-      s.className = 'cslot' + (rec ? ' on' : '');
-      s.innerHTML = '<span class="cring">' + RING_SVG + '</span>';
-      if (rec) {
-        if (!c.noChain) {
-          const ch = document.createElement('span'); ch.className = 'cchain'; ch.innerHTML = CHAIN_SVG;
-          s.appendChild(ch);
-        }
-        const img = document.createElement('img');
-        img.className = 'cimg'; img.alt = ''; img.draggable = false;
-        img.src = cachedPNG(c.id) || flatPNG(c.id, 256);
-        s.appendChild(img);
-        if (firstOpenIds.indexOf(c.id) >= 0) s.classList.add('fresh');
-        s.addEventListener('click', function () {
-          img.classList.remove('sw'); void img.offsetWidth; img.classList.add('sw');
-          if (pageEnv.onBuzz) pageEnv.onBuzz(5);
-          if (pageEnv.onNote) pageEnv.onNote(rec);
-        });
+  const pgr = document.createElement('div');
+  pgr.className = 'pgr';
+  CHARMS.forEach(function (c, i) {
+    const rec = unlocked[c.id];
+    const s = document.createElement('section');
+    s.className = 'pg' + (rec ? ' got' : '') + (firstOpenIds.indexOf(c.id) >= 0 ? ' fresh' : '');
+    s.innerHTML = '<span class="cring">' + RING_SVG + '</span>';   /* 空页只有环 */
+    if (rec) {
+      if (!c.noChain) {                                            /* 戒指页不放链 */
+        const ch = document.createElement('span'); ch.className = 'cchain'; ch.innerHTML = CHAIN_SVG;
+        s.appendChild(ch);
       }
-      row.appendChild(s);
-    });
-    f.appendChild(row);
+      const img = document.createElement('img');
+      img.className = 'cimg'; img.alt = ''; img.draggable = false;
+      img.src = cachedPNG(c.id) || flatPNG(c.id, 256);
+      s.appendChild(img);
+      s.addEventListener('click', function () {
+        img.classList.remove('sw'); void img.offsetWidth; img.classList.add('sw');
+        if (pageEnv.onBuzz) pageEnv.onBuzz(5);
+        if (pageEnv.onNote) pageEnv.onNote(rec);
+      });
+    }
+    pgr.appendChild(s);
+  });
+  f.appendChild(pgr);
+  /* 滚动同步圆点与常驻纸条 */
+  function sync() {
+    const i = Math.max(0, Math.min(CHARMS.length - 1, Math.round(pgr.scrollLeft / pgr.clientWidth)));
+    if (pageEnv.onPage) pageEnv.onPage(i, unlocked[CHARMS[i].id] || null);
+  }
+  pgr.addEventListener('scroll', function () { requestAnimationFrame(sync); });
+  /* 桌面上按住也能拖 */
+  let px = null, sl = 0;
+  pgr.addEventListener('pointerdown', function (e) { px = e.clientX; sl = pgr.scrollLeft; });
+  pgr.addEventListener('pointermove', function (e) {
+    if (px === null) return;
+    pgr.scrollLeft = sl - (e.clientX - px);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
+    pgr.addEventListener(ev, function () { px = null; });
+  });
+  /* 初始停最新解锁的那一枚（布局没好就先零帧） */
+  requestAnimationFrame(function () {
+    pgr.scrollLeft = (pageEnv.startAt || 0) * pgr.clientWidth;
+    sync();
   });
 }
 
