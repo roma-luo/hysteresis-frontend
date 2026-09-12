@@ -427,13 +427,21 @@ export function flatPNG(id, size) {
 
 /* ================= 离屏快照（解锁时渲 PNG，每枚只渲一次） ================= */
 
-let _env = null, _pmrem = null;
+/* PMREM 环境贴图按 renderer 各建各的（WeakMap）：快照 renderer 用完即弃，
+   模块级缓存会让成就页拿到一张死贴图 */
+const _envs = new WeakMap();
 function sharedEnv(renderer) {
-  if (!_pmrem) {
-    _pmrem = new T.PMREMGenerator(renderer);
-    _env = _pmrem.fromScene(new T.RoomEnvironment(), .04).texture;
+  let e = _envs.get(renderer);
+  if (!e) {
+    const pmrem = new T.PMREMGenerator(renderer);
+    e = { pmrem: pmrem, tex: pmrem.fromScene(new T.RoomEnvironment(), .04).texture };
+    _envs.set(renderer, e);
   }
-  return _env;
+  return e.tex;
+}
+function dropEnv(renderer) {
+  const e = _envs.get(renderer);
+  if (e) { e.tex.dispose(); e.pmrem.dispose(); _envs.delete(renderer); }
 }
 export function webglOK() {
   try {
@@ -474,8 +482,9 @@ export async function charmPNG(id) {
   cam.position.set(cx, cy, 30); cam.lookAt(cx, cy, 0);
   r.render(sc, cam);
   const url = r.domElement.toDataURL('image/png');
-  /* 快照 renderer 用完即弃 */
+  /* 快照 renderer 用完即弃：几何、环境贴图、renderer 一起还 */
   sc.traverse(function (o) { if (o.geometry) o.geometry.dispose(); });
+  dropEnv(r);
   r.dispose();
   cachePNG(id, url);
   return url;
@@ -738,7 +747,15 @@ export function openPage(env) {
         renderer = new T.WebGLRenderer({ canvas: env.canvas, alpha: true, antialias: true });
         renderer.toneMapping = T.ACESFilmicToneMapping;
       }
-      buildScene();
+      if (!scene) {
+        buildScene();
+      } else {
+        /* 场景只建一次：新解锁的挂上去，亮暗只调环境与灯 */
+        if (!!env.dark !== darkNow) applyLighting(!!env.dark);
+        slots.forEach(function (s) {
+          if (unlocked[s.id] && !s.charm) hangCharm(s);
+        });
+      }
       fitRenderer();
       /* ?fx=1：桌面拍素材用的后期（GTAO + 景深），默认关——手机走性能闸。
          每次打开重建：场景是新的，composer 不能指旧场景 */
@@ -765,14 +782,17 @@ export function openPage(env) {
   });
   gotoPage(env.startAt || 0, true);        /* 默认停在最新解锁的那一枚（index 传 startAt） */
   frames = []; gated = !!env.nogate;   /* nogate 只给调试页跳过性能闸（真机必走） */
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission !== 'function') {
+  /* 陀螺仪：iOS 要系统授权弹窗，本版不请求不启用；其余平台照旧 */
+  const iOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+  if (!iOS && typeof DeviceOrientationEvent !== 'undefined') {
     window.addEventListener('deviceorientation', onTilt); tiltOn = true;
   }
   env.canvas.addEventListener('pointerdown', onDown);
   env.canvas.addEventListener('pointermove', onMove);
   env.canvas.addEventListener('pointerup', onUp);
   env.canvas.addEventListener('pointercancel', onUp);
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
   if (!rafOn) { rafOn = true; renderer.setAnimationLoop(loop); }
   window.__charmsSlots = function () {                /* 测试探针 */
     return slots.map(function (s) { return { id: s.id, hasCharm: !!s.charm }; });
@@ -791,8 +811,11 @@ export function closePage() {
     pageEnv.canvas.removeEventListener('pointercancel', onUp);
   }
   if (tiltOn) { window.removeEventListener('deviceorientation', onTilt); tiltOn = false; }
+  window.removeEventListener('resize', onResize);
+  window.removeEventListener('orientationchange', onResize);
   dragX = null;
 }
+function onResize() { if (pageEnv && scene) fitRenderer(); }
 /* 解锁时页面正开着（少见）：当场挂上去；若正在这一页，顺手刷新纸条 */
 export function hangNow(rec) {
   if (!slots.length) return;
