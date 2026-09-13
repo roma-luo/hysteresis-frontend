@@ -11,3 +11,6 @@ wheels/
 artifacts/
 .pytest_cache/
 _stage/
+
+# three.js 一次性打包环境（含 node_modules），产物 frontend/vendor/ 入库
+_vendor_build/
