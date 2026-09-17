@@ -3296,144 +3296,8 @@ function guideFly(x,y,s){
   spirit.style.setProperty('--y',(y-80)+'px');
   spirit.style.setProperty('--s',s);
 }
-function spiritGuide(){
-  if(guiding) return;
-  guiding=true;
-  guideT.forEach(clearTimeout); guideT=[];
-  /* calm：无飞行，她不出来；四行字依次各停 700ms 直接打在布上，打完即结束 */
-  if(calm){
-    GLINES.forEach(function(t,i){ guideT.push(setTimeout(function(){ glineType(t); }, i*700)); });
-    guideT.push(setTimeout(function(){
-      glineOut(); guiding=false; markGuided(); hello(track,scroller);
-    }, GLINES.length*700+400));
-    return;
-  }
-  var pill=document.querySelector('.screen[data-s="4"] .idpill');
-  var ava=document.querySelector('.screen[data-s="4"] .who .ava');
-  var ar=app.getBoundingClientRect(), av=guideAvaPos();
-  /* 0：头像弹一下，墨圆反向（scale 1→2.2、淡出），她从头像位置直接淡入（36px），抬眼看你 */
-  pill.classList.add('press'); setTimeout(function(){ pill.classList.remove('press'); },300);
-  ava.classList.add('gout');
-  spiritReset();
-  spirit.classList.add('on','formed','quick','litup','awake','gfade');
-  document.body.classList.add('lit','guiding');
-  guideFly(av.x, av.y, PERCH_S);
-  spiritScheduleBlink();
-  guideT.push(setTimeout(function(){ spiritLook(0,-.9,900); },350));
-  /* 0.6s：飞到屏幕中央偏上（全尺寸）；布上打出第一行 */
-  guideT.push(setTimeout(function(){
-    guideFly(ar.width/2, ar.height*0.40, 1);
-    glineType(GLINES[0]);
-  },600));
-  /* 2.4s：滚到布尾，笔尖从她身上伸出，把第一个 widget（唱机）带进来 */
-  guideT.push(setTimeout(function(){
-    smoothTo(scroller, scroller.scrollHeight, 600, function(){
-      var sr=spirit.getBoundingClientRect(), tr=track.getBoundingClientRect();
-      guideWg=placeWidget('vt',{from:{x:sr.left+sr.width/2-tr.left, y:sr.top+sr.height/2-tr.top}});
-      guideAfterPlace();
-    });
-  },2400));
-}
-/* 唱机落下之后：她飘过去看它、推一下，然后等你挪它 */
-function guideAfterPlace(){
-  (function poll(){
-    if(!guiding) return;
-    if(guideWg && getComputedStyle(guideWg).visibility==='visible'){
-      setTimeout(guideNudge,1300); return;
-    }
-    setTimeout(poll,200);
-  })();
-}
-function guideNudge(){
-  if(!guiding) return;
-  /* 3.8s 她飘到唱机右上角，低头看它，把它往前推一下；那行字换掉 */
-  var p=guideAtWidget(guideWg);
-  guideFly(p.x,p.y,1);
-  spiritLookEl(guideWg,1400);
-  guideT.push(setTimeout(function(){
-    guideWg.classList.add('nudge');
-    setTimeout(function(){ guideWg.classList.remove('nudge'); },420);
-    glineType(GLINES[1]);
-  },760));
-  /* 4.6s 等待点：你拖动唱机就继续（她眨两下）；6s 没动她自己继续 */
-  var waited=false;
-  function proceed(){
-    if(waited || !guiding) return; waited=true;
-    guideWg.removeEventListener('pointerup',onUp);
-    guideBubble();
-  }
-  function onUp(){ if(guideWg._dragged){ spiritBlink(true); proceed(); } }
-  guideWg.addEventListener('pointerup',onUp);
-  guideT.push(setTimeout(proceed,6000+760));
-}
-function guideBubble(){
-  if(!guiding) return;
-  /* 飞到对话流位置，她说一句（玻璃气泡）；到达后 600ms 气泡上泛一次轻按的涟漪，字换 */
-  var p=guideAtThread();
-  guideFly(p.x,p.y,1);
-  herSay(track,scroller,STRINGS.guide.bubble,function(){
-    var msgs=track.querySelectorAll('.msg.her'), m=msgs[msgs.length-1];
-    setTimeout(function(){
-      var rp=document.createElement('i'); rp.className='ripple';
-      m.appendChild(rp); setTimeout(function(){ rp.remove(); },560);
-      glineType(GLINES[2]);
-    },600);
-  });
-  /* +2.2s 飞到输入胶囊上方，看向胶囊；顶光呼吸两次，字换 */
-  guideT.push(setTimeout(guideComposer,2200));
-}
-function guideComposer(){
-  if(!guiding) return;
-  var cf=document.querySelector('.screen[data-s="4"] .cfield');
-  var p=guideAtComposer();
-  guideFly(p.x,p.y,1);
-  spiritLookEl(cf,1400);
-  cf.classList.add('breath');
-  setTimeout(function(){ cf.classList.remove('breath'); },2500);
-  var cin=cf.querySelector('.cin');
-  guidePh=true; cin.placeholder=STRINGS.canvas.guidePh;
-  glineType(GLINES[3]);
-  /* +4.4s 飞回头像；落地那帧墨圆正向回来、她淡出、胶囊 press；那行墨字淡出 */
-  guideT.push(setTimeout(guideHome,4400-2200));
-}
-function guideHome(){
-  if(!guiding) return;
-  var av=guideAvaPos();
-  guideFly(av.x,av.y,PERCH_S);
-  guideT.push(setTimeout(function(){
-    var pill=document.querySelector('.screen[data-s="4"] .idpill');
-    var ava=document.querySelector('.screen[data-s="4"] .who .ava');
-    ava.classList.add('gback'); ava.classList.remove('gout');
-    setTimeout(function(){ ava.classList.remove('gback'); },560);
-    spirit.classList.remove('on');
-    pill.classList.add('press'); setTimeout(function(){ pill.classList.remove('press'); },300);
-    glineOut();
-  },720));
-  /* +5.2s hello()：她的第一句话与第一张事件卡按现有节奏进 */
-  guideT.push(setTimeout(function(){
-    spiritReset(); document.body.classList.remove('lit','guiding');
-    guiding=false; guideWg=null; markGuided(); hello(track,scroller);
-  },1450));
-}
-/* 跳过：她 720ms 飞回头像，墨字淡出，然后 hello() 照常 */
-function spiritGuideSkip(){
-  if(!guiding) return;
-  guideT.forEach(clearTimeout); guideT=[];
-  if(calm){ guiding=false; markGuided(); hello(track,scroller); return; }
-  var av=guideAvaPos();
-  guideFly(av.x,av.y,PERCH_S);
-  glineOut();
-  setTimeout(function(){
-    var ava=document.querySelector('.screen[data-s="4"] .who .ava');
-    ava.classList.add('gback'); ava.classList.remove('gout');
-    setTimeout(function(){ ava.classList.remove('gback'); },560);
-    spirit.classList.remove('on');
-    setTimeout(function(){
-      spiritReset(); document.body.classList.remove('lit','guiding');
-      guiding=false; guideWg=null; markGuided(); hello(track,scroller);
-    },350);
-  },720);
-}
+function spiritGuide(){ prologueStart(); }
+function spiritGuideSkip(){ prologueSkip(); }
 
 /* ---------- 输入区 ----------
    右边永远只有一个控件。空着的时候它是图片，有东西可发的时候它就是发送。
@@ -5180,5 +5044,6 @@ boot();
     </div>
   </div>
 </template>
+<script src="prologue.js"></script>
 </body>
 </html>
