@@ -395,6 +395,70 @@ def test_netfail_presence(mobile_page, app_url):
     )
 
 
+# ---------- 片头（第一次进画布） ----------
+
+
+def test_prologue(mobile_page, app_url):
+    """片头：新用户进画布她本人演一遍；按住 800ms 跳过，一切倒回。"""
+    errors = []
+    mobile_page.on("pageerror", lambda e: errors.append(str(e)))
+    mobile_page.goto(app_url)
+    mobile_page.wait_for_selector("#app")
+    dark0 = mobile_page.evaluate("document.body.classList.contains('dark')")
+    mobile_page.evaluate("go(4)")
+    # 2s 时她已出来（spirit.on 且有尺寸）
+    mobile_page.wait_for_timeout(2000)
+    assert mobile_page.eval_on_selector(
+        "#spirit", "el => el.classList.contains('on') && el.getBoundingClientRect().width > 0"
+    )
+    # 4s 内她对镜头开口（.pbub.on），且画布先起了雾（body.pfocus）
+    mobile_page.wait_for_selector(".pbub.on", timeout=4000)
+    assert mobile_page.evaluate("document.body.classList.contains('pfocus')")
+    # 片头的招呼（~3s，两只手张开）与冷透两张截图在 test_prologue_cold_screenshot 里拍
+    # ——全页截图会改视口、拖慢时序，搅乱按住跳过的验收点
+    mobile_page.wait_for_timeout(11000)  # ~13s：对话流还空着、雾已退
+    # 触屏档的 mouse.down 在 WebKit 不产 pointerdown，用合成 PointerEvent 走真实监听路径
+    # （坐标取视口内相对位置：Playwright 的 iPhone 档视口高比屏小，写死像素会落空）
+    def hold_point(ev):
+        mobile_page.evaluate(
+            """(() => { const x = window.innerWidth / 2, y = window.innerHeight * 0.75;
+               document.elementFromPoint(x, y).dispatchEvent(
+                 new PointerEvent('EV', {bubbles: true, clientX: x, clientY: y, pointerId: 1})); })()""".replace("EV", ev)
+        )
+    hold_point("pointerdown")
+    mobile_page.wait_for_timeout(950)
+    hold_point("pointerup")
+    mobile_page.wait_for_function(
+        "() => localStorage.getItem('after-guided') === '1'", timeout=15000
+    )  # abort → 快速收尾 → finish() 里才记 guided
+    assert not mobile_page.eval_on_selector(".pbub", "el => el.classList.contains('on')")
+    assert mobile_page.evaluate("document.body.classList.contains('dark')") == dark0
+    assert mobile_page.evaluate("localStorage.getItem('after-guided')") == "1"
+    assert not mobile_page.eval_on_selector(
+        f"{CANVAS} .ehint", "el => el.classList.contains('bye')"
+    )
+    assert not mobile_page.eval_on_selector("#spirit", "el => el.classList.contains('on')")
+    assert errors == [], f"片头报错: {errors}"
+
+
+def test_prologue_cold_screenshot(mobile_page, app_url):
+    """片头截图：招呼（两只手张开）与争吵冷透（body.distant）。只在主力档跑（要走全程）。"""
+    if mobile_page.device_id != "iphone-13":
+        pytest.skip("片头截图只在主力档跑")
+    errors = []
+    mobile_page.on("pageerror", lambda e: errors.append(str(e)))
+    mobile_page.goto(app_url)
+    mobile_page.wait_for_selector("#app")
+    mobile_page.evaluate("go(4)")
+    mobile_page.wait_for_selector(".pbub.on", timeout=6000)
+    mobile_page.wait_for_timeout(700)   # 招呼那句正说着：两只手张开、右手挥
+    shot(mobile_page, "prologue-hello")
+    mobile_page.wait_for_selector("body.distant", timeout=95000)
+    mobile_page.wait_for_timeout(1600)  # 光冷透走完 + 眼皮耷下来
+    shot(mobile_page, "prologue-cold")
+    assert errors == [], f"片头报错: {errors}"
+
+
 # ---------- 文案 / STRINGS ----------
 
 
