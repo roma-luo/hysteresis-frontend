@@ -439,11 +439,14 @@
     charmUnlock=_charmUnlock;
     hello(track,scroller);
   }
-  function abort(){                       /* 按住跳过 / 离屏：直接倒回 */
+  function abort(){                       /* 按住跳过 / 离屏：直接倒回；减动效下没有可倒的，直接收尾 */
     if(!on) return;
+    if(calmNow()){ finish(); return; }
     var id=++run; handOff(false); clearTimeout(bubT); bub.classList.remove('on'); document.body.classList.remove('pfocus');
     b7_rewind(id,true);
   }
+  /* calm 是加载时的常量；body.calm 给验收/调试一个手动入口 */
+  function calmNow(){ return calm || document.body.classList.contains('calm'); }
 
   /* ---------- 入口：index.html 的 spiritGuide/spiritGuideSkip 各是一行转发 ---------- */
   function prologue(){
@@ -451,7 +454,7 @@
     on=true; guiding=true; var id=++run;
     prevDark=document.body.classList.contains('dark');
     t0=performance.now(); tick();
-    if(calm){ calmRun(id); return; }      /* 减动效：只播三个对话框 */
+    if(calmNow()){ calmRun(id); return; }  /* 减动效：只播三个对话框 */
     charmUnlock=function(id2,done){ if(done) done(); };   /* 片头期间挂件不解锁：争吵是演的，唱机是道具 */
     (async function(){
       var beats=[b1_who,b2_how,b3_draw,b4_night,b5_weather,b6_fight];
