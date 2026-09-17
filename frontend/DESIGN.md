@@ -116,10 +116,16 @@
 - 进入页：飘回中央、光回来、静静看你，3.2s 化成墨圆；落地那帧头像出现、胶囊弹一下，无空圆、无大小跳变（锚点不缩放，墨圆保持 30px）。
 - 她现在不散：没有 leaving，她跟着走；回到开始页/登录页她才不在。
 
-### 引导（只在第一次进画布）
+### 片头（只在第一次进画布）
 
-不用文字讲规则，她做一遍：从头像探出 → 带你看布、物件（把唱机带进来，等你拖，6s 没动她自己继续）、气泡、输入，再回去。约 11 秒。点任意处跳过。calm（减动效）时她不出来，四行字打完即结束。记 `after-guided`。
-引导期间 abar、剧本播放器、arrive 全部挂起（guiding）。
+她本人在真实画布上用真实系统演一遍：打招呼 → 放唱机等你拖 → 画她自己 → 去按 ≡ 拨「晚安」→ 送天气 → 争吵、光冷透、耷眼 → 清场、她把灯拨回来、挥手「欢迎你的加入！」→ 回头像 → `hello()`。约 86 秒。住在 `frontend/prologue.js`（普通 `<script>`，只调主程序已有的函数）。片头期间 abar、剧本播放器、arrive、挂件解锁全部挂起（`guiding`）；`charmUnlock` 暂时替换成空操作——争吵是演的，唱机是道具。跳过只认按住 800ms（`go(n≠4)` 也算）；灯由她开也由她关，用户本来就是夜间则不动灯。calm（减动效）时只播三个对话框（hello/hi1/hi2），不起雾、不飞、不放不画不关灯，完了直接 `hello()`。
+
+- 她的两只手：肩膀在 (43,100) / (169,100)，形状是布被顶出的小三角（根宽 27、长 25、圆钝尖）；伸 560ms 带回弹、收 520ms 不弹；打招呼两手张开右手挥三下；指 / 点 / 画只用左手；指尖相对她中心 (-14,+4)px（坐姿档）。
+- 她对镜头说的话（`.pbub`）：纸白 82%（夜间暖深灰 86%）、`--r-glass`、SVG 尾巴朝她、离两端圆角 ≥22px；出现前画布先起雾（与设置页玻璃同规则，`.screen` 与光 blur 18px，350ms），雾起 260ms 后开口，说完 200ms 后雾退；连着说的几句雾不断。
+- 她对你说的话仍走对话流气泡；两种气泡不同时出现，每句落下后至少停 1.1–1.8s 她再动。
+- 换场：上一轮东西往左 72px 平移淡出（错开 40ms），不叫回空态。
+- 不开心：两眼压到 0.34 高、下移 4px、各向外斜 14°，900ms；光回来时一起回来。
+- 画她自己：沿 `#ghost` 每 5 单位重描，法线上加慢晃 ±2.6 与颤 ±0.7；荧光笔 = 画画屏那支（平头、尖角、竖向 0.42、暖褐 50%、multiply）；三笔：轮廓、左眼、右眼，每笔她跟着笔尖走。
 
 ### 笔尖（她的手）
 
@@ -202,12 +208,12 @@
 - 剧本《十二天》七幕在内嵌 JSON（字段见 `SCRIPT.md`）。动作：say / you / place / ink / card（decide/coop）/ recall / warmth / presence / wait / arrive / stage / branch / end。`?scene=N` 从第 N 幕起播；`pace()` 让剧本吃 SC。
 - 翻旧账：recall 引用 decide 记下的 stamp（`player.marks`），旧消息旁 stamp 亮一下，滚过去 400ms 再滚回。
 - 分岔（第六幕）：播放器停在 branch，演示菜单选「回/不回」；回 → warmth 回 .6 且和好（第十二天不来）。`skipIfMuted` 的幕在「停止她的主动联系」开着时整幕跳过。
-- 剧终（end）：body.ended——头像退回墨色空心圆、小字空、输入区收起、画布只读、她的东西留着不动；记 `after-ended`，之后再打开 app 直达只读画布，开始页不再出现「注册」。「申请新的角色」与演示菜单「重头/从头走一遍」走 `restartAll()`：抹掉结束态与引导记号、清画布、回开始页。
+- 剧终（end）：body.ended——头像退回墨色空心圆、小字空、输入区收起、画布只读、她的东西留着不动；记 `after-ended`，之后再打开 app 直达只读画布，开始页不再出现「注册」。「申请新的角色」与演示菜单「重头/从头走一遍」走 `restartAll()`：抹掉结束态与片头记号、清画布、回开始页。
 - 演示菜单是测试脚手架（触屏或 `?dev=1` 出现），上线前整块删掉，其字串不进 STRINGS。
 
 ### localStorage 键（全部 `after-` 前缀；隐私页「导出我的数据」全量打包，「删除账户」全清）
 
-`after-guided` 引导已播 · `after-dark` 夜间 · `after-mute` 停止主动联系 · `after-qfrom/qto` 安静时段（只 UI）· `after-cam-asked` 相机前置已问 · `after-profile` 注册资料 · `after-login` 走过登录路径 · `after-fs` 字号三档 · `after-reports` 报告 · `after-charms` 她给的挂件 · `after-charms-seen` 挂件已看 · `after-charm-img-*` 挂件 PNG 缓存 · `after-met` 认识第 1 天 · `after-ended` 结束态
+`after-guided` 片头已播 · `after-dark` 夜间 · `after-mute` 停止主动联系 · `after-qfrom/qto` 安静时段（只 UI）· `after-cam-asked` 相机前置已问 · `after-profile` 注册资料 · `after-login` 走过登录路径 · `after-fs` 字号三档 · `after-reports` 报告 · `after-charms` 她给的挂件 · `after-charms-seen` 挂件已看 · `after-charm-img-*` 挂件 PNG 缓存 · `after-met` 认识第 1 天 · `after-ended` 结束态
 
 ---
 
