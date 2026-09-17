@@ -131,6 +131,8 @@ def test_drawer_account_area(mobile_page, app_url):
     """账户区显示注册时填的用户名与姓名；登录路径显示「已登录」。"""
     mobile_page.goto(app_url)
     mobile_page.wait_for_selector("#app")
+    # 与片头无关的用例：关掉片头与开场白，行为确定（片头另由 test_prologue 覆盖）
+    mobile_page.evaluate("localStorage.setItem('after-guided','1'); helloDone=true;")
     # 注册路径：直接在第 11 屏填表（DOM 即是注册时填的）
     mobile_page.evaluate("go(11)")
     mobile_page.fill(".fin[autocomplete='username']", "romaluo")

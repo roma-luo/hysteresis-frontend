@@ -45,7 +45,7 @@
     /* 不开心：眼皮从上面耷下来，眼睛往下看 */
     '.spirit.sad .eyes{transform:translate(0,4px)!important}'+
     '.spirit.sad .eyes circle{transform-origin:50% 100%;transition:transform 900ms var(--ease)!important}'+
-    'body.prologue .spirit,body.prologue .gline{z-index:70}'+
+    'body.prologue .spirit{z-index:70}'+
     'body.prologue #drawer .gpage{pointer-events:none}'+
     'body.prologue .hbtn.pressed{transform:scale(.9)}'+
     '.pcat{position:absolute;width:150px;height:175px;pointer-events:none;transition:opacity .7s var(--ease)}'+
@@ -216,6 +216,28 @@
   }
 
   /* ---------- 拍 ---------- */
+  /* 减动效：不起雾、她不飞、不放不画不关灯——头像旁依次三个对话框，完了直接开始 */
+  function calmBubble(text,ms){
+    clearTimeout(bubT);
+    bub.querySelector('span').textContent=text;
+    bub.classList.remove('above');
+    bub.style.left='0px'; bub.style.top='0px'; void bub.offsetWidth;
+    var ar=appRect(), w=bub.offsetWidth;
+    var x=Math.max(12,Math.min(ar.width-w-12, at.x-22));
+    bub.style.left=x+'px'; bub.style.top=(at.y+46)+'px';   /* 头像下沿 */
+    bub.querySelector('svg').style.left=Math.max(22,Math.min(w-38, at.x-x-8))+'px';
+    bub.classList.add('on');
+    return new Promise(function(r){ bubT=setTimeout(function(){ bub.classList.remove('on'); setTimeout(r,360); },ms); });
+  }
+  async function calmRun(id){
+    var av=guideAvaPos(); at={x:av.x,y:av.y,s:PERCH_S};
+    document.body.classList.add('prologue');
+    await calmBubble(BUB.hello,1600); if(!alive(id)) return;
+    await calmBubble(BUB.hi1,2200); if(!alive(id)) return;
+    await calmBubble(BUB.hi2,2600);
+    finish();
+  }
+
   async function b1_who(id){
     var pill=document.querySelector('.screen[data-s="4"] .idpill');
     var ava=document.querySelector('.screen[data-s="4"] .who .ava');
@@ -426,11 +448,11 @@
   /* ---------- 入口：index.html 的 spiritGuide/spiritGuideSkip 各是一行转发 ---------- */
   function prologue(){
     if(on || guiding) return;
-    if(calm){ markGuided(); hello(track,scroller); return; }   /* 减动效：暂不进片头（三句对话框的减动效版随后补上） */
     on=true; guiding=true; var id=++run;
     prevDark=document.body.classList.contains('dark');
-    charmUnlock=function(id2,done){ if(done) done(); };   /* 片头期间挂件不解锁：争吵是演的，唱机是道具 */
     t0=performance.now(); tick();
+    if(calm){ calmRun(id); return; }      /* 减动效：只播三个对话框 */
+    charmUnlock=function(id2,done){ if(done) done(); };   /* 片头期间挂件不解锁：争吵是演的，唱机是道具 */
     (async function(){
       var beats=[b1_who,b2_how,b3_draw,b4_night,b5_weather,b6_fight];
       for(var i=0;i<beats.length;i++){ if(!alive(id)) return; console.log('[prologue] beat',i+1,((performance.now()-t0)/1000).toFixed(1)+'s'); await beats[i](id); }
@@ -453,6 +475,4 @@
     function off(){ clearTimeout(t); ring.classList.remove('on'); }
     app.addEventListener('pointerup',off); app.addEventListener('pointercancel',off);
   })();
-  /* 演示菜单：那颗「重放引导」现在重放的是片头 */
-  var rg=document.querySelector('.devmenu [data-act="reguide"]'); if(rg) rg.textContent='重放片头';
 })();
