@@ -14,3 +14,7 @@ _stage/
 
 # three.js 一次性打包环境（含 node_modules），产物 frontend/vendor/ 入库
 _vendor_build/
+
+# 仓库根一次性验证/扫描脚本（本机路径写死、内容过时）：留在本地，不入库
+_scan.py
+verify_*.py
