@@ -275,20 +275,33 @@ def test_album_sends_local_image(mobile_page, app_url, tmp_path):
     mobile_page.wait_for_selector(f"{CANVAS} .msg.you img")
 
 
-def test_her_card_paper(mobile_page, app_url):
-    """顶栏点她胶囊：一张纸（名字 / 自述 / 认识第 N 天），不可编辑。"""
+def test_pill_expands_and_feed(mobile_page, app_url):
+    """顶栏点她胶囊：向右展开「聊天/社交」两个 toggle；社交 → 她的朋友圈（有图帖+纯文字帖）。"""
     go_canvas(mobile_page, app_url)
-    mobile_page.click(f"{CANVAS} .idpill")
-    mobile_page.wait_for_selector("#hercard.open")
-    assert mobile_page.eval_on_selector("#hpName", "el => el.textContent") == "陈小满"
-    assert mobile_page.eval_on_selector("#hpBio", "el => el.textContent.length > 0")
-    assert mobile_page.eval_on_selector(
-        "#hpDays", "el => el.textContent"
-    ) == "认识第 1 天"
-    assert mobile_page.eval_on_selector(
-        "#hercard", "el => !el.querySelector('input,textarea')"
+    pill = f"{CANVAS} .idpill"
+    mobile_page.click(pill)
+    mobile_page.wait_for_selector(f"{pill}.xp")
+    # 展开：两个 toggle，默认「聊天」选中
+    labels = mobile_page.eval_on_selector_all(
+        f"{pill} .idtog button", "els => els.map(e => e.textContent)"
     )
-    shot(mobile_page, "hercard")
+    assert labels == ["聊天", "社交"]
+    assert mobile_page.eval_on_selector(f"{pill} .idtog .talk", "el => el.classList.contains('on')")
+    # 点「社交」进她的朋友圈
+    mobile_page.click(f"{pill} .idtog .social")
+    mobile_page.wait_for_selector("#feed.open")
+    assert mobile_page.eval_on_selector("#feedTitle", "el => el.textContent") == "她的朋友圈"
+    assert mobile_page.eval_on_selector_all("#feedList .fpost", "els => els.length") == 7
+    assert mobile_page.eval_on_selector_all("#feedList .fimg", "els => els.length") == 4
+    assert mobile_page.eval_on_selector_all("#feedList .fpost.ftext", "els => els.length") == 3
+    shot(mobile_page, "feed")
+    mobile_page.click("#feedClose")
+    # 点别处收起展开
+    mobile_page.click(pill)
+    mobile_page.wait_for_selector(f"{pill}.xp")
+    mobile_page.evaluate("document.getElementById('track').dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}))")
+    mobile_page.wait_for_timeout(300)
+    assert mobile_page.eval_on_selector_all(".idpill.xp", "els => els.length") == 0
 
 
 def test_achv_charms_empty_and_unlock(mobile_page, app_url):

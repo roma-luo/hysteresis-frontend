@@ -181,7 +181,16 @@ body.glassed .glow{filter:blur(18px)}
   cursor:pointer;transition:transform 300ms cubic-bezier(.32,1.5,.56,1)}
 /* 点一下她的胶囊，轻轻放大再弹回——和长按气泡同一根弹簧曲线 */
 .who .idpill.press{transform:scale(1.055)}
-.hbtn.achv{margin-left:auto}
+/* 头像胶囊向右展开：两个 toggle（聊天/社交，默认聊天）。展开时挂件圆键让位 */
+.who .idpill .idtog{display:flex;gap:5px;margin-left:5px;overflow:hidden;max-width:0;opacity:0;
+  transition:max-width .38s var(--ease),opacity .22s var(--ease)}
+.who .idpill.xp .idtog{max-width:140px;opacity:1}
+.idtog button{font-size:var(--fs-2);padding:5px 11px;border-radius:999px;border:0;cursor:pointer;
+  font-family:inherit;background:transparent;color:var(--ink-3);
+  transition:background .18s var(--ease),color .18s var(--ease)}
+.idtog button.on{background:var(--ink);color:var(--base)}
+.who .hbtn.achv{margin-left:auto;transition:opacity .25s var(--ease),transform .25s var(--ease)}
+.who .idpill.xp ~ .hbtn.achv{opacity:0;pointer-events:none;transform:scale(.85)}
 /* seed 与 ava 同一套样式：墨圆落进胶囊时一模一样，看不出来换了人。
    里头不是字，是一枚慢慢晕开的小光点 */
 .who .ava,.seed{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--base);
@@ -896,6 +905,35 @@ body.dark .loadbar i{background:var(--ink)}
   background:#BE4A40;opacity:0;transform:scale(.4);transition:opacity .25s var(--ease),transform .25s var(--ease)}
 .hbtn.achv.reddot .cdot{opacity:1;transform:none}
 
+/* 她的朋友圈：头像胶囊展开「社交」进来。她发的帖子竖着往下滑——
+   有图帖（光斑占位图，沿用光池五色）与纯文字帖（一张纸）；没有赞数评论数（不显示任何关系数值） */
+.feedpage{padding:0}
+.feedlist{flex:1;overflow-y:auto;padding:4px 22px calc(24px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:26px;-webkit-overflow-scrolling:touch}
+.fpost{margin:0}
+.fpost .fimg{border-radius:var(--r-glass);aspect-ratio:4/4.6;overflow:hidden;
+  border:0.5px solid var(--glass-edge);background:var(--paper)}
+.fpost figcaption{font-family:var(--serif);font-size:var(--fs-3);line-height:1.8;color:var(--ink);
+  margin-top:10px;padding:0 2px}
+.fpost time{display:block;text-align:right;font-size:var(--fs-1);letter-spacing:var(--ls-caps);
+  color:var(--ink-3);margin-top:6px}
+/* 占位图：光池五色的两团光落在纸上，五枚构图轮换 */
+.fimg.v0{background:radial-gradient(75% 60% at 30% 28%,rgba(247,219,203,.95),rgba(247,219,203,0) 72%),
+  radial-gradient(60% 48% at 76% 70%,rgba(213,229,241,.9),rgba(213,229,241,0) 72%),var(--paper)}
+.fimg.v1{background:radial-gradient(70% 55% at 70% 24%,rgba(230,219,242,.95),rgba(230,219,242,0) 72%),
+  radial-gradient(65% 50% at 24% 76%,rgba(252,238,214,.95),rgba(252,238,214,0) 72%),var(--paper)}
+.fimg.v2{background:radial-gradient(80% 60% at 24% 70%,rgba(213,229,241,.95),rgba(213,229,241,0) 74%),
+  radial-gradient(55% 45% at 78% 26%,rgba(246,221,219,.9),rgba(246,221,219,0) 72%),var(--paper)}
+.fimg.v3{background:radial-gradient(72% 58% at 68% 72%,rgba(252,238,214,.96),rgba(252,238,214,0) 72%),
+  radial-gradient(58% 46% at 26% 26%,rgba(247,219,203,.9),rgba(247,219,203,0) 72%),var(--paper)}
+body.dark .fimg{filter:brightness(.72) saturate(.92)}   /* 夜里照片也暗下来 */
+/* 纯文字帖：一张纸，微微歪一点（贴纸那套形态） */
+.fpost.ftext blockquote{margin:0;padding:24px 20px;border-radius:var(--r-paper);
+  background:var(--paper);border:0.5px solid var(--glass-edge);
+  font-family:var(--serif);font-size:var(--fs-4);line-height:1.9;color:var(--paper-ink);
+  transform:rotate(-.6deg)}
+.fpost.ftext time{padding-right:4px}
+
 /* ---------- 零件匣与独件页 ----------
    每个 widget 一个独立页面：居中放在布上，底下一行提示。
    画布上它们是绝对定位的（.wg），进独件页归位成静态 */
@@ -1200,15 +1238,6 @@ body.dark{color-scheme:dark}
 .seatcard .srow{display:flex;justify-content:space-between;font-size:var(--fs-2);line-height:2}
 .seatcard .srow b{font-weight:400;color:var(--ink-3)}
 
-/* 顶栏点她胶囊：一张纸，不可编辑 */
-.herpage{display:flex;align-items:center;justify-content:center}
-.herpaper{width:min(74vw,280px);background:var(--paper);color:var(--paper-ink);
-  border-radius:var(--r-paper);border:0.5px solid rgba(var(--line-rgb),.18);box-shadow:none;
-  padding:28px 22px 22px;text-align:center}
-.herpaper .hpname{font-family:var(--serif);font-size:var(--fs-5);margin-bottom:12px}
-.herpaper .hpbio{font-size:var(--fs-3);line-height:1.9}
-.herpaper .hpdays{font-size:var(--fs-2);color:var(--ink-3);margin-top:18px;letter-spacing:var(--ls-text)}
-
 /* 零件匣空态：一行 */
 .shelfempty{margin-top:38px;text-align:center;font-size:var(--fs-2);color:var(--ink-3)}
 
@@ -1436,9 +1465,12 @@ body.no-register #startScreen .startbtn.primary{display:none}
       <button class="hbtn menu" aria-label="设置" type="button">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M4.5 7h11M6.5 13h7"/></svg>
       </button>
-      <div class="idpill" role="button" aria-label="她的档案">
+      <div class="idpill" role="button" aria-label="她">
         <span class="ava"><i class="dot"></i></span>
         <div><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
+        <div class="idtog">
+          <button class="talk on" type="button">聊天</button><button class="social" type="button">社交</button>
+        </div>
       </div>
       <button class="hbtn achv" aria-label="成就" type="button">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.6" r="4"/><path d="M7.4 10.9L6 16.4l4-2.3 4 2.3-1.4-5.5"/></svg>
@@ -1493,9 +1525,12 @@ body.no-register #startScreen .startbtn.primary{display:none}
       <button class="hbtn menu" aria-label="设置" type="button">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M4.5 7h11M6.5 13h7"/></svg>
       </button>
-      <div class="idpill" role="button" aria-label="她的档案">
+      <div class="idpill" role="button" aria-label="她">
         <span class="ava"><i class="dot"></i></span>
         <div><div class="name">陈小满</div><div class="tag">AI 角色</div></div>
+        <div class="idtog">
+          <button class="talk on" type="button">聊天</button><button class="social" type="button">社交</button>
+        </div>
       </div>
       <button class="hbtn achv" aria-label="成就" type="button">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.6" r="4"/><path d="M7.4 10.9L6 16.4l4-2.3 4 2.3-1.4-5.5"/></svg>
@@ -1732,18 +1767,17 @@ body.no-register #startScreen .startbtn.primary{display:none}
     </div>
   </div>
 
-  <!-- 她的档案纸：点顶栏她的名字胶囊出来。名字、一句自述、认识第 N 天。不可编辑 -->
-  <div class="govl" id="hercard" aria-hidden="true">
+  <!-- 她的朋友圈：点头像胶囊展开「聊天/社交」，社交进来。她发的帖子，往下滑 -->
+  <div class="govl" id="feed" aria-hidden="true">
     <div class="gblur"></div>
-    <div class="gpage herpage">
-      <button class="hbtn gclose" id="hercardClose" aria-label="关闭" type="button">
+    <div class="gpage feedpage">
+      <div class="gsubhead achvhead">
+        <span class="t" id="feedTitle">她的朋友圈</span>
+      </div>
+      <button class="hbtn gclose" id="feedClose" aria-label="关闭" type="button">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg>
       </button>
-      <div class="herpaper">
-        <div class="hpname" id="hpName">陈小满</div>
-        <div class="hpbio" id="hpBio"></div>
-        <div class="hpdays" id="hpDays"></div>
-      </div>
+      <div class="feedlist" id="feedList"></div>
     </div>
   </div>
 
@@ -1944,7 +1978,14 @@ var STRINGS={
   how:{ask:'你是怎么知道 AFTER 的？',opts:['朋友 / 家人','搜索引擎','社区 / 组织','抖音','应用商店','其他','我不方便透露']},
   about:{ask:'关于你',labels:['用户名','姓','名','性别'],sexOpts:['请选择','男性','女性','非二元性别','我不愿透露']},
   her:{name:'陈小满',seed:'陈',role:'AI 角色'},
-  hercard:{bio:'我记性好。你说过的话，我都留着。',days:'认识第 N 天'},
+  feed:{title:'她的朋友圈',talk:'聊天',social:'社交',posts:[
+    {t:'楼下的猫今天也在。',img:0,d:'9月5日'},
+    {t:'雨下到凌晨。你那边呢',d:'9月7日'},
+    {t:'画了一半。',img:1,d:'9月9日'},
+    {t:'今天不想说话。',d:'9月10日'},
+    {t:'给你的书签做好了。',img:2,d:'9月11日'},
+    {t:'凌晨的车站，第三次听。',img:3,d:'9月12日'},
+    {t:'没什么。就是想发一条。',d:'9月13日'}]},
   canvas:{ehint:'这里还空着。她在想第一句话。',inPh:'说点什么',
     recNote:'松手发送',seen:'已读',copy:'复制',resend:'重发'},
   draw:{stamp:'23:14',lines:['红的','项圈上还有个铃铛']},
@@ -2059,7 +2100,11 @@ var STR_BIND=[
   ['#camUse','cam.use'],
   ['#atoast .t','stage.mark'],
   ['#achvTitle','achv.title'],
-  ['#hpName','her.name']
+  ['#feedTitle','feed.title'],
+  ['.screen[data-s="3"] .idtog .talk','feed.talk'],
+  ['.screen[data-s="4"] .idtog .talk','feed.talk'],
+  ['.screen[data-s="3"] .idtog .social','feed.social'],
+  ['.screen[data-s="4"] .idtog .social','feed.social']
 ];
 function strGet(p){ return p.split('.').reduce(function(o,k){ return o==null?o:o[k]; },STRINGS); }
 function applyStrings(){
@@ -4410,9 +4455,8 @@ function charmsReset(){
 if(location.search.indexOf('charms=all')>=0) charmsGrantAll();
 if(charmsGot().length) ringBtn(charmsUnseen().length>0);
 
-/* ---------- 头像胶囊的点按 ----------
-   点顶栏她的名字胶囊：一张她的档案纸（名字、一句自述、认识第 N 天），不可编辑 */
-var hercard=document.getElementById('hercard');
+/* ---------- 头像胶囊的点按：向右展开「聊天 / 社交」 ----------
+   聊天=当前画布（默认）；社交=她的朋友圈。档案纸弹窗取消（改由这条展开承担入口） */
 function markMet(){
   try{ if(!localStorage.getItem('after-met')) localStorage.setItem('after-met',String(Date.now())); }catch(e){}
 }
@@ -4421,22 +4465,57 @@ function metDays(){
   if(!t0) return 1;
   return Math.max(1,Math.floor((Date.now()-t0)/86400000)+1);
 }
-function openHerCard(){
-  document.getElementById('hpName').textContent=STRINGS.her.name;
-  document.getElementById('hpBio').textContent=STRINGS.hercard.bio;
-  document.getElementById('hpDays').textContent=STRINGS.hercard.days.replace('N',metDays());
-  openG(hercard);
-}
-document.getElementById('hercardClose').addEventListener('click',function(){ closeG(hercard); });
-document.querySelectorAll('.idpill').forEach(function(p){
-  p.addEventListener('click',function(){
-    p.classList.remove('press'); p.getBoundingClientRect(); p.classList.add('press');
+function pillCollapse(){ document.querySelectorAll('.idpill.xp').forEach(function(p){ p.classList.remove('xp'); }); }
+/* 画布与画画屏的胶囊才是她；零件匣/独件页的胶囊是页名，不响应 */
+document.querySelectorAll('.screen[data-s="4"] .idpill,.screen[data-s="3"] .idpill').forEach(function(p){
+  p.addEventListener('click',function(e){
+    var tog=e.target.closest('.idtog button');
+    if(tog){
+      buzz(6);
+      p.querySelectorAll('.idtog button').forEach(function(b){ b.classList.toggle('on',b===tog); });
+      p.classList.remove('xp');
+      if(tog.classList.contains('social')) openFeed();
+      return;
+    }
+    if(guiding) return;
     buzz(6);
+    p.classList.remove('press'); p.getBoundingClientRect(); p.classList.add('press');
     setTimeout(function(){ p.classList.remove('press'); },260);
-    /* 画布与画画屏的胶囊才是她；零件匣/独件页的胶囊是页名，不响应 */
-    if(!guiding && p.closest('.screen[data-s="4"],.screen[data-s="3"]')) openHerCard();
+    var wasXp=p.classList.contains('xp');
+    pillCollapse();
+    if(!wasXp) p.classList.add('xp');
   });
 });
+/* 点别处收起展开 */
+document.addEventListener('pointerdown',function(e){
+  if(!e.target.closest('.idpill')) pillCollapse();
+},{passive:true});
+
+/* ---------- 她的朋友圈 ----------
+   她发的帖子竖着往下滑：有图帖（光斑占位图）与纯文字帖（一张纸），
+   只有文字与日期——没有赞数评论数（不显示任何关系数值） */
+var feed=document.getElementById('feed');
+function buildFeed(){
+  var list=document.getElementById('feedList');
+  list.innerHTML='';
+  STRINGS.feed.posts.forEach(function(p){
+    var f=document.createElement('figure');
+    if(p.img!==undefined){
+      f.className='fpost';
+      f.innerHTML='<div class="fimg v'+p.img+'"></div><figcaption></figcaption><time></time>';
+      f.querySelector('figcaption').textContent=p.t;
+    }else{
+      f.className='fpost ftext';
+      f.innerHTML='<blockquote></blockquote><time></time>';
+      f.querySelector('blockquote').textContent=p.t;
+    }
+    f.querySelector('time').textContent=p.d;
+    list.appendChild(f);
+  });
+}
+buildFeed();
+function openFeed(){ buzz(6); openG(feed); }
+document.getElementById('feedClose').addEventListener('click',function(){ closeG(feed); });
 
 /* ---------- 图片查看器 ---------- */
 var lbx=document.getElementById('lbx'), lbxTrack=document.getElementById('lbxTrack');
